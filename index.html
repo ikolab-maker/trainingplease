@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hola Claudia · Mi camino a la Media Maratón</title>
+  <meta name="description" content="Plan de entrenamiento de Claudia Celeste hacia la Media Maratón de Lima 2027.">
+  <meta name="theme-color" content="#5BB8D6">
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <noscript><p style="padding:1rem;text-align:center;font-family:sans-serif">Para ver tu plan necesitas activar JavaScript.</p></noscript>
+
+  <nav class="topnav" aria-label="Secciones">
+    <a href="#semana" data-view="semana">Mi semana</a>
+    <a href="#mejor" data-view="mejor">Lo mejor de mí</a>
+    <a href="#meta" data-view="meta">La meta</a>
+  </nav>
+
+  <main>
+
+    <!-- ============ VISTA 1: MI SEMANA ============ -->
+    <section id="view-semana" class="view" aria-labelledby="hola">
+      <header class="hero">
+        <div class="hero-inner">
+          <p class="hero-kicker">Tu plan de entrenamiento</p>
+          <h1 id="hola">¡Hola Claudia!</h1>
+          <p class="hero-sub">Empieza tu camino a la media maratón</p>
+
+          <div class="hero-tags">
+            <div class="tag-row">
+              <span class="tag">Esta semana</span>
+              <span class="tag-text">21 al 27 de septiembre</span>
+            </div>
+            <div class="tag-row">
+              <span class="tag">La meta</span>
+              <span class="tag-text">Media Maratón de Lima · domingo 22 de agosto de 2027<br><small>(fecha por confirmar)</small></span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="countdown" role="timer" aria-label="Cuenta regresiva a la media maratón">
+        <div class="cd-cell"><span class="cd-num" id="cd-months">00</span><span class="cd-label">Meses</span></div>
+        <div class="cd-cell"><span class="cd-num" id="cd-days">00</span><span class="cd-label">Días</span></div>
+        <div class="cd-cell"><span class="cd-num" id="cd-hours">00</span><span class="cd-label">Horas</span></div>
+        <div class="cd-cell"><span class="cd-num" id="cd-minutes">00</span><span class="cd-label">Min</span></div>
+        <div class="cd-cell"><span class="cd-num" id="cd-seconds">00</span><span class="cd-label">Seg</span></div>
+      </div>
+
+      <div class="wrap" id="weekApp"></div>
+    </section>
+
+    <!-- ============ VISTA 2: LO MEJOR DE MÍ Y MI RETO ============ -->
+    <section id="view-mejor" class="view" aria-labelledby="mejor-title" hidden>
+      <header class="banner">
+        <h2 id="mejor-title">Lo mejor de mí<br>y mi reto</h2>
+        <p>Lo que ya tengo a mi favor y lo que voy a construir.</p>
+      </header>
+
+      <div class="wrap">
+        <h3 class="section-title">Lo mejor de mí</h3>
+        <p class="section-sub">Esto ya es mío. No lo tengo que conseguir: solo cuidarlo.</p>
+        <div class="card-grid" id="strengths"></div>
+
+        <h3 class="section-title">Mi reto</h3>
+        <p class="section-sub">Lo que voy a trabajar, y cómo lo voy a hacer.</p>
+        <div class="card-grid" id="challenges"></div>
+
+        <div class="pledge">
+          <p>Lo mejor de mí me trajo hasta aquí.<br>Mis retos me llevan a la meta.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA 3: LA META ============ -->
+    <section id="view-meta" class="view" aria-labelledby="meta-title" hidden>
+      <header class="banner">
+        <h2 id="meta-title">La meta</h2>
+        <p>Media Maratón de Lima · domingo 22 de agosto de 2027</p>
+      </header>
+
+      <div class="wrap">
+        <div class="goal-card">
+          <p class="goal-big">21,1 km en menos de 2 horas</p>
+          <p>Eso es correr a <strong>5:41 por km</strong>, parejo, de principio a fin. Todo el plan existe para que ese ritmo se sienta cómodo el día de la carrera.</p>
+          <p class="note">La fecha es provisional. Cuando se confirme, se mueve solo el final del plan.</p>
+        </div>
+
+        <h3 class="section-title">Mis tres niveles de meta</h3>
+        <p class="section-sub">Así, pase lo que pase en el camino, siempre hay una meta buena por delante.</p>
+        <div class="levels" id="levels"></div>
+
+        <h3 class="section-title">De dónde parto y a dónde voy</h3>
+        <div class="progress-table" id="startpoint"></div>
+
+        <h3 class="section-title">Las 6 fases</h3>
+        <p class="section-sub">Son 48 semanas, divididas en 6 etapas. Toca una para ver de qué trata.</p>
+        <div class="phases" id="phases"></div>
+
+        <h3 class="section-title">Mes a mes</h3>
+        <p class="section-sub">Los kilómetros son de carrera por semana. Las pruebas están marcadas con la bandera.</p>
+        <ol class="months" id="months"></ol>
+        <p class="note center">Cuando conozcamos el calendario oficial de carreras, ajustamos las fechas de las pruebas.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Hecho con cariño para Claudia Celeste</p>
+    <p class="footer-small">Si algún dolor pasa de 3 sobre 10 o te cambia la forma de pisar, se corta la sesión. El plan se ajusta a cómo responde tu cuerpo.</p>
+  </footer>
+
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
