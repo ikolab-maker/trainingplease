@@ -28,7 +28,7 @@
       range: '21 al 27 de septiembre',
       start: '2026-09-21',
       phase: 'Amanecer · Cada madrugada cuenta',
-      goal: 'Cumplir las 5 sesiones principales sin buscar ritmo. Paso de 1 a 3 carreras por semana (unos 13 km en total) y ninguna pasa de los 6 km. El ritmo es suave: entre 7:30 y 8:00 por km, con el que puedo conversar.',
+      goal: 'Cumplir las 5 sesiones principales sin buscar ritmo. Paso de 1 a 3 carreras por semana, y el domingo corro mi primer 10K con dorsal del plan: la Carrera BBVA. Ahí el objetivo no es el tiempo, es terminar bien y sostener el ritmo.',
       days: [
         {
           key: 'lun', dow: 'Lun', num: 21, date: '2026-09-21', type: 'gym', core: true,
@@ -67,7 +67,17 @@
           tip: 'Estirar es sentir una tensión suave, nunca dolor.'
         },
         {
-          key: 'jue', dow: 'Jue', num: 24, date: '2026-09-24', type: 'tech', core: true,
+          key: 'jue', dow: 'Jue', num: 24, date: '2026-09-24', type: 'rest',
+          title: 'Descanso', meta: 'Recuperar también es entrenar',
+          steps: [
+            'Día libre de entrenamiento',
+            'Si el cuerpo lo pide, 10 a 15 min de estiramiento suave',
+            'Dormir temprano, como de costumbre'
+          ],
+          tip: 'Mañana toca técnica de carrera. Hoy el cuerpo se prepara descansando.'
+        },
+        {
+          key: 'vie', dow: 'Vie', num: 25, date: '2026-09-25', type: 'tech', core: true,
           title: 'Técnica de carrera', meta: '30 min · unos 4 km',
           focus: 'Lo que voy a cuidar: inclinación leve desde los tobillos, pisada bajo el cuerpo, brazos a 90°, hombros sueltos y una cadencia de 165 a 175 pasos por minuto (la veo en el Apple Watch).',
           steps: [
@@ -79,7 +89,101 @@
           tip: 'Las aceleraciones son ágiles, no un sprint. Termino cada una con el cuerpo relajado.'
         },
         {
-          key: 'vie', dow: 'Vie', num: 25, date: '2026-09-25', type: 'gym', core: true,
+          key: 'sab', dow: 'Sáb', num: 26, date: '2026-09-26', type: 'gym', core: true,
+          title: 'Gym corto · Sin piernas', meta: '25 a 30 min',
+          focus: 'Mañana corro los 10K de la BBVA, así que hoy nada de sentadillas, zancadas ni peso muerto. Solo torso, core y estiramiento.',
+          steps: [
+            'Remo con mancuerna: 2 × 10',
+            'Press de hombro: 2 × 10',
+            'Plancha: 2 × 30 s',
+            'Cierre: 10 min de estiramiento suave — isquios, cuádriceps, gemelos y cadera'
+          ],
+          tip: 'Esfuerzo bajo, de 3 a 4 sobre 10. Hoy la prioridad es llegar fresca al domingo, no cansarme.'
+        },
+        {
+          key: 'dom', dow: 'Dom', num: 27, date: '2026-09-27', type: 'run', core: true,
+          title: 'Carrera BBVA · 10K', meta: 'Entrenamiento con dorsal',
+          steps: [
+            'Salida a esfuerzo conversable, sin buscar tiempo: es un entrenamiento con dorsal, no un examen',
+            'Ritmo guía cercano al de mis salidas suaves (unos 7:00 a 7:30 por km), ajustando según cómo me sienta',
+            'Hidratación en los puntos de la carrera',
+            'Si el cuerpo responde bien, disfruto los últimos metros'
+          ],
+          tip: 'Ya corrí un 10K en junio (1:05:15). Hoy no busco superarlo: practico salir tranquila y sostener el ritmo hasta el final.'
+        }
+      ],
+      rules: [
+        {
+          title: 'Antes y después de entrenar',
+          html: '<ul><li>Antes de correr: algo ligero (una banana o una tostada con miel) y agua.</li><li>Después: proteína y carbohidrato en la primera hora. Por ejemplo, yogur griego con fruta o huevos con pan.</li></ul>'
+        },
+        {
+          title: 'El dulce tiene su día',
+          html: '<p>Un postre el domingo, después del fondo. El resto de la semana, sin dulce suelto.</p><p>No se prohíbe: se programa.</p>'
+        },
+        {
+          title: 'Cómo sé que voy bien',
+          html: '<div class="effort"><div><b>3 a 4</b><span>Suave: puedo conversar</span></div><div><b>6 a 7</b><span>Fuerte: me quedan 2 repeticiones en reserva</span></div></div><p style="margin-top:.7rem">Cada día anoto el esfuerzo (1 a 10), las horas de sueño y cualquier molestia. Si un dolor pasa de 3 sobre 10 o me cambia la pisada, corto la sesión.</p>'
+        }
+      ]
+    },
+    {
+      id: 'sem-02',
+      title: 'Semana 2',
+      range: '28 de septiembre al 4 de octubre',
+      start: '2026-09-28',
+      phase: 'Amanecer · Cada madrugada cuenta',
+      goal: 'Vuelvo al patrón de la semana base: gym, carrera suave, movilidad, técnica, gym y fondo. Subo un poco el volumen: la carrera suave crece a unos 4 km y el fondo del domingo a unos 7 km, siempre a ritmo conversable.',
+      days: [
+        {
+          key: 'lun', dow: 'Lun', num: 28, date: '2026-09-28', type: 'gym', core: true,
+          title: 'Gym A · Fuerza base', meta: '45 min',
+          steps: [
+            'Calentamiento de 8 min (caminata rápida o bici suave y movilidad)',
+            'Sentadilla goblet: 3 × 10',
+            'Peso muerto rumano con mancuernas: 3 × 10',
+            'Zancada reversa: 3 × 8 por pierna',
+            'Puente de glúteo con carga: 3 × 12',
+            'Elevación de talones: 3 × 12',
+            'Plancha 3 × 30 s y dead bug 3 × 8 por lado'
+          ],
+          tip: 'Si la semana pasada este esfuerzo se sintió de 6 a 7 sobre 10, hoy pruebo si ya puedo sumar un poco más de peso.'
+        },
+        {
+          key: 'mar', dow: 'Mar', num: 29, date: '2026-09-29', type: 'run', core: true,
+          title: 'Carrera suave', meta: '30 a 32 min · unos 4 km',
+          steps: [
+            'Trote continuo y conversable (esfuerzo de 3 a 4 sobre 10)',
+            'Ritmo guía: 7:30 a 8:00 por km. Manda la sensación, no el reloj',
+            'Un poco más de tiempo que la semana pasada: el cuerpo ya conoce este ritmo'
+          ],
+          tip: 'Si el 10K del domingo dejó algo de cansancio en las piernas, hoy bajo el ritmo un poco más de lo habitual.'
+        },
+        {
+          key: 'mie', dow: 'Mié', num: 30, date: '2026-09-30', type: 'mob', extra: true,
+          title: 'Movilidad y descarga', meta: '20 min',
+          steps: [
+            'Foam roller en cuádriceps, isquios, glúteo y gemelos (1 a 2 min por zona)',
+            'Estiramiento de flexores de cadera y posición 90/90',
+            'Gemelo en la pared',
+            '2 min de respiración tranquila'
+          ],
+          tip: 'Si todavía no agendé el chequeo médico (hemograma y ferritina), esta semana es un buen momento para hacerlo.'
+        },
+        {
+          key: 'jue', dow: 'Jue', num: 1, date: '2026-10-01', type: 'tech', core: true,
+          title: 'Técnica de carrera', meta: '30 min · unos 4 km',
+          focus: 'Lo que voy a cuidar: inclinación leve desde los tobillos, pisada bajo el cuerpo, brazos a 90°, hombros sueltos y una cadencia de 165 a 175 pasos por minuto (la veo en el Apple Watch).',
+          steps: [
+            '10 min de trote suave',
+            'Ejercicios de técnica, 2 × 15 m cada uno: marcha alta, skipping bajo, talones al glúteo y tobillos',
+            '15 min de trote suave',
+            'Cierre: 4 aceleraciones de 15 a 20 s (unos 5:30 por km), caminando 60 a 90 s entre cada una'
+          ],
+          tip: 'Las aceleraciones son ágiles, no un sprint. Termino cada una con el cuerpo relajado.'
+        },
+        {
+          key: 'vie', dow: 'Vie', num: 2, date: '2026-10-02', type: 'gym', core: true,
           title: 'Gym B · Torso y core', meta: '40 min',
           steps: [
             'Remo con mancuerna: 3 × 10',
@@ -93,7 +197,7 @@
           tip: 'Hoy no trabajo piernas pesadas: mañana descanso y el domingo toca el fondo.'
         },
         {
-          key: 'sab', dow: 'Sáb', num: 26, date: '2026-09-26', type: 'rest',
+          key: 'sab', dow: 'Sáb', num: 3, date: '2026-10-03', type: 'rest',
           title: 'Descanso', meta: 'Recuperar también es entrenar',
           steps: [
             'Caminata opcional de 30 a 40 min',
@@ -103,14 +207,14 @@
           tip: 'Hoy mi cuerpo absorbe todo lo que trabajé esta semana.'
         },
         {
-          key: 'dom', dow: 'Dom', num: 27, date: '2026-09-27', type: 'long', core: true,
-          title: 'Fondo suave', meta: '45 a 50 min · unos 6 km',
+          key: 'dom', dow: 'Dom', num: 4, date: '2026-10-04', type: 'long', core: true,
+          title: 'Fondo suave', meta: '55 a 60 min · unos 7 km',
           steps: [
             'Trote suave, los primeros 5 min todavía más tranquilos',
             'Después mantengo el mismo ritmo hasta el final',
             'Objetivo: que todos los parciales queden dentro de 10 segundos entre sí'
           ],
-          tip: 'Al terminar: yogur griego con fruta, o huevos con pan. Y hoy sí, un postre 🍰'
+          tip: 'Un km más que la semana pasada. Si se siente igual de cómodo, voy por buen camino.'
         }
       ],
       rules: [
