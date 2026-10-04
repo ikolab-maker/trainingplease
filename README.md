@@ -20,10 +20,10 @@ Panel de coach y plan semanal de cada atleta. Next.js en Vercel, login con Googl
 "No realizada" no se guarda: se calcula al leer. Una sesión sin marcar queda *pendiente* hasta el final del día siguiente y luego *no realizada*. El cumplimiento cuenta solo las sesiones principales (las extra y el descanso no).
 
 ## Puesta en marcha
-1. **Firebase**: crear el proyecto, activar Authentication › Google y Firestore (región sugerida `southamerica-east1` o `us-east1`). En Authentication › Settings › Authorized domains, agregar el dominio de Vercel.
+1. **Firebase** (proyecto `trainingplease`, ya creado): activar Authentication › Google y Firestore (región sugerida `southamerica-east1` o `us-east1`). En Authentication › Settings › Authorized domains, agregar el dominio de Vercel.
 2. **Reglas**: `npx firebase deploy --only firestore:rules --project <id>`.
 3. **Vercel**: nuevo proyecto con este repo (raíz por defecto, framework Next.js). Variables de entorno (ver `.env.example`):
-   - `NEXT_PUBLIC_FIREBASE_*` con la configuración web del proyecto.
+   - `NEXT_PUBLIC_FIREBASE_*`: opcionales; la configuración web del proyecto `trainingplease` ya está en `src/lib/firebase.ts`.
    - `FIREBASE_SERVICE_ACCOUNT`: el JSON de la cuenta de servicio (Configuración del proyecto › Cuentas de servicio › Generar nueva clave), pegado en una línea. **Nunca subirlo al repo**.
    - `ADMIN_EMAILS`: correos de Google de la coach y admins, separados por coma.
 4. Entrar con la cuenta del coach, dar de alta a los atletas y pedirles que entren con Google.

@@ -4,11 +4,13 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, GoogleAuthProvider, signInWithCredential, type Auth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 
+// Configuración web pública del proyecto de Firebase "trainingplease" (no es secreta:
+// la protección está en las reglas de Firestore). Las variables NEXT_PUBLIC_* la reemplazan.
 const config = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? 'AIzaSyBPmEDBHjaujYN2hd5O3dEoSXJXbRks9h4',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? 'trainingplease.firebaseapp.com',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'trainingplease',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '1:574814197147:web:8713eaac14e4aa62873d3e',
 };
 
 export const firebaseConfigured = Boolean(config.apiKey && config.projectId);

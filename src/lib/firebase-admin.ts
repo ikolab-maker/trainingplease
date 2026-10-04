@@ -9,7 +9,7 @@ function adminApp(): App {
   if (existing) return existing;
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw && process.env.FIRESTORE_EMULATOR_HOST) {
-    return initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
+    return initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'trainingplease' });
   }
   if (!raw) throw new Error('Falta FIREBASE_SERVICE_ACCOUNT');
   return initializeApp({ credential: cert(JSON.parse(raw)) });
