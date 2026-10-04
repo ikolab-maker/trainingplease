@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env*.local
+.env
+*.json.key
+service-account*.json
+firebase-debug.log
+firestore-debug.log
+next-env.d.ts
+tsconfig.tsbuildinfo
