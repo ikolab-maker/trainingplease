@@ -12,7 +12,16 @@ function adminApp(): App {
     return initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'trainingplease' });
   }
   if (!raw) throw new Error('Falta FIREBASE_SERVICE_ACCOUNT');
-  return initializeApp({ credential: cert(JSON.parse(raw)) });
+  let sa: Record<string, string>;
+  try {
+    sa = JSON.parse(raw);
+  } catch {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT no es un JSON válido (pega el archivo completo, con las llaves { }).');
+  }
+  if (sa.project_id && sa.project_id !== (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'trainingplease')) {
+    throw new Error(`La cuenta de servicio es del proyecto "${sa.project_id}", no de "trainingplease".`);
+  }
+  return initializeApp({ credential: cert(sa) });
 }
 
 export const adminAuth = () => getAuth(adminApp());
@@ -30,9 +39,11 @@ export async function verifyRequest(req: Request) {
   const header = req.headers.get('authorization') ?? '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   if (!token) return null;
+  const auth = adminAuth(); // si falta la cuenta de servicio, el error sube con su mensaje
   try {
-    return await adminAuth().verifyIdToken(token);
-  } catch {
+    return await auth.verifyIdToken(token);
+  } catch (e) {
+    console.error('verifyIdToken', e);
     return null;
   }
 }

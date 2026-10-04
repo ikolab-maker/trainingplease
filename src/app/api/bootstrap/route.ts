@@ -10,6 +10,17 @@ export const runtime = 'nodejs';
  * y deja el rol como custom claim para las reglas de Firestore.
  */
 export async function POST(req: Request) {
+  try {
+    return await bootstrap(req);
+  } catch (e) {
+    // Errores de configuración (cuenta de servicio, Firestore no creado…): se muestran para diagnosticar.
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('bootstrap', e);
+    return NextResponse.json({ error: 'server', detail: msg.slice(0, 300) }, { status: 500 });
+  }
+}
+
+async function bootstrap(req: Request) {
   const token = await verifyRequest(req);
   if (!token) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
 

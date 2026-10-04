@@ -9,6 +9,9 @@ const DENIED: Record<string, string> = {
   not_registered: 'Tu cuenta de Google no está registrada. Pide a tu coach que te dé de alta con este correo.',
   email_not_verified: 'Tu correo de Google no está verificado.',
   network: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.',
+  unauthenticated: 'El servidor no pudo validar tu sesión (revisa la cuenta de servicio en Vercel).',
+  server: 'Error de configuración del servidor.',
+  profile: 'No se pudo leer tu perfil (revisa que las reglas de Firestore estén publicadas).',
 };
 
 function GoogleIcon() {
@@ -61,6 +64,7 @@ export default function LoginPage() {
           {state.status === 'denied' && (
             <>
               <p className="alert error">{DENIED[state.reason] ?? 'No pudimos darte acceso.'}</p>
+              <p className="note">Código: {state.reason}{state.detail ? ` · ${state.detail}` : ''}</p>
               <p>Entraste como <b>{state.user.email}</b>.</p>
               <button type="button" className="btn secondary" onClick={() => signOut()}>Usar otra cuenta</button>
             </>

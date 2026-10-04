@@ -10,7 +10,7 @@ type State =
   | { status: 'loading' }
   | { status: 'unconfigured' }
   | { status: 'signedOut' }
-  | { status: 'denied'; reason: string; user: User }
+  | { status: 'denied'; reason: string; detail?: string; user: User }
   | { status: 'ready'; user: User; profile: UserDoc };
 
 interface AuthApi {
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setState({ status: 'denied', user, reason: data.error ?? 'error' });
+          setState({ status: 'denied', user, reason: data.error ?? `http_${res.status}`, detail: data.detail });
           return;
         }
         // El rol llega como custom claim: refrescar el token para que las reglas lo vean.
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (snap) => {
           if (snap.exists()) setState({ status: 'ready', user, profile: snap.data() as UserDoc });
         },
-        () => setState({ status: 'denied', user, reason: 'profile' }),
+        (err) => setState({ status: 'denied', user, reason: 'profile', detail: err.message }),
       );
     });
 
