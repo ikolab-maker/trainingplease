@@ -49,7 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           method: 'POST',
           headers: { Authorization: `Bearer ${await user.getIdToken()}` },
         });
-        const data = await res.json().catch(() => ({}));
+        const raw = await res.text();
+        let data: { error?: string; detail?: string; role?: string; claimsChanged?: boolean } = {};
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { detail: raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200) };
+        }
         if (!res.ok) {
           setState({ status: 'denied', user, reason: data.error ?? `http_${res.status}`, detail: data.detail });
           return;
