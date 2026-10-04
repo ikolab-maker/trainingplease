@@ -27,7 +27,7 @@ Panel de coach y plan semanal de cada atleta. Next.js en Vercel, login con Googl
    - `FIREBASE_SERVICE_ACCOUNT`: el JSON de la cuenta de servicio (Configuración del proyecto › Cuentas de servicio › Generar nueva clave), pegado en una línea. **Nunca subirlo al repo**.
    - `ADMIN_EMAILS`: correos de Google de la coach y admins, separados por coma.
 4. Entrar con la cuenta del coach, dar de alta a los atletas y pedirles que entren con Google.
-5. Plan actual de Claudia: cuando ella haya entrado una vez, `FIREBASE_SERVICE_ACCOUNT="$(cat clave.json)" npm run seed:plan -- correo@gmail.com data/claudia-plan.json` carga sus semanas 1 y 2 en Firestore.
+5. Plan actual de Claudia: cuando ella haya entrado una vez, en Panel coach › Claudia aparece el botón **Cargar plan de Claudia (web anterior)** (solo si aún no tiene semanas). También se puede con `npm run seed:plan -- correo@gmail.com data/claudia-plan.json` y la cuenta de servicio.
 
 ## Datos de la web anterior
 `data/claudia-plan.json` (semanas y sesiones) y `data/claudia-meta.json` (fases, mes a mes, "lo mejor de mí y mi reto", niveles de meta) guardan el contenido de la web estática de Claudia, que se retiró del repo. Sirven para cargar su plan y para construir más adelante las vistas "La meta" y "Lo mejor de mí".

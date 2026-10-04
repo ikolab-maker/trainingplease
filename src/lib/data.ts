@@ -103,3 +103,21 @@ export async function duplicateWeek(uid: string, from: Week, to: Week, sessions:
   }
   await batch.commit();
 }
+
+export interface PlanFile {
+  id: string;
+  week: Omit<Week, 'id'>;
+  sessions: (Omit<Session, 'id'> & { id: string })[];
+}
+
+/** Carga un plan guardado en JSON (data/*.json). Crea o sobrescribe semanas y sesiones. */
+export async function importPlan(uid: string, plan: PlanFile[]) {
+  const batch = writeBatch(db());
+  for (const w of plan) {
+    batch.set(doc(weeksCol(uid), w.id), w.week, { merge: true });
+    for (const { id, ...s } of w.sessions) {
+      batch.set(doc(sessionsCol(uid, w.id), id), { ...s, weekId: w.id });
+    }
+  }
+  await batch.commit();
+}
