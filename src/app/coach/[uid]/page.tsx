@@ -7,6 +7,7 @@ import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
 import { WeekView } from '@/components/WeekView';
+import { PlanTransfer } from '@/components/PlanTransfer';
 import { SessionEditor, emptySession } from '@/components/SessionEditor';
 import { db } from '@/lib/firebase';
 import { deleteSession, duplicateWeek, saveSession, saveWeek, useLogs, useSessions, useWeeks } from '@/lib/data';
@@ -92,9 +93,11 @@ function AthleteDetail({ uid }: { uid: string }) {
             onPreview={() => setPreview(true)} onSelect={setWeekId} />
         ) : (
           <>
-            <p className="section-sub">Crea la primera semana del plan.</p>
+            <p className="section-sub">Crea la primera semana del plan o impórtala abajo.</p>
           </>
         )}
+
+        <PlanTransfer uid={uid} athlete={athlete} weeks={weeks ?? []} weekId={weekId} onImported={setWeekId} />
       </div>
     </main>
   );

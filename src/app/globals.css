@@ -1141,3 +1141,10 @@ table.sessions td.comment { color: var(--ink-soft); font-style: italic; max-widt
 }
 .theme-swatch[aria-pressed="true"] { border-color: var(--pink); box-shadow: 0 0 0 3px var(--yellow); }
 .theme-swatch i { width: 1.6rem; height: 1.6rem; border-radius: 50%; display: block; }
+
+/* Exportar / importar semana (panel coach) */
+.transfer { display: grid; gap: 1.2rem; margin-top: 2rem; }
+@media (min-width: 900px) { .transfer { grid-template-columns: 1fr 1fr; align-items: start; } }
+.import-week { border-top: 1px solid var(--line, rgba(0,0,0,.12)); padding-top: .6rem; margin-top: .6rem; }
+.import-week ul { margin: .3rem 0 0; padding-left: 1.1rem; font-size: .92rem; }
+.alert ul { margin: .4rem 0 0; padding-left: 1.1rem; }
