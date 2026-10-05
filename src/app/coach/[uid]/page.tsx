@@ -94,7 +94,7 @@ function AthleteDetail({ uid }: { uid: string }) {
         ) : (
           <>
             <p className="section-sub">Crea la primera semana del plan.</p>
-            {weeks?.length === 0 && (
+            {weeks?.length === 0 && /^claudia\b/i.test(athlete.name.trim()) && (
               <div className="actions">
                 <button type="button" className="btn secondary" onClick={async () => {
                   if (!window.confirm(`¿Cargar las semanas del plan de Claudia (web anterior) en el plan de ${athlete.name}?`)) return;
