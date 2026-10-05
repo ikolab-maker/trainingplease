@@ -41,3 +41,10 @@ npm run test:rules    # reglas de Firestore en el emulador (requiere Java)
 cp .env.emulators.example .env.local && npm run dev:emu   # app completa con emuladores
 ```
 Con emuladores, en la consola del navegador `__tpSignIn('coach@example.com')` inicia sesión sin la ventana de Google.
+
+## Exportar e importar semanas
+
+En la ficha de cada atleta (panel coach) hay dos paneles:
+
+- **Exportar semana**: descarga o copia un JSON con el perfil del atleta, la semana elegida (y, si se marca, las 4 anteriores), sus sesiones y los registros (hecho, RPE real, comentario, fecha). Los registros solo se incluyen si el atleta tiene el consentimiento vigente.
+- **Importar semana**: pega o sube un JSON con el formato de `scripts/seed-plan.mjs` (`[{ id, week, sessions }]`) o un archivo exportado. Muestra una vista previa y lo guarda por `/api/admin/plan` con el mismo comportamiento que el script: fusiona la semana y crea o reemplaza sus sesiones, sin borrar otras.

@@ -57,6 +57,12 @@ export async function fetchAllSessions(uid: string): Promise<Session[]> {
   return all.flatMap((s) => s.docs.map((d) => ({ ...(d.data() as Omit<Session, 'id'>), id: d.id })));
 }
 
+/** Sesiones de una semana, ordenadas por fecha (para exportar). */
+export async function fetchWeekSessions(uid: string, weekId: string): Promise<Session[]> {
+  const s = await getDocs(query(sessionsCol(uid, weekId), orderBy('date')));
+  return s.docs.map((d) => ({ ...(d.data() as Omit<Session, 'id'>), id: d.id }));
+}
+
 export async function fetchLogs(uid: string): Promise<LogMap> {
   const s = await getDocs(logsCol(uid));
   return Object.fromEntries(s.docs.map((d) => [d.id, d.data() as LogEntry]));
