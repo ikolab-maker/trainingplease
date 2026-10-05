@@ -181,7 +181,7 @@ function NewAthleteForm({ onCreated }: { onCreated: () => void }) {
   return (
     <form className="panel form" onSubmit={submit}>
       <div className="form-row">
-        {input('name', 'Nombre', { required: true, placeholder: 'Claudia Celeste' })}
+        {input('name', 'Nombre', { required: true, placeholder: 'Nombre y apellido' })}
         {input('email', 'Correo de Google', { required: true, type: 'email', placeholder: 'nombre@gmail.com' })}
       </div>
       <div className="form-row">
