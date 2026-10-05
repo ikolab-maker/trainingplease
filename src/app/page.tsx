@@ -41,7 +41,13 @@ export default function LoginPage() {
     try { await signIn(); } catch (e) {
       const code = (e as { code?: string }).code;
       if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-        setError('No se pudo iniciar sesión con Google. Inténtalo otra vez.');
+        setError(
+          code === 'auth/unauthorized-domain'
+            ? `Este dominio (${window.location.hostname}) no está autorizado en Firebase › Authentication › Authorized domains.`
+            : code === 'auth/popup-blocked'
+              ? 'El navegador bloqueó la ventana de Google. Permite las ventanas emergentes e inténtalo otra vez.'
+              : `No se pudo iniciar sesión con Google. Inténtalo otra vez. (Código: ${code ?? 'desconocido'})`,
+        );
       }
     }
   }
