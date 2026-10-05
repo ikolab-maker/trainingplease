@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// Train Please · reglas de Firestore
+// - El rol viene del custom claim `role` que pone el servidor (Admin SDK).
+// - El atleta solo lee y escribe lo suyo; solo admin escribe planes.
+// - Si el atleta revoca el consentimiento, el coach deja de ver sus registros.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.role == 'admin'; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)); }
+    function hasConsent(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid))
+        && userDoc(uid).data.get('consent', null) != null;
+    }
+
+    // Perfil. Lo crea el servidor al primer acceso; el atleta edita solo campos propios.
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow update: if isSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['theme', 'profile', 'goalRace', 'consent', 'updatedAt']);
+      allow update: if isAdmin()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email', 'consent']);
+      allow create, delete: if false;
+    }
+
+    // Alta manual de atletas: la gestiona el servidor. El admin solo la consulta.
+    match /allowlist/{email} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Evidencia del consentimiento: solo se agregan eventos, nunca se editan ni borran.
+    match /consents/{uid}/events/{eventId} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create: if isSelf(uid)
+        && request.resource.data.action in ['granted', 'revoked']
+        && request.resource.data.version is string
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+
+    // Plan semanal: lo escribe el coach; el atleta lo lee.
+    match /plans/{uid}/weeks/{weekId} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow write: if isAdmin();
+
+      match /sessions/{sessionId} {
+        allow read: if isSelf(uid) || isAdmin();
+        allow write: if isAdmin();
+      }
+    }
+
+    // Registro del atleta por sesión (realizada, RPE real, comentario).
+    match /logs/{uid}/entries/{sessionId} {
+      allow read: if isSelf(uid) || (isAdmin() && hasConsent(uid));
+      allow create, update: if isSelf(uid) && hasConsent(uid) && validLog();
+      allow delete: if isSelf(uid);
+    }
+
+    function validLog() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['done', 'rpe', 'comment', 'weekId', 'updatedAt'])
+        && d.done is bool
+        && d.weekId is string
+        && (d.rpe == null || (d.rpe is int && d.rpe >= 1 && d.rpe <= 10))
+        && (d.comment is string && d.comment.size() <= 1000)
+        && d.updatedAt == request.time;
+    }
+  }
+}

@@ -1,0 +1,340 @@
+{
+  "race": {
+    "name": "Media Maratón de Lima",
+    "date": "2027-08-22",
+    "distanceKm": 21.1,
+    "provisional": true,
+    "goal": "21,1 km en menos de 2 horas (5:41 por km)"
+  },
+  "phases": [
+    {
+      "id": "amanecer",
+      "name": "Amanecer",
+      "motto": "Cada madrugada cuenta",
+      "color": "var(--yellow)",
+      "start": "2026-09-21",
+      "end": "2026-11-15",
+      "weeks": 8,
+      "what": "Construyo el hábito y una base sólida. Corro suave, aprendo técnica y me acostumbro a entrenar de 3 a 4 días por semana.",
+      "gym": "Adaptación y técnica de cada ejercicio.",
+      "test": "Test de 5K el domingo 15 de noviembre. Meta: 28:45 o menos. Justo después de mi cumpleaños."
+    },
+    {
+      "id": "raices",
+      "name": "Raíces",
+      "motto": "Lo que crece en silencio",
+      "color": "var(--mint)",
+      "start": "2026-11-16",
+      "end": "2027-01-24",
+      "weeks": 10,
+      "what": "Sumo kilómetros con paciencia. Los fondos crecen hasta los 10 o 12 km y la fuerza sube de nivel.",
+      "gym": "Fuerza más pesada, con series de 6 a 8 repeticiones.",
+      "test": "Primer 10K el domingo 13 de diciembre. Meta: 1:01:00 o menos. En las fiestas, semanas flexibles."
+    },
+    {
+      "id": "forja",
+      "name": "Forja",
+      "motto": "La velocidad se forja",
+      "color": "var(--blue)",
+      "start": "2027-01-25",
+      "end": "2027-03-21",
+      "weeks": 8,
+      "what": "Aquí gano velocidad. Aparecen los intervalos cortos y el trabajo a ritmo firme, sin perder la técnica.",
+      "gym": "Potencia suave, para correr con más impulso.",
+      "test": "Test de 5K el 21 de febrero (27:00 o menos) y segundo 10K el 21 de marzo (57:30 o menos)."
+    },
+    {
+      "id": "fuego",
+      "name": "Fuego",
+      "motto": "Resistencia que no se apaga",
+      "color": "var(--pink-soft)",
+      "start": "2027-03-22",
+      "end": "2027-05-30",
+      "weeks": 10,
+      "what": "Trabajo la resistencia. Los fondos suben de 14 a 18 km y aprendo a correr largo sin apagarme.",
+      "gym": "Mantenimiento: lo justo para seguir fuerte.",
+      "test": "Fondo de 18 km el 25 de abril y primer 21K de prueba el 30 de mayo, entre 2:05 y 2:08. Ahí practico el ritmo, no busco récord."
+    },
+    {
+      "id": "cumbre",
+      "name": "Cumbre",
+      "motto": "Ritmo de sub-2",
+      "color": "var(--lilac)",
+      "start": "2027-05-31",
+      "end": "2027-07-25",
+      "weeks": 8,
+      "what": "El tramo más específico. Practico el ritmo de 5:41 por km y llego al mayor volumen del plan, entre 34 y 38 km por semana.",
+      "gym": "Una sola sesión, más liviana y con foco en el core.",
+      "test": "10K de prueba de fuego el 27 de junio (54:30 o menos) y ensayo general el 18 de julio: 18 a 20 km con 10 a 12 km a 5:41 por km."
+    },
+    {
+      "id": "vuelo",
+      "name": "Vuelo",
+      "motto": "Llegar fresca, correr libre",
+      "color": "#FFC38A",
+      "start": "2027-07-26",
+      "end": "2027-08-22",
+      "weeks": 4,
+      "what": "Bajo la carga, descanso y confío en lo que entrené. Llego fresca a la línea de salida.",
+      "gym": "Solo activación, sin cansarme.",
+      "test": "Domingo 22 de agosto: Media Maratón de Lima."
+    }
+  ],
+  "months": [
+    {
+      "y": 2026,
+      "m": 8,
+      "name": "Septiembre",
+      "ph": [
+        "amanecer"
+      ],
+      "focus": "Empiezo de nuevo: técnica y 3 carreras por semana.",
+      "km": "13 a 14",
+      "hito": "Agendar el chequeo médico (hemograma y ferritina)."
+    },
+    {
+      "y": 2026,
+      "m": 9,
+      "name": "Octubre",
+      "ph": [
+        "amanecer"
+      ],
+      "focus": "Base aeróbica. El fondo llega a 9 o 10 km y el gym es de adaptación.",
+      "km": "14 a 19",
+      "hito": "Semana de descarga del 12 al 18 de octubre."
+    },
+    {
+      "y": 2026,
+      "m": 10,
+      "name": "Noviembre",
+      "ph": [
+        "amanecer",
+        "raices"
+      ],
+      "focus": "Últimas semanas de base y luego más volumen.",
+      "km": "18 a 22",
+      "hito": "Test de 5K el domingo 15. Meta: 28:45 o menos. Mi regalo de cumpleaños."
+    },
+    {
+      "y": 2026,
+      "m": 11,
+      "name": "Diciembre",
+      "ph": [
+        "raices"
+      ],
+      "focus": "Fondos de 10 a 12 km y fuerza más pesada.",
+      "km": "22 a 26",
+      "hito": "Primer 10K el domingo 13. Meta: 1:01:00 o menos. Semanas flexibles en fiestas."
+    },
+    {
+      "y": 2027,
+      "m": 0,
+      "name": "Enero",
+      "ph": [
+        "raices",
+        "forja"
+      ],
+      "focus": "Fondo de 12 a 14 km. Empiezan los intervalos.",
+      "km": "24 a 28",
+      "hito": "Cierre de Raíces el 24 de enero."
+    },
+    {
+      "y": 2027,
+      "m": 1,
+      "name": "Febrero",
+      "ph": [
+        "forja"
+      ],
+      "focus": "Intervalos cortos, ritmo firme y técnica.",
+      "km": "26 a 30",
+      "hito": "Test de 5K el domingo 21. Meta: 27:00 o menos."
+    },
+    {
+      "y": 2027,
+      "m": 2,
+      "name": "Marzo",
+      "ph": [
+        "forja",
+        "fuego"
+      ],
+      "focus": "Ritmo firme y los primeros fondos largos.",
+      "km": "28 a 30",
+      "hito": "Segundo 10K el domingo 21. Meta: 57:30 o menos. Semana Santa (22 al 28) de descarga."
+    },
+    {
+      "y": 2027,
+      "m": 3,
+      "name": "Abril",
+      "ph": [
+        "fuego"
+      ],
+      "focus": "Fondos que crecen poco a poco, de 14 a 18 km.",
+      "km": "30 a 34",
+      "hito": "Fondo de 18 km el domingo 25."
+    },
+    {
+      "y": 2027,
+      "m": 4,
+      "name": "Mayo",
+      "ph": [
+        "fuego",
+        "cumbre"
+      ],
+      "focus": "Fondos con bloques a ritmo de carrera.",
+      "km": "32 a 36",
+      "hito": "Primer 21K de prueba el domingo 30. Entre 2:05 y 2:08."
+    },
+    {
+      "y": 2027,
+      "m": 5,
+      "name": "Junio",
+      "ph": [
+        "cumbre"
+      ],
+      "focus": "Trabajo a 5:41 por km y pico de volumen.",
+      "km": "34 a 38",
+      "hito": "10K de prueba de fuego el domingo 27. Meta: 54:30 o menos."
+    },
+    {
+      "y": 2027,
+      "m": 6,
+      "name": "Julio",
+      "ph": [
+        "cumbre",
+        "vuelo"
+      ],
+      "focus": "Ensayo general y luego bajo la carga.",
+      "km": "38, bajando a 20",
+      "hito": "Ensayo el domingo 18: 18 a 20 km con 10 a 12 a 5:41 por km."
+    },
+    {
+      "y": 2027,
+      "m": 7,
+      "name": "Agosto",
+      "ph": [
+        "vuelo"
+      ],
+      "focus": "Semana de carrera: descanso y confianza.",
+      "km": "Unos 10, más el 21K",
+      "hito": "Media Maratón de Lima, domingo 22."
+    }
+  ],
+  "strengths": [
+    {
+      "icon": "💖",
+      "title": "Mi meta es mía",
+      "text": "La media maratón de Lima me contagió las ganas y la decisión es mía. Las metas que uno elige son las que más duran."
+    },
+    {
+      "icon": "🌱",
+      "title": "33 años, casi 34",
+      "text": "Estoy en una gran etapa para mejorar la resistencia. El 14 de noviembre cumplo 34 y el 15 hago mi primer test."
+    },
+    {
+      "icon": "🌅",
+      "title": "Duermo y despierto temprano",
+      "text": "Entreno fresca, recupero mejor y ya estoy acostumbrada a rendir de mañana, que es cuando se corren las carreras."
+    },
+    {
+      "icon": "🏋️",
+      "title": "El gym ya es un hábito",
+      "text": "Llevo 47 sesiones en 2026. Esa fuerza me protege y me hace correr mejor."
+    },
+    {
+      "icon": "🏁",
+      "title": "Ya crucé una meta de 10K",
+      "text": "En junio corrí 9,96 km en 1:05:15. Y mi mejor 10K registrado es 1:03:57."
+    },
+    {
+      "icon": "⚡",
+      "title": "Ya tengo velocidad",
+      "text": "Mi mejor km es 5:25 y mi mejor 5K es 29:55. El ritmo de sub-2 (5:41 por km) ya lo he tocado en distancias cortas."
+    },
+    {
+      "icon": "📈",
+      "title": "Mucho por mejorar",
+      "text": "Llevo menos de un año registrando actividad y hoy hago de 3 a 4 sesiones por semana. Todo lo que viene es progreso."
+    }
+  ],
+  "challenges": [
+    {
+      "icon": "📅",
+      "title": "La constancia",
+      "text": "Las ganas suben y bajan. Lo que me lleva a la meta es el hábito.",
+      "how": "Marco cada sesión en esta web y celebro cada semana completa. Cuando baje el entusiasmo (suele pasar entre las semanas 6 y 10), me apoyo en la rutina."
+    },
+    {
+      "icon": "🍓",
+      "title": "Mejorar mi alimentación",
+      "text": "Comer bien alrededor de los entrenos y ordenar el dulce. El postre no se prohíbe: se programa.",
+      "how": "Proteína y carbohidrato después de entrenar, algo ligero antes, y un postre elegido en vez de dulces sueltos durante la semana."
+    },
+    {
+      "icon": "⏱️",
+      "title": "Correr a ritmo parejo",
+      "text": "En mi 10K mis parciales fueron desde 5:55 hasta 6:49 por km.",
+      "how": "Salir tranquila, y en los fondos mantener todos los parciales dentro de 10 segundos entre sí."
+    },
+    {
+      "icon": "🐢",
+      "title": "Paciencia con los kilómetros",
+      "text": "Subir rápido es la forma más fácil de lesionarse.",
+      "how": "Aumento poco a poco y respeto las semanas de descarga, aunque me sienta con fuerza."
+    },
+    {
+      "icon": "🧘",
+      "title": "Cuidar mi cuerpo",
+      "text": "Correr más pide fuerza, movilidad y descanso.",
+      "how": "Gym, foam roller, un masaje deportivo cada 3 o 4 semanas, dormir de 7,5 a 8 horas y un chequeo médico al inicio."
+    },
+    {
+      "icon": "🥇",
+      "title": "Aprender a competir",
+      "text": "Los 10K y el 21K de prueba son entrenamientos con dorsal.",
+      "how": "Practico el ritmo, la hidratación y el desayuno del día de carrera para que el 22 de agosto no tenga sorpresas."
+    }
+  ],
+  "levels": [
+    {
+      "cls": "a",
+      "name": "Meta A",
+      "goal": "Menos de 2:00",
+      "text": "La meta grande: 21,1 km a 5:41 por km."
+    },
+    {
+      "cls": "b",
+      "name": "Meta B",
+      "goal": "2:05 a 2:10",
+      "text": "Una marca excelente si el camino se complica un poco."
+    },
+    {
+      "cls": "c",
+      "name": "Meta C",
+      "goal": "Llegar fuerte",
+      "text": "Terminar bien, feliz y sin lesión. Ya es una gran victoria."
+    }
+  ],
+  "startpoint": [
+    {
+      "label": "5K",
+      "from": "29:55",
+      "fromNote": "mi mejor hoy",
+      "to": "26:05",
+      "toNote": "aprox. necesario"
+    },
+    {
+      "label": "10K",
+      "from": "1:03:57",
+      "fromNote": "mi mejor hoy",
+      "to": "54:25",
+      "toNote": "aprox. necesario"
+    },
+    {
+      "label": "Km/sem",
+      "from": "6 a 7",
+      "fromNote": "corriendo hoy",
+      "to": "30 a 40",
+      "toNote": "en el pico del plan"
+    }
+  ]
+}

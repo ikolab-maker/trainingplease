@@ -1,0 +1,325 @@
+[
+  {
+    "id": "2026-W39",
+    "week": {
+      "start": "2026-09-21",
+      "title": "Semana 1",
+      "phase": "Amanecer · Cada madrugada cuenta",
+      "goal": "Cumplir las 5 sesiones principales sin buscar ritmo. Paso de 1 a 3 carreras por semana, y el domingo corro mi primer 10K con dorsal del plan: la Carrera BBVA. Ahí el objetivo no es el tiempo, es terminar bien y sostener el ritmo.",
+      "aiAssisted": false,
+      "notes": [
+        {
+          "title": "Antes y después de entrenar",
+          "body": "• Antes de correr: algo ligero (una banana o una tostada con miel) y agua.\n• Después: proteína y carbohidrato en la primera hora. Por ejemplo, yogur griego con fruta o huevos con pan."
+        },
+        {
+          "title": "El dulce tiene su día",
+          "body": "Un postre el domingo, después del fondo. El resto de la semana, sin dulce suelto.\nNo se prohíbe: se programa."
+        },
+        {
+          "title": "Cómo sé que voy bien",
+          "body": "3 a 4: Suave: puedo conversar\n6 a 7: Fuerte: me quedan 2 repeticiones en reserva\nCada día anoto el esfuerzo (1 a 10), las horas de sueño y cualquier molestia. Si un dolor pasa de 3 sobre 10 o me cambia la pisada, corto la sesión."
+        }
+      ]
+    },
+    "sessions": [
+      {
+        "id": "sem-01-lun",
+        "date": "2026-09-21",
+        "sport": "gimnasio",
+        "title": "Gym A · Fuerza base",
+        "summary": "45 min",
+        "durationMin": 45,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Calentamiento de 8 min (caminata rápida o bici suave y movilidad)",
+          "Sentadilla goblet: 3 × 10",
+          "Peso muerto rumano con mancuernas: 3 × 10",
+          "Zancada reversa: 3 × 8 por pierna",
+          "Puente de glúteo con carga: 3 × 12",
+          "Elevación de talones: 3 × 12",
+          "Plancha 3 × 30 s y dead bug 3 × 8 por lado"
+        ],
+        "focus": "",
+        "tip": "Esfuerzo de 6 a 7 sobre 10. Al terminar cada serie, siento que podía hacer 2 repeticiones más.",
+        "core": true
+      },
+      {
+        "id": "sem-01-mar",
+        "date": "2026-09-22",
+        "sport": "running",
+        "title": "Carrera suave",
+        "summary": "25 a 30 min · unos 3,5 km",
+        "durationMin": 30,
+        "distanceKm": 3.5,
+        "rpe": null,
+        "steps": [
+          "Trote continuo y conversable (esfuerzo de 3 a 4 sobre 10)",
+          "Ritmo guía: 7:30 a 8:00 por km. Manda la sensación, no el reloj",
+          "Si el cuerpo pide pausa: 5 min trotando y 1 min caminando, y repito"
+        ],
+        "focus": "",
+        "tip": "Terminar con ganas de más es el objetivo de esta semana.",
+        "core": true
+      },
+      {
+        "id": "sem-01-mie",
+        "date": "2026-09-23",
+        "sport": "movilidad",
+        "title": "Movilidad y descarga",
+        "summary": "20 min",
+        "durationMin": 20,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Foam roller en cuádriceps, isquios, glúteo y gemelos (1 a 2 min por zona)",
+          "Estiramiento de flexores de cadera y posición 90/90",
+          "Gemelo en la pared",
+          "2 min de respiración tranquila",
+          "Pendiente de la semana: agendar el chequeo médico (hemograma y ferritina)"
+        ],
+        "focus": "",
+        "tip": "Estirar es sentir una tensión suave, nunca dolor.",
+        "core": false
+      },
+      {
+        "id": "sem-01-jue",
+        "date": "2026-09-24",
+        "sport": "descanso",
+        "title": "Descanso",
+        "summary": "Recuperar también es entrenar",
+        "durationMin": null,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Día libre de entrenamiento",
+          "Si el cuerpo lo pide, 10 a 15 min de estiramiento suave",
+          "Dormir temprano, como de costumbre"
+        ],
+        "focus": "",
+        "tip": "Mañana toca técnica de carrera. Hoy el cuerpo se prepara descansando.",
+        "core": false
+      },
+      {
+        "id": "sem-01-vie",
+        "date": "2026-09-25",
+        "sport": "tecnica",
+        "title": "Técnica de carrera",
+        "summary": "30 min · unos 4 km",
+        "durationMin": 30,
+        "distanceKm": 4,
+        "rpe": null,
+        "steps": [
+          "10 min de trote suave",
+          "Ejercicios de técnica, 2 × 15 m cada uno: marcha alta, skipping bajo, talones al glúteo y tobillos",
+          "15 min de trote suave",
+          "Cierre: 4 aceleraciones de 15 a 20 s (unos 5:30 por km), caminando 60 a 90 s entre cada una"
+        ],
+        "focus": "Lo que voy a cuidar: inclinación leve desde los tobillos, pisada bajo el cuerpo, brazos a 90°, hombros sueltos y una cadencia de 165 a 175 pasos por minuto (la veo en el Apple Watch).",
+        "tip": "Las aceleraciones son ágiles, no un sprint. Termino cada una con el cuerpo relajado.",
+        "core": true
+      },
+      {
+        "id": "sem-01-sab",
+        "date": "2026-09-26",
+        "sport": "gimnasio",
+        "title": "Gym corto · Sin piernas",
+        "summary": "25 a 30 min",
+        "durationMin": 30,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Remo con mancuerna: 2 × 10",
+          "Press de hombro: 2 × 10",
+          "Plancha: 2 × 30 s",
+          "Cierre: 10 min de estiramiento suave — isquios, cuádriceps, gemelos y cadera"
+        ],
+        "focus": "Mañana corro los 10K de la BBVA, así que hoy nada de sentadillas, zancadas ni peso muerto. Solo torso, core y estiramiento.",
+        "tip": "Esfuerzo bajo, de 3 a 4 sobre 10. Hoy la prioridad es llegar fresca al domingo, no cansarme.",
+        "core": true
+      },
+      {
+        "id": "sem-01-dom",
+        "date": "2026-09-27",
+        "sport": "running",
+        "title": "Carrera BBVA · 10K",
+        "summary": "Entrenamiento con dorsal",
+        "durationMin": null,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Salida a esfuerzo conversable, sin buscar tiempo: es un entrenamiento con dorsal, no un examen",
+          "Ritmo guía cercano al de mis salidas suaves (unos 7:00 a 7:30 por km), ajustando según cómo me sienta",
+          "Hidratación en los puntos de la carrera",
+          "Si el cuerpo responde bien, disfruto los últimos metros"
+        ],
+        "focus": "",
+        "tip": "Ya corrí un 10K en junio (1:05:15). Hoy no busco superarlo: practico salir tranquila y sostener el ritmo hasta el final.",
+        "core": true
+      }
+    ]
+  },
+  {
+    "id": "2026-W40",
+    "week": {
+      "start": "2026-09-28",
+      "title": "Semana 2",
+      "phase": "Amanecer · Cada madrugada cuenta",
+      "goal": "Vuelvo al patrón de la semana base: gym, carrera suave, movilidad, técnica, gym y fondo. Subo un poco el volumen: la carrera suave crece a unos 4 km y el fondo del domingo a unos 7 km, siempre a ritmo conversable.",
+      "aiAssisted": false,
+      "notes": [
+        {
+          "title": "Antes y después de entrenar",
+          "body": "• Antes de correr: algo ligero (una banana o una tostada con miel) y agua.\n• Después: proteína y carbohidrato en la primera hora. Por ejemplo, yogur griego con fruta o huevos con pan."
+        },
+        {
+          "title": "El dulce tiene su día",
+          "body": "Un postre el domingo, después del fondo. El resto de la semana, sin dulce suelto.\nNo se prohíbe: se programa."
+        },
+        {
+          "title": "Cómo sé que voy bien",
+          "body": "3 a 4: Suave: puedo conversar\n6 a 7: Fuerte: me quedan 2 repeticiones en reserva\nCada día anoto el esfuerzo (1 a 10), las horas de sueño y cualquier molestia. Si un dolor pasa de 3 sobre 10 o me cambia la pisada, corto la sesión."
+        }
+      ]
+    },
+    "sessions": [
+      {
+        "id": "sem-02-lun",
+        "date": "2026-09-28",
+        "sport": "gimnasio",
+        "title": "Gym A · Fuerza base",
+        "summary": "45 min",
+        "durationMin": 45,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Calentamiento de 8 min (caminata rápida o bici suave y movilidad)",
+          "Sentadilla goblet: 3 × 10",
+          "Peso muerto rumano con mancuernas: 3 × 10",
+          "Zancada reversa: 3 × 8 por pierna",
+          "Puente de glúteo con carga: 3 × 12",
+          "Elevación de talones: 3 × 12",
+          "Plancha 3 × 30 s y dead bug 3 × 8 por lado"
+        ],
+        "focus": "",
+        "tip": "Si la semana pasada este esfuerzo se sintió de 6 a 7 sobre 10, hoy pruebo si ya puedo sumar un poco más de peso.",
+        "core": true
+      },
+      {
+        "id": "sem-02-mar",
+        "date": "2026-09-29",
+        "sport": "running",
+        "title": "Carrera suave",
+        "summary": "30 a 32 min · unos 4 km",
+        "durationMin": 32,
+        "distanceKm": 4,
+        "rpe": null,
+        "steps": [
+          "Trote continuo y conversable (esfuerzo de 3 a 4 sobre 10)",
+          "Ritmo guía: 7:30 a 8:00 por km. Manda la sensación, no el reloj",
+          "Un poco más de tiempo que la semana pasada: el cuerpo ya conoce este ritmo"
+        ],
+        "focus": "",
+        "tip": "Si el 10K del domingo dejó algo de cansancio en las piernas, hoy bajo el ritmo un poco más de lo habitual.",
+        "core": true
+      },
+      {
+        "id": "sem-02-mie",
+        "date": "2026-09-30",
+        "sport": "movilidad",
+        "title": "Movilidad y descarga",
+        "summary": "20 min",
+        "durationMin": 20,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Foam roller en cuádriceps, isquios, glúteo y gemelos (1 a 2 min por zona)",
+          "Estiramiento de flexores de cadera y posición 90/90",
+          "Gemelo en la pared",
+          "2 min de respiración tranquila"
+        ],
+        "focus": "",
+        "tip": "Si todavía no agendé el chequeo médico (hemograma y ferritina), esta semana es un buen momento para hacerlo.",
+        "core": false
+      },
+      {
+        "id": "sem-02-jue",
+        "date": "2026-10-01",
+        "sport": "tecnica",
+        "title": "Técnica de carrera",
+        "summary": "30 min · unos 4 km",
+        "durationMin": 30,
+        "distanceKm": 4,
+        "rpe": null,
+        "steps": [
+          "10 min de trote suave",
+          "Ejercicios de técnica, 2 × 15 m cada uno: marcha alta, skipping bajo, talones al glúteo y tobillos",
+          "15 min de trote suave",
+          "Cierre: 4 aceleraciones de 15 a 20 s (unos 5:30 por km), caminando 60 a 90 s entre cada una"
+        ],
+        "focus": "Lo que voy a cuidar: inclinación leve desde los tobillos, pisada bajo el cuerpo, brazos a 90°, hombros sueltos y una cadencia de 165 a 175 pasos por minuto (la veo en el Apple Watch).",
+        "tip": "Las aceleraciones son ágiles, no un sprint. Termino cada una con el cuerpo relajado.",
+        "core": true
+      },
+      {
+        "id": "sem-02-vie",
+        "date": "2026-10-02",
+        "sport": "gimnasio",
+        "title": "Gym B · Torso y core",
+        "summary": "40 min",
+        "durationMin": 40,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Remo con mancuerna: 3 × 10",
+          "Press de hombro: 3 × 10",
+          "Jalón al pecho: 3 × 10",
+          "Abducción de cadera con banda: 3 × 12",
+          "Pallof press: 3 × 10",
+          "Bird-dog: 3 × 8",
+          "Plancha lateral: 3 × 20 s"
+        ],
+        "focus": "",
+        "tip": "Hoy no trabajo piernas pesadas: mañana descanso y el domingo toca el fondo.",
+        "core": true
+      },
+      {
+        "id": "sem-02-sab",
+        "date": "2026-10-03",
+        "sport": "descanso",
+        "title": "Descanso",
+        "summary": "Recuperar también es entrenar",
+        "durationMin": null,
+        "distanceKm": null,
+        "rpe": null,
+        "steps": [
+          "Caminata opcional de 30 a 40 min",
+          "10 min de foam roller por la noche",
+          "Dormir entre 7,5 y 8 horas"
+        ],
+        "focus": "",
+        "tip": "Hoy mi cuerpo absorbe todo lo que trabajé esta semana.",
+        "core": false
+      },
+      {
+        "id": "sem-02-dom",
+        "date": "2026-10-04",
+        "sport": "fondo",
+        "title": "Fondo suave",
+        "summary": "55 a 60 min · unos 7 km",
+        "durationMin": 60,
+        "distanceKm": 7,
+        "rpe": null,
+        "steps": [
+          "Trote suave, los primeros 5 min todavía más tranquilos",
+          "Después mantengo el mismo ritmo hasta el final",
+          "Objetivo: que todos los parciales queden dentro de 10 segundos entre sí"
+        ],
+        "focus": "",
+        "tip": "Un km más que la semana pasada. Si se siente igual de cómodo, voy por buen camino.",
+        "core": true
+      }
+    ]
+  }
+]
