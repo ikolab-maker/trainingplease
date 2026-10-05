@@ -1,12 +1,12 @@
 // Textos legales. Fuente: train-please/02-legal-disclaimer-terminos-consentimiento.md
-// BORRADOR pendiente de revisión por abogado. Al cambiar un texto, sube LEGAL_VERSION:
+// Al cambiar un texto, sube LEGAL_VERSION:
 // la app pedirá una nueva aceptación en el siguiente acceso.
 
-export const LEGAL_VERSION = '1.0-borrador';
-export const LEGAL_IS_DRAFT = true;
+export const LEGAL_VERSION = '1.0';
+export const LEGAL_IS_DRAFT = false;
 
-export const OWNER = '[Razón social]';
-export const PRIVACY_EMAIL = '[correo de privacidad]';
+export const OWNER = 'TRAINING PLEASE';
+export const PRIVACY_EMAIL = 'christianikolai@gmail.com';
 
 export const REQUIRED_CHECKS = [
   { key: 'adult', text: 'Soy mayor de 18 años.' },
@@ -27,7 +27,7 @@ export const REQUIRED_CHECKS = [
 
 export const OPTIONAL_CHECKS = [
   { key: 'ai', text: 'Generar o ajustar mis planes con herramientas de inteligencia artificial, siempre con revisión de mi coach.' },
-  { key: 'marketing', text: 'Recibir novedades, promociones y servicios de Train Please.' },
+  { key: 'marketing', text: 'Recibir novedades, promociones y servicios de Training Please.' },
   { key: 'stats', text: 'Usar mis datos anonimizados para mejorar los planes y elaborar estadísticas.' },
 ] as const;
 
@@ -36,7 +36,7 @@ export interface LegalSection { title: string; items: string[] }
 export const DISCLAIMER: LegalSection = {
   title: 'Aviso de responsabilidad',
   items: [
-    'No es consejo médico. Los planes, recomendaciones y contenidos de Train Please, sean elaborados por un coach o generados o asistidos por inteligencia artificial, son orientaciones de entrenamiento deportivo. No constituyen diagnóstico, tratamiento ni consejo médico, nutricional o fisioterapéutico.',
+    'No es consejo médico. Los planes, recomendaciones y contenidos de Training Please, sean elaborados por un coach o generados o asistidos por inteligencia artificial, son orientaciones de entrenamiento deportivo. No constituyen diagnóstico, tratamiento ni consejo médico, nutricional o fisioterapéutico.',
     'Evaluación médica. El usuario declara haberse sometido, o se compromete a someterse, a una evaluación médica que lo habilite para la actividad física propuesta, en especial si tiene más de 35 años, antecedentes cardiacos, hipertensión, diabetes, lesiones previas o está embarazada.',
     'Asunción del riesgo. La práctica deportiva conlleva riesgos inherentes. El usuario los conoce, los acepta y decide libremente seguir o no cada sesión, adaptándola a su estado del día.',
     'Escuchar al cuerpo. El usuario debe detener la actividad ante dolor en el pecho, mareo, falta de aire anormal, dolor articular o cualquier síntoma inusual, buscar atención médica y avisar a su coach.',
@@ -50,7 +50,7 @@ export const TERMS: LegalSection = {
   title: 'Términos y Condiciones de Uso',
   items: [
     `Titular: ${OWNER}, con RUC [N.º], domicilio en [dirección], Perú.`,
-    'Objeto: Train Please es una plataforma web privada que permite a coaches crear planes de entrenamiento individuales y a atletas consultarlos y registrar su progreso y sensaciones.',
+    'Objeto: Training Please es una plataforma web privada que permite a coaches crear planes de entrenamiento individuales y a atletas consultarlos y registrar su progreso y sensaciones.',
     'Acceso: solo para usuarios mayores de 18 años registrados por un administrador, mediante cuenta de Google. El usuario es responsable de la seguridad de su cuenta y de la veracidad de sus datos.',
     'Obligaciones: brindar información veraz, en especial sobre salud, lesiones y limitaciones; comunicar al coach cualquier cambio; no compartir la cuenta ni intentar acceder a datos de otros usuarios.',
     'Naturaleza de los planes: son recomendaciones deportivas generales adaptadas con la información del usuario. Su ejecución es decisión libre del usuario, quien asume los riesgos inherentes. No se garantizan resultados deportivos. Se aplica el Aviso de responsabilidad. Nada en estos términos excluye la responsabilidad que por ley no pueda excluirse.',
@@ -66,7 +66,7 @@ export const PRIVACY: LegalSection = {
   title: 'Política de Datos Personales',
   items: [
     `Responsable: ${OWNER}. Banco de datos "Atletas" (inscripción ante la ANPD pendiente). Ley N.º 29733 y su Reglamento (D.S. N.º 016-2024-JUS).`,
-    'Datos que tratamos: identificación y contacto (nombre, correo de Google, foto); deportivos (nivel, objetivos, carreras, disponibilidad, equipo, sesiones realizadas, comentarios y esfuerzo percibido); y datos sensibles de salud que declares (lesiones, limitaciones, condiciones médicas).',
+    'Datos que tratamos: identificación y contacto (nombre, correo de Google, foto); físicos (edad, talla y peso); deportivos (nivel, objetivos, carreras, disponibilidad, equipo, sesiones realizadas, comentarios y esfuerzo percibido); y datos sensibles de salud que declares (lesiones, limitaciones, condiciones médicas).',
     'Finalidades necesarias: crear y ajustar tu plan, permitir que tu coach vea tu cumplimiento y comentarios, y gestionar tu cuenta. Finalidades adicionales y opcionales: IA con revisión del coach, novedades y estadísticas anonimizadas.',
     'Transferencia internacional: tus datos se almacenan con Google LLC (Firebase) y Vercel Inc., con servidores fuera del Perú. No vendemos tus datos.',
     'Conservación: mientras tengas cuenta activa. Tras la baja o la revocación, eliminamos o anonimizamos tus datos en un plazo máximo de [30] días, salvo obligación legal.',

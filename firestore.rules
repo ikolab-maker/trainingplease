@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Train Please · reglas de Firestore
+// Training Please · reglas de Firestore
 // - El rol viene del custom claim `role` que pone el servidor (Admin SDK).
 // - El atleta solo lee y escribe lo suyo; solo admin escribe planes.
 // - Si el atleta revoca el consentimiento, el coach deja de ver sus registros.

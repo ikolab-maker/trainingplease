@@ -25,6 +25,9 @@ export interface UserDoc {
   theme?: Theme;
   goalRace?: GoalRace | null;
   profile?: {
+    age?: string;
+    heightCm?: string;
+    weightKg?: string;
     level?: string;
     availability?: string;
     equipment?: string;

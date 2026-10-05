@@ -57,7 +57,7 @@ export default function LoginPage() {
       <header className="hero">
         <div className="hero-inner">
           <p className="hero-kicker">Tu plan de entrenamiento</p>
-          <h1>Train Please</h1>
+          <h1>Training Please</h1>
           <p className="hero-sub">Entrena con tu coach</p>
         </div>
       </header>

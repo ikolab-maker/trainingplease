@@ -5,6 +5,7 @@ import { onAuthStateChanged, signInWithPopup, signOut as fbSignOut, type User } 
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db, firebaseConfigured, googleProvider } from '@/lib/firebase';
 import type { UserDoc } from '@/lib/types';
+import { DEFAULT_THEME } from '@/lib/themes';
 
 type State =
   | { status: 'loading' }
@@ -80,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Tema elegido por el atleta (rosa por defecto).
-  const theme = state.status === 'ready' ? state.profile.theme ?? 'rosa' : 'rosa';
+  const theme = state.status === 'ready' ? state.profile.theme ?? DEFAULT_THEME : DEFAULT_THEME;
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
 
   const api: AuthApi = {

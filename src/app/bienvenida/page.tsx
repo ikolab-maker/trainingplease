@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Gate } from '@/components/Gate';
 import { useAuth } from '@/components/AuthProvider';
 import { grantConsent, type OptionalPurposes } from '@/lib/consent';
-import { LEGAL_IS_DRAFT, OPTIONAL_CHECKS, REQUIRED_CHECKS } from '@/lib/legal';
+import { OPTIONAL_CHECKS, REQUIRED_CHECKS } from '@/lib/legal';
 
 export default function BienvenidaPage() {
   return <Gate role="athlete" allowNoConsent>{({ user, profile }) => <Consent uid={user.uid} name={profile.name} renewing={!!profile.consent} />}</Gate>;
@@ -35,14 +35,13 @@ function Consent({ uid, name, renewing }: { uid: string; name: string; renewing:
 
   return (
     <main>
-      {LEGAL_IS_DRAFT && <p className="draft-banner">Borrador pendiente de revisión legal</p>}
       <header className="banner">
         <h2>Antes de empezar</h2>
         <p>Hola {name.split(' ')[0]}{renewing ? ', actualizamos los términos' : ''}</p>
       </header>
       <div className="wrap" style={{ maxWidth: 720 }}>
         <p className="section-sub">
-          Train Please te da planes de entrenamiento y un espacio para registrar tu progreso. Antes de usarla, confirma lo siguiente.
+          Training Please te da planes de entrenamiento y un espacio para registrar tu progreso. Antes de usarla, confirma lo siguiente.
           Puedes leer el <Link href="/legal" target="_blank">Aviso de responsabilidad, los Términos y la Política de Datos</Link> completos.
         </p>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminAuth, adminDb, adminEmails, verifyRequest } from '@/lib/firebase-admin';
+import { DEFAULT_THEME } from '@/lib/themes';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +54,7 @@ async function bootstrap(req: Request) {
       email,
       name: invite.get('name') ?? token.name ?? email,
       photoURL: token.picture ?? null,
-      theme: 'rosa',
+      theme: DEFAULT_THEME,
       goalRace: invite.get('goalRace') ?? null,
       profile: {},
       consent: null,
