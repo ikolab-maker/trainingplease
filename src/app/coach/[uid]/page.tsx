@@ -9,8 +9,7 @@ import { TopNav } from '@/components/TopNav';
 import { WeekView } from '@/components/WeekView';
 import { SessionEditor, emptySession } from '@/components/SessionEditor';
 import { db } from '@/lib/firebase';
-import { deleteSession, duplicateWeek, importPlan, saveSession, saveWeek, useLogs, useSessions, useWeeks, type PlanFile } from '@/lib/data';
-import claudiaPlan from '../../../../data/claudia-plan.json';
+import { deleteSession, duplicateWeek, saveSession, saveWeek, useLogs, useSessions, useWeeks } from '@/lib/data';
 import { addDays, compliance, dayParts, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
 import { SPORTS } from '@/lib/sports';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
@@ -94,15 +93,6 @@ function AthleteDetail({ uid }: { uid: string }) {
         ) : (
           <>
             <p className="section-sub">Crea la primera semana del plan.</p>
-            {weeks?.length === 0 && /^claudia\b/i.test(athlete.name.trim()) && (
-              <div className="actions">
-                <button type="button" className="btn secondary" onClick={async () => {
-                  if (!window.confirm(`¿Cargar las semanas del plan de Claudia (web anterior) en el plan de ${athlete.name}?`)) return;
-                  await importPlan(uid, claudiaPlan as PlanFile[]);
-                  setWeekId(null);
-                }}>Cargar plan de Claudia (web anterior)</button>
-              </div>
-            )}
           </>
         )}
       </div>
