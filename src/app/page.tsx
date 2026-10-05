@@ -41,7 +41,13 @@ export default function LoginPage() {
     try { await signIn(); } catch (e) {
       const code = (e as { code?: string }).code;
       if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-        setError('No se pudo iniciar sesión con Google. Inténtalo otra vez.');
+        setError(
+          code === 'auth/unauthorized-domain'
+            ? `Este dominio (${window.location.hostname}) no está autorizado en Firebase › Authentication › Authorized domains.`
+            : code === 'auth/popup-blocked'
+              ? 'El navegador bloqueó la ventana de Google. Permite las ventanas emergentes e inténtalo otra vez.'
+              : `No se pudo iniciar sesión con Google. Inténtalo otra vez. (Código: ${code ?? 'desconocido'})`,
+        );
       }
     }
   }
@@ -51,7 +57,7 @@ export default function LoginPage() {
       <header className="hero">
         <div className="hero-inner">
           <p className="hero-kicker">Tu plan de entrenamiento</p>
-          <h1>Train Please</h1>
+          <h1>Training Please</h1>
           <p className="hero-sub">Entrena con tu coach</p>
         </div>
       </header>

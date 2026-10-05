@@ -8,13 +8,9 @@ import { TopNav } from '@/components/TopNav';
 import { db } from '@/lib/firebase';
 import { grantConsent, revokeConsent } from '@/lib/consent';
 import { OPTIONAL_CHECKS } from '@/lib/legal';
+import { DEFAULT_THEME, THEMES } from '@/lib/themes';
 import type { Theme, UserDoc } from '@/lib/types';
 
-const THEMES: { key: Theme; label: string; color: string }[] = [
-  { key: 'rosa', label: 'Rosa', color: '#E0479F' },
-  { key: 'azul', label: 'Azul', color: '#2F9CC4' },
-  { key: 'oscuro', label: 'Oscuro', color: '#221a25' },
-];
 
 export default function AjustesPage() {
   return (
@@ -34,6 +30,9 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
   useEffect(() => { setFirst(new URLSearchParams(window.location.search).has('primera')); }, []);
 
   const [p, setP] = useState({
+    age: profile.profile?.age ?? '',
+    heightCm: profile.profile?.heightCm ?? '',
+    weightKg: profile.profile?.weightKg ?? '',
     level: profile.profile?.level ?? '',
     availability: profile.profile?.availability ?? '',
     equipment: profile.profile?.equipment ?? '',
@@ -97,7 +96,7 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
           <h3>Tema</h3>
           <div className="theme-options">
             {THEMES.map((t) => (
-              <button key={t.key} type="button" className="theme-swatch" aria-pressed={(profile.theme ?? 'rosa') === t.key} onClick={() => setTheme(t.key)}>
+              <button key={t.key} type="button" className="theme-swatch" aria-pressed={(profile.theme ?? DEFAULT_THEME) === t.key} onClick={() => setTheme(t.key)}>
                 <i style={{ background: t.color }} /> {t.label}
               </button>
             ))}
@@ -113,6 +112,14 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
               <input type="date" value={race.date} onChange={(e) => setRace({ ...race, date: e.target.value })} /></label>
             <label className="field"><span>Distancia (km)</span>
               <input inputMode="decimal" value={race.distanceKm} placeholder="21,1" onChange={(e) => setRace({ ...race, distanceKm: e.target.value })} /></label>
+          </div>
+          <div className="form-row">
+            <label className="field"><span>Edad</span>
+              <input inputMode="numeric" value={p.age} placeholder="35" onChange={(e) => setP({ ...p, age: e.target.value })} /></label>
+            <label className="field"><span>Talla (cm)</span>
+              <input inputMode="numeric" value={p.heightCm} placeholder="165" onChange={(e) => setP({ ...p, heightCm: e.target.value })} /></label>
+            <label className="field"><span>Peso (kg)</span>
+              <input inputMode="decimal" value={p.weightKg} placeholder="60" onChange={(e) => setP({ ...p, weightKg: e.target.value })} /></label>
           </div>
           {field('level', 'Nivel actual', 'Km por semana y salida más larga reciente')}
           {field('availability', 'Disponibilidad', 'Días y horarios en que puedes entrenar')}

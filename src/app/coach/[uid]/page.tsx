@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
 import { WeekView } from '@/components/WeekView';
@@ -13,6 +13,7 @@ import { deleteSession, duplicateWeek, importPlan, saveSession, saveWeek, useLog
 import claudiaPlan from '../../../../data/claudia-plan.json';
 import { addDays, compliance, dayParts, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
 import { SPORTS } from '@/lib/sports';
+import { DEFAULT_THEME, THEMES } from '@/lib/themes';
 import type { Session, UserDoc, Week } from '@/lib/types';
 
 const STATUS_TXT = { done: 'Realizada', missed: 'No realizada', late: 'Pendiente', today: 'Hoy', upcoming: 'Próxima', rest: 'Descanso' } as const;
@@ -77,7 +78,7 @@ function AthleteDetail({ uid }: { uid: string }) {
         <p><Link href="/coach">‹ Todos los atletas</Link></p>
         {!athlete.consent && <p className="alert">Consentimiento pendiente o revocado: no puedes ver sus registros hasta que acepte.</p>}
 
-        <AthleteProfile athlete={athlete} />
+        <AthleteProfile uid={uid} athlete={athlete} />
 
         <h3 className="section-title">Plan semanal</h3>
         <div className="week-tabs" role="group" aria-label="Semanas">
@@ -109,9 +110,10 @@ function AthleteDetail({ uid }: { uid: string }) {
   );
 }
 
-function AthleteProfile({ athlete }: { athlete: UserDoc }) {
+function AthleteProfile({ uid, athlete }: { uid: string; athlete: UserDoc }) {
   const p = athlete.profile ?? {};
   const rows: [string, string | undefined][] = [
+    ['Edad', p.age], ['Talla (cm)', p.heightCm], ['Peso (kg)', p.weightKg],
     ['Nivel', p.level], ['Disponibilidad', p.availability], ['Equipo', p.equipment], ['Objetivos', p.goals], ['Limitaciones', p.limitations],
   ];
   const filled = rows.filter(([, v]) => v);
@@ -119,6 +121,14 @@ function AthleteProfile({ athlete }: { athlete: UserDoc }) {
     <section className="panel">
       <h3>Perfil</h3>
       <p className="note">{athlete.email}</p>
+      <div className="theme-options" style={{ margin: '.6rem 0' }}>
+        {THEMES.map((t) => (
+          <button key={t.key} type="button" className="theme-swatch" aria-pressed={(athlete.theme ?? DEFAULT_THEME) === t.key}
+            onClick={() => updateDoc(doc(db(), 'users', uid), { theme: t.key, updatedAt: serverTimestamp() })}>
+            <i style={{ background: t.color }} /> {t.label}
+          </button>
+        ))}
+      </div>
       {filled.length === 0 ? <p className="note">El atleta aún no completó su perfil.</p> : (
         <dl style={{ display: 'grid', gap: '.4rem', margin: 0 }}>
           {filled.map(([k, v]) => <div key={k}><dt style={{ fontWeight: 700, display: 'inline' }}>{k}: </dt><dd style={{ display: 'inline', margin: 0 }}>{v}</dd></div>)}

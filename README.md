@@ -1,4 +1,4 @@
-# Train Please · app web
+# Training Please · app web
 
 Panel de coach y plan semanal de cada atleta. Next.js en Vercel, login con Google (Firebase Auth), datos en Firestore y Firebase Admin SDK en rutas API privadas. Proyecto hecho desde cero con Claude Code. El diseño respeta el de la web original del plan de Claudia (rosa, celeste, amarillo y menta; Oswald y Nunito Sans; tarjetas por día con check y cuenta regresiva), con tres temas a elegir: rosa, azul y oscuro.
 

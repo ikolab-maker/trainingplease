@@ -12,7 +12,7 @@ export default function PlanPage() {
           <TopNav />
           <main><WeekView uid={user.uid} profile={profile} /></main>
           <footer className="footer">
-            <p>Train Please</p>
+            <p>Training Please</p>
             <p className="footer-small">Si algún dolor pasa de 3 sobre 10 o te cambia la forma de pisar, corta la sesión y avísale a tu coach.</p>
           </footer>
         </>
