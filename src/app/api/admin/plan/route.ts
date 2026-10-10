@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb, verifyRequest } from '@/lib/firebase-admin';
 import { parsePlanFile } from '@/lib/planFile';
+import { writePlan } from '@/lib/planWrite';
 
 export const runtime = 'nodejs';
 
@@ -25,13 +26,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Ese atleta no existe.' }, { status: 404 });
   }
 
-  const batch = db.batch();
-  for (const w of plan) {
-    batch.set(db.doc(`plans/${uid}/weeks/${w.id}`), w.week, { merge: true });
-    for (const { id, ...s } of w.sessions) {
-      batch.set(db.doc(`plans/${uid}/weeks/${w.id}/sessions/${id}`), { ...s, weekId: w.id });
-    }
-  }
-  await batch.commit();
-  return NextResponse.json({ ok: true, weeks: plan.length, sessions: plan.reduce((n, w) => n + w.sessions.length, 0) });
+  const written = await writePlan(db, uid, plan);
+  return NextResponse.json({ ok: true, ...written });
 }
