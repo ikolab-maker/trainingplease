@@ -1,9 +1,15 @@
 import 'server-only';
 import { adminDb } from '@/lib/firebase-admin';
 import type { GoalRace, LogEntry, Session, UserDoc, Week } from '@/lib/types';
+import { parseReference, type FitnessReference } from './fitness';
 
 export interface MemoryRow { weekId: string; decision: string; row: string }
-export interface AthleteMemory { ficha: string; history: MemoryRow[] }
+export interface AthleteMemory {
+  ficha: string;
+  history: MemoryRow[];
+  reference: FitnessReference | null; // tiempo de referencia para el índice de forma y los ritmos
+  goalTimeMin: number | null; // meta de tiempo en la carrera objetivo
+}
 
 export interface AthleteContext {
   uid: string;
@@ -60,7 +66,12 @@ export async function loadAthleteContext(uid: string, analyzedWeekId: string, ta
     profile: user.profile ?? {},
     hasConsent,
     aiConsent: user.consent?.optional?.ai === true,
-    memory: { ficha: typeof mem.ficha === 'string' ? mem.ficha : '', history: Array.isArray(mem.history) ? mem.history : [] },
+    memory: {
+      ficha: typeof mem.ficha === 'string' ? mem.ficha : '',
+      history: Array.isArray(mem.history) ? mem.history : [],
+      reference: parseReference(mem.reference),
+      goalTimeMin: typeof mem.goalTimeMin === 'number' && mem.goalTimeMin > 0 ? mem.goalTimeMin : null,
+    },
     weeks,
     sessions,
     logs,

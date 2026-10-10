@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import './agent.css';
-import { dayParts } from '@/lib/dates';
+import { dayParts, daysUntil, todayISO } from '@/lib/dates';
+import { equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, parseReference, parseTime, trainingPaces, type FitnessReference } from '@/lib/agent/fitness';
 import { parsePlanFile, type PlanWeekFile } from '@/lib/planFile';
 import { SPORTS } from '@/lib/sports';
 import type { UserDoc } from '@/lib/types';
@@ -35,6 +36,24 @@ const DECISION_LABEL: Record<string, string> = {
 };
 const STATUS_LABEL = { pending: 'Pendiente de tu aprobación', approved: 'Aprobada y cargada', discarded: 'Descartada' };
 
+interface RefDraft { label: string; distanceKm: string; time: string; date: string; maxEffort: boolean }
+const EMPTY_REF: RefDraft = { label: '', distanceKm: '', time: '', date: '', maxEffort: true };
+const dec = (n: number, digits = 1) => n.toFixed(digits).replace('.', ',');
+
+/** El tiempo de referencia del formulario, validado igual que en el servidor. */
+function readReference(r: RefDraft): { value: FitnessReference | null; error?: string } {
+  if (!r.label.trim() && !r.distanceKm.trim() && !r.time.trim() && !r.date) return { value: null };
+  const value = parseReference({
+    label: r.label.trim(),
+    distanceKm: Number(r.distanceKm.replace(',', '.')),
+    timeMin: parseTime(r.time) ?? NaN,
+    date: r.date,
+    maxEffort: r.maxEffort,
+  });
+  if (!value || value.date > todayISO()) return { value: null, error: 'Revisa el tiempo de referencia: distancia en km, tiempo como 56:00 o 1:05:52 y una fecha que ya pasó.' };
+  return { value };
+}
+
 /**
  * Agente principal en la ficha del atleta: su memoria, la propuesta de la semana siguiente y
  * los ajustes puntuales que pide el coach, para aprobar, editar o descartar.
@@ -50,6 +69,8 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   const [editing, setEditing] = useState<string | null>(null); // id de la propuesta en edición
   const [request, setRequest] = useState('');
   const [draft, setDraft] = useState('');
+  const [ref, setRef] = useState<RefDraft>(EMPTY_REF);
+  const [goalTime, setGoalTime] = useState('');
   const aiConsent = athlete.consent?.optional?.ai === true;
 
   const load = useCallback(async () => {
@@ -59,6 +80,9 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
       const data = await res.json();
       setProposals(data.proposals);
       setFicha(data.memory?.ficha ?? '');
+      const r = parseReference(data.memory?.reference);
+      setRef(r ? { label: r.label, distanceKm: String(r.distanceKm).replace('.', ','), time: fmtTime(r.timeMin), date: r.date, maxEffort: r.maxEffort } : EMPTY_REF);
+      setGoalTime(typeof data.memory?.goalTimeMin === 'number' ? fmtTime(data.memory.goalTimeMin) : '');
       setHistory(Array.isArray(data.memory?.history) ? data.memory.history : []);
       setAgentReady(!!data.agentReady);
     } catch {
@@ -124,10 +148,16 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   }
 
   async function saveFicha() {
+    const reference = readReference(ref);
+    if (reference.error) { setMsg(reference.error); return; }
+    const goalTimeMin = goalTime.trim() ? parseTime(goalTime) : null;
+    if (goalTime.trim() && goalTimeMin == null) { setMsg('La meta de tiempo se escribe como 56:00 o 1:50:00.'); return; }
     setBusy('ficha'); setMsg('');
     try {
-      const { ok, data } = await post('/api/admin/memory', { uid, ficha });
+      const { ok, data } = await post('/api/admin/memory', { uid, ficha, reference: reference.value, goalTimeMin });
       setMsg(ok ? 'Ficha guardada.' : data.error ?? 'No se pudo guardar la ficha.');
+    } catch {
+      setMsg('Sin conexión.');
     } finally { setBusy(''); }
   }
 
@@ -204,6 +234,25 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
           <span>Ficha</span>
           <textarea value={ficha} onChange={(e) => setFicha(e.target.value)} rows={10} />
         </label>
+        <h4>Forma actual</h4>
+        <p className="note">Una carrera o un test a tope de las últimas 8 semanas. De aquí salen el índice de forma y los ritmos que usa el agente; sin esto, prescribe por esfuerzo (RPE).</p>
+        <div className="form-row">
+          <label className="field"><span>Carrera o test</span>
+            <input value={ref.label} placeholder="10K BBVA" maxLength={120} onChange={(e) => setRef({ ...ref, label: e.target.value })} /></label>
+          <label className="field"><span>Distancia (km)</span>
+            <input inputMode="decimal" value={ref.distanceKm} placeholder="10" onChange={(e) => setRef({ ...ref, distanceKm: e.target.value })} /></label>
+          <label className="field"><span>Tiempo</span>
+            <input value={ref.time} placeholder="56:00 o 1:05:52" onChange={(e) => setRef({ ...ref, time: e.target.value })} /></label>
+          <label className="field"><span>Fecha</span>
+            <input type="date" value={ref.date} max={todayISO()} onChange={(e) => setRef({ ...ref, date: e.target.value })} /></label>
+        </div>
+        <label className="check">
+          <input type="checkbox" checked={ref.maxEffort} onChange={(e) => setRef({ ...ref, maxEffort: e.target.checked })} />
+          <span>Fue a tope (carrera o test). Desmárcala si fue un entrenamiento: el índice queda como mínimo.</span>
+        </label>
+        <label className="field"><span>Meta de tiempo{athlete.goalRace ? ` en ${athlete.goalRace.name}` : ''} (opcional)</span>
+          <input value={goalTime} placeholder="1:50:00" onChange={(e) => setGoalTime(e.target.value)} /></label>
+        <FitnessPreview draft={ref} goalTime={goalTime} race={athlete.goalRace ?? null} />
         <button type="button" className="btn small" disabled={!!busy} onClick={saveFicha}>{busy === 'ficha' ? 'Guardando…' : 'Guardar ficha'}</button>
         {history.length > 0 && (
           <>
@@ -222,6 +271,36 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
         </details>
       )}
     </section>
+  );
+}
+
+/** Lo que calcula el agente Ciencia con el tiempo de referencia, para que el coach lo vea antes de guardar. */
+function FitnessPreview({ draft, goalTime, race }: { draft: RefDraft; goalTime: string; race: UserDoc['goalRace'] | null }) {
+  const { value: r, error } = readReference(draft);
+  if (error) return <p className="note">{error}</p>;
+  if (!r) return null;
+  const index = fitnessIndex(r.distanceKm, r.timeMin);
+  const p = trainingPaces(index);
+  const goal = parseTime(goalTime);
+  const age = daysUntil(todayISO(), r.date); // días desde la referencia
+  let raceLine = '';
+  if (race?.distanceKm) {
+    const weeks = Math.max(0, Math.round(daysUntil(race.date) / 7));
+    const [lo, hi] = equivalentRange(r, race.distanceKm);
+    raceLine = `Con esta forma, ${race.name} (${dec(race.distanceKm)} km): ${fmtTime(lo)} a ${fmtTime(hi)}.`;
+    if (goal) {
+      const g = goalCheck(r, { distanceKm: race.distanceKm, timeMin: goal }, weeks);
+      raceLine += g.gapPct > 0
+        ? ` La meta de ${fmtTime(goal)} pide ${dec(g.gapPct)} % más rápido, a ${weeks} semanas: ${g.label}.`
+        : ` La meta de ${fmtTime(goal)} ya está al alcance.`;
+    }
+  }
+  return (
+    <div className="note">
+      <p>Índice de forma <strong>{dec(index)}</strong>{r.maxEffort ? '' : ' (mínimo)'}. Ritmos por km: suave {fmtPace(p.easy[0])} a {fmtPace(p.easy[1])} · maratón {fmtPace(p.marathon)} · umbral {fmtPace(p.threshold)} · intervalos {fmtPace(p.interval)} · repeticiones {fmtPace(p.repetition)}.</p>
+      {raceLine && <p>{raceLine}</p>}
+      {age > 56 && <p>La referencia tiene más de 8 semanas: conviene un test o una carrera más reciente.</p>}
+    </div>
   );
 }
 

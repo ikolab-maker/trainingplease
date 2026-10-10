@@ -1,10 +1,12 @@
 // Agente Guardián: reglas duras que toda propuesta debe cumplir antes de llegar al coach.
 // Si algo falla, el agente principal recibe la lista y corrige; si no lo logra, la
-// propuesta llega al coach con estas observaciones a la vista.
+// propuesta llega al coach con estas observaciones a la vista. Los avisos no bloquean:
+// van al coach junto con la propuesta. Fuentes de cada regla en 09-metodologia-agente-ciencia.md.
 
 import { addDays } from '../dates.ts';
 import { parsePlanFile, type PlanWeekFile } from '../planFile.ts';
 import { RUN_SPORTS, round1, runKm, type Decision } from './metrics.ts';
+import type { QualityWork } from './proposal.ts';
 import type { Session } from '../types.ts';
 
 export interface GuardContext {
@@ -12,61 +14,192 @@ export interface GuardContext {
   start: string; // su lunes
   decision: Decision; // decisión que adopta la propuesta
   painAlert: boolean; // el análisis encontró posible dolor
-  prevKm: number | null; // km de carrera planificados la semana anterior
-  recentMaxKm: number | null; // máximo de km planificados en las 4 semanas previas
+  illnessAlert?: boolean; // el análisis encontró posible enfermedad
+  prevKm: number | null; // km de carrera de la semana anterior (hechos y pendientes)
+  prev2Km?: number | null; // km de carrera de dos semanas atrás
+  recentMaxKm: number | null; // máximo de km de las 4 semanas previas (volumen normal antes del taper)
   prevWasDeload: boolean;
-  raceDate: string | null;
+  race: { date: string; distanceKm: number | null } | null; // carrera objetivo
+  longestRecentKm?: number | null; // salida de carrera más larga de los últimos 30 días
+  easyPaceSecPerKm?: number | null; // ritmo suave medio del atleta, para estimar duraciones
+  painFreeWeeks?: boolean; // sin dolor en las semanas recientes: con 4 días se permite una segunda calidad
+  mode?: 'semanal' | 'ajuste'; // en un ajuste, las reglas de estructura (4 a 7) avisan en vez de bloquear
 }
 
-const QUALITY_RPE = 7;
+export type SessionExtras = Record<string, { race: boolean; work: QualityWork[] }>;
 
-/** Valida la propuesta. Devuelve el plan limpio y la lista de problemas (vacía si pasa). */
-export function checkProposal(raw: unknown, ctx: GuardContext): { plan: PlanWeekFile[]; issues: string[]; km: number } {
+export const QUALITY_RPE = 7;
+export const LONG_RUN_MAX_MIN = 150; // Daniels
+const SPIKE = 1.1; // Frandsen 2025: ninguna salida > 10 % sobre la más larga de 30 días
+const WEEK_CAP = 1.2; // Damsted 2019: < 20 % por semana
+const TWO_WEEK_CAP = 1.3; // Nielsen 2014: > 30 % en 2 semanas
+const HALF_KM = 15; // desde aquí, taper de media (y más largo)
+
+/** Topes de Daniels por sesión, como fracción del volumen semanal y en km absolutos. */
+export const WORK_CAPS: Record<QualityWork['zone'], { share: number; maxKm: number; maxRepMin: number | null; label: string }> = {
+  M: { share: 0.2, maxKm: 29, maxRepMin: null, label: 'ritmo de maratón' },
+  T: { share: 0.1, maxKm: Infinity, maxRepMin: null, label: 'umbral' },
+  I: { share: 0.08, maxKm: 10, maxRepMin: 5, label: 'intervalos' },
+  R: { share: 0.05, maxKm: 8, maxRepMin: 2, label: 'repeticiones' },
+};
+
+const fmtKm = (n: number) => String(round1(n)).replace('.', ',');
+const dayDiff = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
+
+/** Máximo de sesiones de calidad según los días de carrera de la semana. */
+export function maxQualitySessions(runDays: number, painFree: boolean): number {
+  if (runDays <= 3) return 1;
+  if (runDays === 4) return painFree ? 2 : 1;
+  return 2;
+}
+
+/** Valida la propuesta. Devuelve el plan limpio, los problemas (vacío si pasa) y avisos para el coach. */
+export function checkProposal(raw: unknown, ctx: GuardContext, extras: SessionExtras = {}): { plan: PlanWeekFile[]; issues: string[]; warnings: string[]; km: number } {
   const { plan, errors } = parsePlanFile(raw);
   const issues = [...errors];
+  const warnings: string[] = [];
   if (plan.length !== 1) issues.push('La propuesta debe tener exactamente una semana.');
   const w = plan[0];
-  if (!w) return { plan, issues, km: 0 };
+  if (!w) return { plan, issues, warnings, km: 0 };
   if (w.id !== ctx.weekId) issues.push(`La semana debe ser ${ctx.weekId}, no ${w.id}.`);
   if (w.week.start !== ctx.start) issues.push(`week.start debe ser ${ctx.start}.`);
   if (w.week.aiAssisted !== true) issues.push('week.aiAssisted debe ser true.');
 
-  const km = runKm(w.sessions);
-  const quality = w.sessions.filter((s) => RUN_SPORTS.has(s.sport) && (s.rpe ?? 0) >= QUALITY_RPE);
   const end = addDays(ctx.start, 6);
-  const raceThisWeek = ctx.raceDate != null && ctx.raceDate >= ctx.start && ctx.raceDate <= end;
+  const runs = w.sessions.filter((s) => RUN_SPORTS.has(s.sport));
+  const isRace = (s: PlanWeekFile['sessions'][number]) => extras[s.id]?.race === true || (ctx.race != null && s.date === ctx.race.date);
+  const workOf = (s: PlanWeekFile['sessions'][number]) => extras[s.id]?.work ?? [];
+  const isQuality = (s: PlanWeekFile['sessions'][number]) => !isRace(s) && ((s.rpe ?? 0) >= QUALITY_RPE || workOf(s).length > 0);
+  const km = runKm(w.sessions);
+  const races = runs.filter(isRace);
+  const kmExRace = runKm(runs.filter((s) => !isRace(s)));
+  const quality = runs.filter(isQuality);
+  const runDays = new Set(runs.map((s) => s.date)).size;
 
+  const race = ctx.race;
+  const raceThisWeek = race != null && race.date >= ctx.start && race.date <= end;
+  const raceInDays = race != null ? dayDiff(ctx.start, race.date) : null; // desde el lunes
+  const raceNextWeek = raceInDays != null && raceInDays >= 7 && raceInDays <= 13;
+  const halfOrLonger = (race?.distanceKm ?? 0) >= HALF_KM;
+  const taper = raceThisWeek || raceNextWeek;
+  const normalKm = Math.max(ctx.prevKm ?? 0, ctx.recentMaxKm ?? 0) || null;
+  // Un ajuste cambia solo lo pedido sobre una semana que el coach ya aprobó: lo que ya estaba no se reabre.
+  const structural = (msg: string) => (ctx.mode === 'ajuste' ? warnings : issues).push(msg);
+
+  // 1. Volumen semanal: +10 % es la guía del modelo; el tope duro es +20 % sobre la semana anterior
+  //    y +30 % sobre la de dos semanas atrás. Al volver de una descarga se puede regresar al volumen previo.
   if (ctx.prevKm != null && ctx.prevKm > 0 && !raceThisWeek) {
-    // Al volver de una descarga se puede regresar al volumen previo; si no, máximo +10 %.
     const base = ctx.prevWasDeload && ctx.recentMaxKm ? Math.max(ctx.prevKm, ctx.recentMaxKm) : ctx.prevKm;
-    const cap = round1(base * 1.1 + 0.5);
-    if (km > cap) issues.push(`Sube demasiado: ${km} km de carrera contra ${ctx.prevKm} la semana anterior (máximo ${cap} km).`);
+    const cap = round1(base * WEEK_CAP + 0.5);
+    if (km > cap) issues.push(`Sube demasiado: ${fmtKm(km)} km de carrera contra ${fmtKm(ctx.prevKm)} la semana anterior (máximo +20 %: ${fmtKm(cap)} km; lo normal es +10 %).`);
+    if (ctx.prev2Km && ctx.prev2Km > 0 && km > round1(ctx.prev2Km * TWO_WEEK_CAP + 0.5)) {
+      issues.push(`Sube demasiado en dos semanas: ${fmtKm(km)} km contra ${fmtKm(ctx.prev2Km)} hace dos semanas (máximo +30 %: ${fmtKm(ctx.prev2Km * TWO_WEEK_CAP)} km).`);
+    }
     if (ctx.decision === 'descarga' && km > round1(ctx.prevKm * 0.75 + 0.5)) {
-      issues.push(`Una descarga baja 30–40 % de km: ${km} km es demasiado (máximo ${round1(ctx.prevKm * 0.75)} km).`);
+      issues.push(`Una descarga baja 30–40 % de km: ${fmtKm(km)} km es demasiado (máximo ${fmtKm(ctx.prevKm * 0.75)} km).`);
     }
     if (ctx.decision === 'bajar' && km > round1(ctx.prevKm * 0.95)) {
-      issues.push(`La decisión es bajar 10–20 %: ${km} km no baja lo suficiente (máximo ${round1(ctx.prevKm * 0.9)} km).`);
+      issues.push(`La decisión es bajar 10–20 %: ${fmtKm(km)} km no baja lo suficiente (máximo ${fmtKm(ctx.prevKm * 0.9)} km).`);
     }
     if (ctx.decision === 'mantener' && km > round1(ctx.prevKm * 1.03 + 0.5)) {
-      issues.push(`La decisión es mantener: ${km} km sube respecto de ${ctx.prevKm}.`);
+      issues.push(`La decisión es mantener: ${fmtKm(km)} km sube respecto de ${fmtKm(ctx.prevKm)}.`);
     }
   }
-  if (raceThisWeek && ctx.prevKm) {
-    // Semana de carrera: taper. Sin contar la carrera, como mucho ~70 % de la semana anterior.
-    const kmExRace = runKm(w.sessions.filter((s) => s.date !== ctx.raceDate));
-    const cap = round1(ctx.prevKm * 0.7 + 0.5);
-    if (kmExRace > cap) issues.push(`Es la semana de la carrera (${ctx.raceDate}): sin contarla van ${kmExRace} km y el taper permite hasta ${cap}. No se recorta el taper.`);
+
+  // 2. Taper. Semana de carrera, sin contarla: hasta 70 % del volumen normal en 10K y 60 % en media o más.
+  //    Semana anterior a una media: hasta 80 %. No se quitan días de carrera.
+  if (raceThisWeek && normalKm) {
+    const share = halfOrLonger ? 0.6 : 0.7;
+    const cap = round1(normalKm * share + 0.5);
+    if (kmExRace > cap) issues.push(`Es la semana de la carrera (${race!.date}): sin contarla van ${fmtKm(kmExRace)} km y el taper permite hasta ${fmtKm(cap)} (${share * 100} % de ${fmtKm(normalKm)} km). No se recorta el taper.`);
   }
-  if ((ctx.decision === 'descarga' || ctx.painAlert) && quality.length && !raceThisWeek) {
-    issues.push(`Con descarga o posible dolor no va calidad: baja el RPE de ${quality.map((s) => s.title).join(', ')} por debajo de ${QUALITY_RPE}.`);
+  if (raceNextWeek && halfOrLonger && normalKm) {
+    const cap = round1(normalKm * 0.8 + 0.5);
+    if (km > cap) issues.push(`La media es la semana siguiente (${race!.date}): el taper empieza ya y esta semana va hasta ${fmtKm(cap)} km (80 % de ${fmtKm(normalKm)}); van ${fmtKm(km)}.`);
   }
-  if (ctx.painAlert && !w.sessions.some((s) => /fisio|profesional|dolor|molest/i.test(`${s.tip} ${s.focus} ${s.steps.join(' ')}`))
-    && !(w.week.notes ?? []).some((n) => /fisio|profesional|dolor|molest/i.test(`${n.title} ${n.body}`))) {
+
+  // 3. Salto por sesión: ninguna salida supera en más de 10 % a la más larga de los últimos 30 días.
+  if (ctx.longestRecentKm && ctx.longestRecentKm > 0) {
+    const limit = round1(ctx.longestRecentKm * SPIKE);
+    for (const s of runs) {
+      if ((s.distanceKm ?? 0) <= limit + 0.05) continue;
+      const pct = Math.round(((s.distanceKm ?? 0) / ctx.longestRecentKm - 1) * 100);
+      if (isRace(s)) warnings.push(`La carrera "${s.title}" (${fmtKm(s.distanceKm ?? 0)} km) es un salto de +${pct} % sobre la salida más larga de los últimos 30 días (${fmtKm(ctx.longestRecentKm)} km).`);
+      else issues.push(`"${s.title}" (${fmtKm(s.distanceKm ?? 0)} km) supera en más de 10 % la salida más larga de los últimos 30 días (${fmtKm(ctx.longestRecentKm)} km): máximo ${fmtKm(limit)} km.`);
+    }
+  }
+
+  // 4. Fondo: máximo 150 min; peso en la semana según los días de carrera.
+  const nonRace = runs.filter((s) => !isRace(s));
+  const long = nonRace.reduce<PlanWeekFile['sessions'][number] | null>((a, s) => ((s.distanceKm ?? 0) > (a?.distanceKm ?? 0) ? s : a), null);
+  if (long?.distanceKm) {
+    const minutes = long.durationMin ?? (ctx.easyPaceSecPerKm ? (long.distanceKm * ctx.easyPaceSecPerKm) / 60 : null);
+    if (minutes != null && minutes > LONG_RUN_MAX_MIN + 1) {
+      structural(`"${long.title}" dura unos ${Math.round(minutes)} min: el fondo va hasta ${LONG_RUN_MAX_MIN} min.`);
+    }
+    const share = kmExRace > 0 ? long.distanceKm / kmExRace : 0;
+    if (!taper && kmExRace >= 10 && runDays >= 3) {
+      if (runDays <= 4 && share > 0.5) structural(`El fondo "${long.title}" es el ${Math.round(share * 100)} % de la semana: con ${runDays} días de carrera va hasta el 50 %.`);
+      else if (runDays <= 4 && share > 0.4) warnings.push(`El fondo es el ${Math.round(share * 100)} % de los km de la semana (aviso desde el 40 %).`);
+      else if (runDays >= 5 && share > 0.3) warnings.push(`El fondo es el ${Math.round(share * 100)} % de los km de la semana; con ${runDays} días, Daniels lo deja en 30 %.`);
+    }
+  }
+
+  // 5. Calidad por sesión (topes de Daniels) y declaración del trabajo de calidad.
+  const hasExtras = Object.keys(extras).length > 0;
+  for (const s of runs) {
+    const work = workOf(s);
+    if (hasExtras && !isRace(s) && (s.rpe ?? 0) >= QUALITY_RPE && !work.length) {
+      structural(`"${s.title}" tiene RPE ${s.rpe}: declara en work su trabajo de calidad (zona M, T, I o R y km a ese ritmo).`);
+    }
+    const byZone = new Map<QualityWork['zone'], number>();
+    for (const x of work) {
+      byZone.set(x.zone, (byZone.get(x.zone) ?? 0) + (x.km > 0 ? x.km : 0));
+      const capRep = WORK_CAPS[x.zone]?.maxRepMin;
+      if (capRep != null && x.repMin != null && x.repMin > capRep) structural(`"${s.title}": las series de ${WORK_CAPS[x.zone].label} van hasta ${capRep} min cada una (hay de ${x.repMin}).`);
+    }
+    for (const [zone, zkm] of byZone) {
+      const c = WORK_CAPS[zone];
+      if (!c) continue;
+      const cap = round1(Math.min(km * c.share, c.maxKm));
+      if (zkm > cap + 0.1) structural(`"${s.title}": ${fmtKm(zkm)} km a ritmo de ${c.label} pasan el tope de ${fmtKm(cap)} km por sesión (${Math.round(c.share * 100)} % de ${fmtKm(km)} km${Number.isFinite(c.maxKm) ? ` y máximo ${c.maxKm} km` : ''}).`);
+    }
+  }
+
+  // 6. Sesiones de calidad por semana y nunca dos días duros seguidos (las carreras cuentan como día duro).
+  const maxQ = maxQualitySessions(runDays, ctx.painFreeWeeks ?? false);
+  if (quality.length > maxQ) {
+    structural(`Hay ${quality.length} sesiones de calidad (${quality.map((s) => s.title).join(', ')}): con ${runDays} días de carrera van como máximo ${maxQ}.`);
+  }
+  const hardDates = [...new Set([...quality, ...races].map((s) => s.date))].sort();
+  for (let i = 1; i < hardDates.length; i++) {
+    if (dayDiff(hardDates[i - 1], hardDates[i]) === 1) structural(`Hay dos días duros seguidos (${hardDates[i - 1]} y ${hardDates[i]}): deja al menos un día suave o de descanso entre ellos.`);
+  }
+
+  // 7. Después de una carrera: 1 día suave por cada 3 km (Daniels).
+  const raceDays = races.map((s) => ({ date: s.date, km: s.distanceKm ?? 0, title: s.title }));
+  if (race && !raceThisWeek && race.date < ctx.start && race.distanceKm) raceDays.push({ date: race.date, km: race.distanceKm, title: 'la carrera objetivo' });
+  for (const r of raceDays) {
+    const easyDays = Math.ceil(r.km / 3);
+    const tooSoon = quality.filter((s) => s.date > r.date && dayDiff(r.date, s.date) <= easyDays);
+    if (tooSoon.length) structural(`Después de ${r.title} (${fmtKm(r.km)} km, ${r.date}) van ${easyDays} días suaves: ${tooSoon.map((s) => s.title).join(', ')} es demasiado pronto.`);
+  }
+
+  // 8. Con descarga, dolor o enfermedad no va calidad, y la semana dice qué hacer.
+  if ((ctx.decision === 'descarga' || ctx.painAlert || ctx.illnessAlert) && quality.length && !raceThisWeek) {
+    issues.push(`Con descarga, posible dolor o enfermedad no va calidad: baja el RPE de ${quality.map((s) => s.title).join(', ')} por debajo de ${QUALITY_RPE} y deja work vacío.`);
+  }
+  const text = [...w.sessions.map((s) => `${s.tip} ${s.focus} ${s.steps.join(' ')}`), ...(w.week.notes ?? []).map((n) => `${n.title} ${n.body}`)].join(' ');
+  if (ctx.painAlert && !/fisio|profesional|dolor|molest/i.test(text)) {
     issues.push('Hay posible dolor: agrega una nota o tip que diga qué hacer si la molestia sigue (parar y consultar a un profesional).');
   }
-  const runDays = new Set(w.sessions.filter((s) => RUN_SPORTS.has(s.sport)).map((s) => s.date));
-  if (runDays.size > 6) issues.push('Debe quedar al menos un día sin correr.');
-  return { plan, issues, km };
+  if (ctx.illnessAlert && !/m[eé]dic|fiebre|s[ií]ntoma/i.test(text)) {
+    issues.push('Hay posible enfermedad: agrega una nota con qué hacer (con fiebre o síntomas en el pecho no se entrena y se consulta a un médico; se vuelve suave y se avanza solo sin síntomas a las 24 h).');
+  }
+
+  // 9. Al menos un día sin correr.
+  if (runDays > 6) issues.push('Debe quedar al menos un día sin correr.');
+  return { plan, issues, warnings, km };
 }
 
 /** Reglas extra de un ajuste puntual a una semana ya cargada: mismos ids y nada de lo ya hecho cambia. */

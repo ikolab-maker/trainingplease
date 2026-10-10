@@ -1,6 +1,7 @@
 // Agente de Análisis: métricas de la semana calculadas en código (sin modelo).
 // El agente principal recibe estos números como hechos y solo los interpreta.
 
+import { addDays } from '../dates.ts';
 import type { LogEntry, Session, Week } from '../types.ts';
 
 /** Deportes que suman km de carrera. */
@@ -8,6 +9,8 @@ export const RUN_SPORTS = new Set(['running', 'fondo', 'tecnica']);
 
 /** Palabras en los comentarios que el Guardián trata como posible dolor o lesión. */
 const PAIN_RE = /dolor|duel[eo]|molest|lesi[oó]n|rodilla|tobillo|cadera|gemelo|pantorrilla|isquio|pinchazo|calambre|tir[oó]n|inflama|fisio/i;
+/** Palabras que el Guardián trata como posible enfermedad (consenso del COI 2022: con fiebre o síntomas en el pecho no se entrena). */
+const ILLNESS_RE = /fiebre|gripe|resfr[ií]|covid|enferm|infecci[oó]n|\btos\b|escalofr|pecho|palpitaci|mareo/i;
 
 export type Decision = 'descarga' | 'bajar' | 'mantener' | 'progresar' | 'sin-datos';
 export const DECISIONS: Decision[] = ['descarga', 'bajar', 'mantener', 'progresar', 'sin-datos'];
@@ -40,6 +43,7 @@ export interface WeekMetrics {
   rpeOverTarget: { id: string; title: string; target: number; real: number }[]; // real ≥ objetivo + 2
   easyRunHighRpe: { id: string; title: string; target: number; real: number }[]; // rodaje suave (obj ≤ 5) con RPE ≥ 8
   painMentions: { id: string; title: string; comment: string }[];
+  illnessMentions: { id: string; title: string; comment: string }[];
   missedCore: string[];
   rows: SessionRow[];
 }
@@ -100,6 +104,7 @@ export function weekMetrics(
     rpeOverTarget,
     easyRunHighRpe,
     painMentions: rows.filter((r) => r.comment && PAIN_RE.test(r.comment)).map((r) => ({ id: r.id, title: r.title, comment: r.comment })),
+    illnessMentions: rows.filter((r) => r.comment && ILLNESS_RE.test(r.comment)).map((r) => ({ id: r.id, title: r.title, comment: r.comment })),
     missedCore: core.filter((r) => r.status === 'missed').map((r) => r.title),
     rows,
   };
@@ -114,6 +119,7 @@ export function isDeloadPhase(phase: string | undefined): boolean {
  * El modelo puede proponer otra decisión, pero el Guardián compara contra esta.
  */
 export function suggestDecision(m: WeekMetrics, opts: { weeksSinceDeload?: number | null } = {}): { decision: Decision; rule: string } {
+  if (m.illnessMentions.length) return { decision: 'descarga', rule: 'Comentario con posible enfermedad: con fiebre o síntomas en el pecho no se entrena y se consulta a un médico; se vuelve con una sesión suave al 60–70 % y se avanza solo si a las 24 h no hay síntomas.' };
   if (m.painMentions.length) return { decision: 'descarga', rule: 'Comentario con posible dolor o molestia: descarga, nada de calidad y sugerir revisión profesional.' };
   if (m.rpeOverTarget.length >= 2) return { decision: 'descarga', rule: 'RPE real ≥ objetivo + 2 en 2 o más sesiones.' };
   if (m.easyRunHighRpe.length >= 2) return { decision: 'descarga', rule: 'RPE ≥ 8 en un rodaje suave dos veces.' };
@@ -122,5 +128,29 @@ export function suggestDecision(m: WeekMetrics, opts: { weeksSinceDeload?: numbe
   if (pct < 70) return { decision: 'bajar', rule: 'Cumplimiento < 70 %: bajar 10–20 % y simplificar; preguntar la causa.' };
   if (pct < 90) return { decision: 'mantener', rule: 'Cumplimiento 70–89 %: mantener la carga, sin subir.' };
   if (opts.weeksSinceDeload != null && opts.weeksSinceDeload >= 3) return { decision: 'descarga', rule: `Toca descarga por calendario (${opts.weeksSinceDeload} semanas de carga seguidas).` };
-  return { decision: 'progresar', rule: 'Cumplimiento ≥ 90 % y RPE en rango: progresar sin pasar de +10 % de km.' };
+  return { decision: 'progresar', rule: 'Cumplimiento ≥ 90 % y RPE en rango: progresar (guía +10 % de km; tope duro +20 %).' };
+}
+
+/**
+ * Km de carrera que cuentan como hechos en una semana: los marcados y los que aún no vencen.
+ * Si el atleta no registró ninguna sesión de esa semana, lo planificado (no se sabe qué hizo).
+ */
+export function effectiveKm(sessions: Session[], logs: Record<string, Pick<LogEntry, 'done'> | undefined> | null, today: string): number {
+  if (!logs || !sessions.some((s) => logs[s.id]?.done)) return runKm(sessions);
+  return runKm(sessions.filter((s) => logs[s.id]?.done || s.date >= today));
+}
+
+/**
+ * Salida de carrera más larga de los últimos 30 días (regla del salto por sesión, Frandsen 2025).
+ * Cuenta las marcadas como hechas y la de hoy (el análisis corre antes del fondo del domingo).
+ * Si el atleta no registró nada en esos días, se usa lo planificado y se dice.
+ */
+export function longestRecentRun(sessions: Session[], logs: Record<string, Pick<LogEntry, 'done'> | undefined> | null, today: string): { km: number; source: 'registros' | 'plan' } | null {
+  const from = addDays(today, -30);
+  const inWindow = sessions.filter((s) => RUN_SPORTS.has(s.sport) && (s.distanceKm ?? 0) > 0 && s.date >= from && s.date <= today);
+  const done = logs ? inWindow.filter((s) => logs[s.id]?.done || s.date === today) : [];
+  const anyLogged = logs != null && inWindow.some((s) => logs[s.id]?.done);
+  const counted = anyLogged ? done : inWindow;
+  if (!counted.length) return null;
+  return { km: Math.max(...counted.map((s) => s.distanceKm ?? 0)), source: anyLogged ? 'registros' : 'plan' };
 }
