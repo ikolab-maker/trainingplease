@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AccountLink } from '@/components/site/AccountLink';
 import { InvestorForm, PilotForm } from '@/components/site/SiteForms';
 import { OWNER, PRIVACY_EMAIL } from '@/lib/legal';
-import { PILLARS, STEPS, TESTIMONIALS } from '@/lib/site';
+import { AGENTS, LOOPS, PILLARS, STEPS, TESTIMONIALS } from '@/lib/site';
 import './site.css';
 
 export const metadata: Metadata = {
@@ -72,6 +72,7 @@ export default function SitePage() {
           <nav aria-label="Secciones del sitio">
             <a href="#por-que">Por qué</a>
             <a href="#como">Cómo funciona</a>
+            <a href="#motor">La IA</a>
             <a href="#piloto" className="s-nav-cta">Únete<span className="s-hide-xs"> al piloto</span></a>
             <AccountLink className="s-nav-account" />
           </nav>
@@ -85,8 +86,8 @@ export default function SitePage() {
               <p className="s-pill"><span className="s-dot" /> Piloto abierto · Lima, Perú</p>
               <h1>Entrena,<br /><span>por favor.</span></h1>
               <p className="s-lede">
-                Te lo pedimos de verdad. No para que cumplas una tabla, sino porque entrenar te cambia la vida.
-                Un plan semanal hecho para ti, una app simple para contar cómo te fue y alguien que lo mira cada semana.
+                Te lo pedimos de verdad, porque entrenar te cambia la vida. Tu plan lo afina una red de agentes de IA
+                con base científica, y una persona lo revisa contigo cada semana.
               </p>
               <div className="s-ctas">
                 <a href="#piloto" className="s-btn primary">Quiero entrar al piloto</a>
@@ -128,6 +129,54 @@ export default function SitePage() {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        <section id="motor" className="s-section s-motor">
+          <div className="s-container">
+            <div className="s-split">
+              <div>
+                <p className="s-kicker">El motor</p>
+                <h2>Una red de agentes<br /><span>que nunca deja de mirar</span></h2>
+              </div>
+              <div className="s-prose">
+                <p className="s-big">
+                  Detrás de cada semana trabaja una red de agentes de IA que generan, afinan y ajustan tu entrenamiento
+                  sobre metodología científica verificada. Para darte lo mejor a ti, no a un promedio.
+                </p>
+                <p>Cada agente tiene un trabajo. Juntos corren en ciclos: leen, deciden y responden rápido. Tu coach aprueba antes de que algo llegue a tu plan.</p>
+              </div>
+            </div>
+
+            <div className="s-motor-grid">
+              <div className="s-orbit" aria-hidden="true">
+                <svg viewBox="0 0 400 400" className="s-orbit-svg">
+                  <circle cx="200" cy="200" r="140" className="s-ring" />
+                  <circle cx="200" cy="200" r="140" className="s-ring-run" />
+                  <path d="M200 60 L200 140 M340 200 L260 200 M200 340 L200 260 M60 200 L140 200" className="s-spoke" />
+                </svg>
+                <div className="s-core"><b>Tú</b><small>tu semana</small></div>
+                {AGENTS.map((a, i) => (
+                  <span key={a.key} className={`s-node n${i}`}>{a.name}</span>
+                ))}
+                <span className="s-coach">Coach aprueba ✓</span>
+              </div>
+              <div className="s-agents">
+                {AGENTS.map((a, i) => (
+                  <article key={a.key} className="s-agent">
+                    <span className={`s-agent-dot n${i}`} />
+                    <div><h3>Agente {a.name}</h3><p>{a.text}</p></div>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <ol className="s-loops">
+              {LOOPS.map((l) => (
+                <li key={l.when}><span className="s-loop-when">↻ {l.when}</span><p>{l.text}</p></li>
+              ))}
+            </ol>
+            <p className="s-motor-note">Parte de esta red ya trabaja con los atletas del piloto; el resto lo estamos construyendo con ellos.</p>
           </div>
         </section>
 
