@@ -1148,3 +1148,7 @@ table.sessions td.comment { color: var(--ink-soft); font-style: italic; max-widt
 .import-week { border-top: 1px solid var(--line, rgba(0,0,0,.12)); padding-top: .6rem; margin-top: .6rem; }
 .import-week ul { margin: .3rem 0 0; padding-left: 1.1rem; font-size: .92rem; }
 .alert ul { margin: .4rem 0 0; padding-left: 1.1rem; }
+
+/* Solicitudes del piloto en el panel coach */
+.pending-list li .actions { display: flex; gap: .4rem; flex: none; margin: 0; }
+@media (max-width: 600px) { .pending-list li { flex-wrap: wrap; } }

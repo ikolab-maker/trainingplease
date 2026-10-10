@@ -22,7 +22,7 @@ export function Gate({ role, allowNoConsent, children }: {
 
   useEffect(() => {
     if (state.status === 'signedOut' || state.status === 'denied' || state.status === 'unconfigured') {
-      router.replace('/');
+      router.replace('/entrar');
       return;
     }
     if (state.status !== 'ready') return;
