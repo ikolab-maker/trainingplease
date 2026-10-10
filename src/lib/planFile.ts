@@ -75,6 +75,7 @@ export function parsePlanFile(raw: unknown): { plan: PlanWeekFile[]; errors: str
         focus: str(s.focus, 1000),
         tip: str(s.tip, 1000),
         core: s.core === true,
+        ...(s.race === true ? { race: true } : {}),
       });
     });
 

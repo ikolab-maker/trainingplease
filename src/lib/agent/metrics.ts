@@ -133,7 +133,7 @@ export function suggestDecision(m: WeekMetrics, opts: { weeksSinceDeload?: numbe
 
 /**
  * Km de carrera que cuentan como hechos en una semana: los marcados y los que aún no vencen.
- * Si el atleta no registró ninguna sesión de esa semana, lo planificado (no se sabe qué hizo).
+ * Si no marcó ninguna sesión de esa semana como hecha, lo planificado (no se sabe qué hizo).
  */
 export function effectiveKm(sessions: Session[], logs: Record<string, Pick<LogEntry, 'done'> | undefined> | null, today: string): number {
   if (!logs || !sessions.some((s) => logs[s.id]?.done)) return runKm(sessions);

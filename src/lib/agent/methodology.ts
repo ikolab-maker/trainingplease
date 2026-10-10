@@ -30,10 +30,10 @@ export const METHODOLOGY = `
 | R repeticiones | velocidad y economía; series de hasta 2 min, pausa 2–3 veces la serie | 8 | lo menor entre 5 % de la semana y 8 km |
 - Rectas: 4–6 × 15–20 s rápidas y relajadas al final de un rodaje E; no cuentan como calidad.
 - Ritmos: solo los que da Ciencia en el contexto (salen de un tiempo de referencia reciente). Nunca desde la meta. Sin referencia, prescribe por RPE.
-- En cada sesión de carrera declara en "work" los bloques de M, T, I o R con sus km a ese ritmo y la duración de cada serie en minutos (repMin; null si es continuo). Sesiones suaves: work vacío. Toda sesión con RPE ≥ 7 lleva work. Carreras y tests a tope: race true.
+- En cada sesión de carrera declara en "work" los bloques de M, T, I o R con sus km a ese ritmo y la duración de cada serie en minutos (repMin; null si es continuo). Sesiones suaves: work vacío. Toda sesión con RPE ≥ 7 lleva work. Carreras y tests, también una carrera de preparación que se corre controlada: race true y work vacío.
 
 ## La semana
-- Sesiones de calidad (con work o RPE ≥ 7, sin contar carreras): con 3 días de carrera, 1; con 4, 1 (2 solo si lleva semanas sin dolor, y la segunda ligera); con 5 o más, máximo 2.
+- Sesiones de calidad (con work o RPE ≥ 7, sin contar carreras): con 3 días de carrera, 1; con 4, 1 (2 solo tras 4 semanas registradas sin dolor, y la segunda ligera); con 5 o más, máximo 2.
 - Nunca dos días duros seguidos; una carrera cuenta como día duro.
 - Fuerza: 2 sesiones por semana. Pierna intensa nunca 48 h antes de la calidad, el fondo o un test.
 - Al menos un día sin correr.
@@ -42,7 +42,7 @@ export const METHODOLOGY = `
 
 ## Progresión
 - Daniels: mantener la misma carga 3–4 semanas antes de subirla. Al subir, ~10 % de km como guía.
-- Topes duros: +20 % sobre la semana anterior y +30 % sobre la de hace dos semanas. Al volver de una descarga se puede regresar al volumen previo.
+- Topes duros: +20 % sobre la semana anterior y +30 % sobre la de hace dos semanas. Una descarga no cuenta como base: al volver se puede regresar al volumen previo. Si la semana anterior no tuvo km (lesión, enfermedad, viaje), la referencia es el volumen normal reciente.
 - Ninguna salida supera en más de 10 % a la más larga de los últimos 30 días (el contexto trae el número). Así crece el fondo: de a poco.
 - "No correr la distancia de la meta" es una convención del maratón. En 10K y media el fondo puede llegar a la distancia o pasarla si crece con la regla anterior y no pasa de 150 min. En novatos puede quedarse debajo.
 - Descarga cada 3–4 semanas por convención (o la que fije el plan del atleta): −30 a −40 % de km, sin calidad, fuerza ligera.
@@ -69,7 +69,7 @@ export const METHODOLOGY = `
 - Taper de 10K: 7–10 días. Semana de carrera: hasta 70 % del volumen normal sin contar la carrera, mismos días, una sesión corta a ritmo de 10K 3–5 días antes.
 - Taper de media: 10–14 días. Semana anterior: hasta 80 % del volumen normal. Semana de carrera: hasta 60 % sin contar la carrera, mismos días, un toque corto a ritmo de carrera. Se mantiene la intensidad; baja el volumen.
 - Nunca recortar el taper. Tests y carreras mandan sobre el resto de la semana; los 2 días antes de un test bajan la carga.
-- Después de una carrera: 1 día suave por cada 3 km (10K: 3 días; media: 7). Una carrera de preparación a una semana de la meta se corre controlada.
+- Después de una carrera o un test: 1 día suave por cada 3 km (5K: 2 días; 10K: 3; media: 7), también si fue la semana anterior. Una carrera de preparación a una semana de la meta se corre controlada.
 - Predicciones: siempre un rango (índice de forma y Riegel con exponente 1,06–1,08), nunca un solo tiempo. Si la meta pide más de lo que da la forma actual, díselo al coach con números y propone un ritmo de salida prudente.
 
 ## Dolor, enfermedad y calor

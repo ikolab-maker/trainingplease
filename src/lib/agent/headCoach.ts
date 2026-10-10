@@ -1,11 +1,11 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { addDays, dayParts } from '@/lib/dates';
-import { checkAdjustment, checkProposal, LONG_RUN_MAX_MIN, type GuardContext } from './guardrails';
+import { checkAdjustment, checkProposal, easyDaysAfter, LONG_RUN_MAX_MIN, volumeLimits, type GuardContext } from './guardrails';
 import type { AthleteContext } from './context';
 import { easyPaceMid, equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, trainingPaces } from './fitness';
 import { METHODOLOGY, METHODOLOGY_VERSION } from './methodology';
-import { effectiveKm, isDeloadPhase, longestRecentRun, round1, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
+import { effectiveKm, isDeloadPhase, longestRecentRun, round1, RUN_SPORTS, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
 import { OUTPUT_SCHEMA, sessionExtras, toPlanFile, type AgentOutput } from './proposal';
 import type { PlanWeekFile } from '@/lib/planFile';
 
@@ -34,7 +34,7 @@ Cómo trabajar:
    - distanceKm solo en sesiones de carrera (running, fondo, tecnica); en las demás, null.
    - core: true solo en las sesiones que cuentan para el cumplimiento (no descanso ni extras opcionales).
    - steps: instrucciones claras, una por línea. tip: el porqué de la sesión o del cambio.
-   - work: los bloques de calidad (zona M, T, I o R, km a ese ritmo y minutos por serie); vacío en sesiones suaves. race: true solo en carreras o tests a tope.
+   - work: los bloques de calidad (zona M, T, I o R, km a ese ritmo y minutos por serie); vacío en sesiones suaves. race: true en carreras y tests, también en una carrera de preparación que se corre controlada; con race true, work va vacío.
    - Si Ciencia da ritmos, úsalos en los pasos junto al RPE (por ejemplo "a 5:30/km, RPE 7").
 6. summary: 3 líneas para el coach (qué pasó, cómo respondió, qué propones). alerts: solo lo que el coach deba mirar. coachMessage: 2 a 4 líneas con la decisión, los km contra la semana anterior y qué cambió. memoryRow: una fila para el historial con el formato "Fase | Cumplimiento | Km plan / hecho | RPE vs objetivo | Señales | Decisión".
 7. No es consejo médico: ante dolor, la indicación es parar y consultar a un profesional.
@@ -77,12 +77,17 @@ function scienceLines(ctx: AthleteContext, today: string): string[] {
   out.push(`Índice de forma: ${index.toFixed(1)}. Ritmos por km: E ${fmtPace(p.easy[0])}–${fmtPace(p.easy[1])} · M ${fmtPace(p.marathon)} · T ${fmtPace(p.threshold)} · I ${fmtPace(p.interval)} · R ${fmtPace(p.repetition)}.`);
   if (daysBetween(ref.date, today) > 56) out.push('La referencia tiene más de 8 semanas: sugiere un test o usa una carrera más reciente.');
   const race = ctx.goalRace;
-  if (race?.distanceKm) {
+  if (race?.distanceKm && race.date <= today) {
+    out.push(`La carrera objetivo (${race.date}) ya se corrió o es hoy: si el atleta la corrió, su resultado es la nueva referencia; pídesela al coach en alerts.`);
+  } else if (race?.distanceKm) {
     const weeks = Math.max(0, Math.round(daysBetween(today, race.date) / 7));
     const goal = ctx.memory.goalTimeMin;
     const [lo, hi] = equivalentRange(ref, race.distanceKm);
     const range = `${fmtTime(lo)}–${fmtTime(hi)}`;
-    if (goal) {
+    const goalIndex = goal ? fitnessIndex(race.distanceKm, goal) : null;
+    if (goal && goalIndex != null && !(goalIndex >= 15 && goalIndex <= 90)) {
+      out.push(`Equivalente actual en ${kmText(race.distanceKm)} km: ${range}. La meta de tiempo guardada (${fmtTime(goal)}) no es coherente con esa distancia: ignórala y avísale al coach en alerts.`);
+    } else if (goal) {
       const g = goalCheck(ref, { distanceKm: race.distanceKm, timeMin: goal }, weeks);
       out.push(`Meta: ${fmtTime(goal)} en ${kmText(race.distanceKm)} km (índice ${g.goalIndex.toFixed(1)}), a ${weeks} semanas. Con la forma actual: ${range}. ${g.gapPct > 0 ? `La meta pide ${g.gapPct.toFixed(1).replace('.', ',')} % más rápido` : 'La forma actual ya alcanza la meta'}: ${g.label}.`);
     } else {
@@ -92,27 +97,42 @@ function scienceLines(ctx: AthleteContext, today: string): string[] {
   return out;
 }
 
-/** Guardián: los números de esta semana, para que la propuesta los respete desde el primer intento. */
+/** Guardián: los números de esta semana, con las mismas cuentas que usa al revisar (guardrails.ts). */
 function guardLines(g: Omit<GuardContext, 'decision'>, longestSource: 'registros' | 'plan' | null): string[] {
   const out = ['', '## Guardián: límites de esta semana'];
-  if (g.prevKm) {
-    out.push(`Km de carrera de la semana anterior (hechos y pendientes): ${kmText(g.prevKm)}. Guía +10 % (${kmText(g.prevKm * 1.1)}); tope duro +20 % (${kmText(g.prevKm * 1.2)})${g.prev2Km ? ` y +30 % sobre los ${kmText(g.prev2Km)} de hace dos semanas (${kmText(g.prev2Km * 1.3)})` : ''}.`);
+  const v = volumeLimits(g);
+  if (g.mode === 'ajuste') {
+    if (v.refKm) out.push(`Km de carrera de la semana cargada: ${kmText(v.refKm)}. El ajuste no sube volumen salvo que el coach lo pida: con mantener, hasta ${kmText(round1(v.refKm * 1.03 + 0.5))} km; tope duro +20 % (${kmText(v.weekCap!)} km).`);
+  } else if (v.refKm && v.weekBase && v.weekCap) {
+    const ref = v.refFromNormal
+      ? `La semana anterior no tuvo km de carrera: la referencia es el volumen normal reciente, ${kmText(v.refKm)} km.`
+      : `Km de carrera de la semana anterior (hechos y pendientes): ${kmText(v.refKm)}.`;
+    const back = v.weekBase > v.refKm ? ` Viene de una descarga: puede volver al volumen previo (${kmText(v.weekBase)} km).` : '';
+    out.push(`${ref}${back} Guía +10 % (${kmText(v.weekBase * 1.1)}); tope duro +20 % (${kmText(v.weekCap)})${v.twoWeekCap ? ` y +30 % sobre los ${kmText(v.twoWeekBase!)} de hace dos semanas (${kmText(v.twoWeekCap)})` : ''}. Con descarga, hasta ${kmText(v.refKm * 0.75)} km; con bajar, hasta ${kmText(v.refKm * 0.9)}; con mantener, hasta ${kmText(round1(v.refKm * 1.03 + 0.5))}.`);
   }
   if (g.longestRecentKm) {
-    out.push(`Salida más larga de los últimos 30 días: ${kmText(g.longestRecentKm)} km${longestSource === 'plan' ? ' (según el plan: el atleta no registró esos días)' : ''}. Ninguna salida de esta semana pasa de ${kmText(g.longestRecentKm * 1.1)} km, salvo una carrera.`);
+    const what = g.mode === 'ajuste'
+      ? `Salida más larga registrada en 30 días o ya aprobada en esta semana: ${kmText(g.longestRecentKm)} km.`
+      : `Salida más larga de los últimos 30 días: ${kmText(g.longestRecentKm)} km${longestSource === 'plan' ? ' (según el plan: el atleta no registró esos días)' : ''}.`;
+    out.push(`${what} Ninguna salida${g.mode === 'ajuste' ? ' que cambies o agregues' : ' de esta semana'} pasa de ${kmText(round1(g.longestRecentKm * 1.1))} km, salvo una carrera.`);
   } else {
     out.push('No hay salidas registradas en los últimos 30 días: el fondo parte corto y lo dices en alerts para que el coach confirme el punto de partida.');
   }
   out.push(`Fondo: hasta ${LONG_RUN_MAX_MIN} min${g.easyPaceSecPerKm ? ` (a ritmo E son unos ${kmText((LONG_RUN_MAX_MIN * 60) / g.easyPaceSecPerKm)} km)` : ''}.`);
+  const afterRace = (date: string, km: number, what: string) => {
+    const n = easyDaysAfter(km);
+    if (daysBetween(date, g.start) <= n) out.push(`${what} (${kmText(km)} km, ${date}): ${n} días suaves después; calidad recién desde el ${addDays(date, n + 1)}.`);
+  };
+  for (const r of g.recentRaces ?? []) afterRace(r.date, r.distanceKm, `Carrera o test "${r.title}"`);
   if (g.race) {
     const days = daysBetween(g.start, g.race.date);
     const half = (g.race.distanceKm ?? 0) >= 15;
     const normal = Math.max(g.prevKm ?? 0, g.recentMaxKm ?? 0);
     if (days >= 0 && days <= 6) out.push(`Semana de la carrera (${g.race.date}): sin contarla, hasta ${kmText(normal * (half ? 0.6 : 0.7))} km (${half ? 60 : 70} % de ${kmText(normal)}), mismos días, un toque corto a ritmo de carrera.`);
     else if (days >= 7 && days <= 13) out.push(`La carrera es la semana siguiente (${g.race.date}): ${half ? `el taper de media empieza ya: hasta ${kmText(normal * 0.8)} km (80 % de ${kmText(normal)})` : 'el taper de 10K empieza al final de esta semana'}.`);
-    else if (days < 0 && days >= -7 && g.race.distanceKm) out.push(`La carrera fue el ${g.race.date}: ${Math.ceil(g.race.distanceKm / 3)} días suaves después de ella.`);
+    else if (days < 0 && g.race.distanceKm && !(g.recentRaces ?? []).some((r) => r.date === g.race!.date)) afterRace(g.race.date, g.race.distanceKm, 'La carrera objetivo');
   }
-  if (g.painFreeWeeks === false) out.push('Hubo posible dolor en las semanas recientes: con 4 días de carrera, solo 1 sesión de calidad.');
+  if (!g.painFreeWeeks) out.push('Con 4 días de carrera va 1 sesión de calidad: la segunda solo tras 4 semanas registradas sin dolor.');
   return out;
 }
 
@@ -221,7 +241,12 @@ export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; a
   // En un ajuste no se reabre lo que el coach ya aprobó: las distancias de la semana cargada valen como referencia.
   const originalMax = Math.max(0, ...original.filter((s) => !locked.includes(s)).map((s) => (runKm([s]) > 0 ? s.distanceKm ?? 0 : 0)));
   const longestRecentKm = adjust ? Math.max(longest?.km ?? 0, originalMax / 1.1) || null : longest?.km ?? null;
-  const painFreeWeeks = ctx.logs != null && previous.slice(-5).every((w) => !weekMetrics(w, ctx.sessions[w.id] ?? [], ctx.logs, today).painMentions.length);
+  const painFreeWeeks = ctx.logs != null && previous.length >= 4
+    && previous.slice(-4).every((w) => !weekMetrics(w, ctx.sessions[w.id] ?? [], ctx.logs, today).painMentions.length);
+  // Carreras o tests de la semana analizada (marcados como carrera o con RPE 9–10): piden días suaves después.
+  const recentRaces = adjust ? [] : (ctx.sessions[analyzedWeekId] ?? [])
+    .filter((s) => RUN_SPORTS.has(s.sport) && (s.distanceKm ?? 0) > 0 && (s.race === true || (s.rpe ?? 0) >= 9))
+    .map((s) => ({ date: s.date, distanceKm: s.distanceKm!, title: s.title }));
   const reference = ctx.memory.reference;
   // En un ajuste la referencia es la misma semana tal como estaba: no sube km sin que se pida, y
   // la semana de carrera ya quedó protegida cuando se aprobó.
@@ -234,7 +259,10 @@ export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; a
     prev2Km: adjust ? null : prev2Km,
     recentMaxKm: adjust ? null : recent.length ? Math.max(...recent) : null,
     prevWasDeload: !adjust && isDeloadPhase(analyzedWeek?.phase),
+    prev2WasDeload: !adjust && isDeloadPhase(before?.phase),
     race: adjust || !ctx.goalRace ? null : { date: ctx.goalRace.date, distanceKm: ctx.goalRace.distanceKm },
+    recentRaces,
+    lockedIds: locked.map((s) => s.id),
     longestRecentKm,
     easyPaceSecPerKm: reference ? easyPaceMid(fitnessIndex(reference.distanceKm, reference.timeMin)) : null,
     painFreeWeeks,

@@ -20,6 +20,8 @@ test('índice de forma: atletas del piloto', () => {
   assert.equal(fmtPace(p.threshold), '5:30');
   assert.equal(fmtPace(p.interval), '5:04');
   assert.equal(fitnessIndex(10, 56).toFixed(1), '35.0');
+  // Con índices muy bajos, R sigue siendo más rápido que I.
+  for (const i of [15, 16, 17, 30, 50]) assert.ok(trainingPaces(i).repetition < trainingPaces(i).interval, String(i));
 });
 
 test('meta: rango con Riegel y lectura según las semanas que faltan', () => {

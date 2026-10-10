@@ -22,7 +22,7 @@ export interface AgentOutput {
     id: string; date: string; sport: string; title: string; summary: string;
     durationMin: number | null; distanceKm: number | null; rpe: number | null;
     steps: string[]; focus: string; tip: string; core: boolean;
-    race: boolean; // carrera o test a tope
+    race: boolean; // carrera o test (también una de preparación corrida controlada)
     work: QualityWork[]; // vacío en sesiones suaves
   }[];
 }
@@ -59,7 +59,7 @@ export const OUTPUT_SCHEMA = obj({
   },
 });
 
-/** Lo que la app no guarda pero el Guardián revisa: carreras y trabajo de calidad por sesión. */
+/** Lo que el Guardián revisa por sesión: carreras y trabajo de calidad (la app guarda solo la marca de carrera). */
 export function sessionExtras(out: AgentOutput): Record<string, { race: boolean; work: QualityWork[] }> {
   return Object.fromEntries(out.sessions.map((s) => [s.id, { race: s.race === true, work: Array.isArray(s.work) ? s.work : [] }]));
 }
@@ -69,6 +69,6 @@ export function toPlanFile(out: AgentOutput, weekId: string, start: string): Pla
   return [{
     id: weekId,
     week: { start, title: out.week.title, phase: out.week.phase, goal: out.week.goal, aiAssisted: true, notes: out.week.notes },
-    sessions: out.sessions.map(({ race: _race, work: _work, ...s }) => ({ ...s, sport: s.sport as PlanWeekFile['sessions'][number]['sport'] })),
+    sessions: out.sessions.map(({ race, work: _work, ...s }) => ({ ...s, sport: s.sport as PlanWeekFile['sessions'][number]['sport'], ...(race === true ? { race: true } : {}) })),
   }];
 }

@@ -48,14 +48,16 @@ const secPerKm = (metersPerMin: number) => 60_000 / metersPerMin;
 /**
  * Ritmos por tipo de sesión: E al 59–74 % del índice, M al ritmo de maratón equivalente,
  * T al 88 %, I al 97,5 % y R al ritmo de milla equivalente. Son una aproximación de las tablas.
+ * Con índices muy bajos la milla equivalente sale tan lenta como I: R queda al menos 3 % más rápido.
  */
 export function trainingPaces(index: number): TrainingPaces {
+  const interval = secPerKm(speedFor(0.975 * index));
   return {
     easy: [secPerKm(speedFor(0.74 * index)), secPerKm(speedFor(0.59 * index))],
     marathon: (raceTimeMin(index, 42.195) * 60) / 42.195,
     threshold: secPerKm(speedFor(0.88 * index)),
-    interval: secPerKm(speedFor(0.975 * index)),
-    repetition: (raceTimeMin(index, 1.609) * 60) / 1.609,
+    interval,
+    repetition: Math.min((raceTimeMin(index, 1.609) * 60) / 1.609, interval * 0.97),
   };
 }
 

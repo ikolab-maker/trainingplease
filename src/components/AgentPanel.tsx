@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import './agent.css';
 import { dayParts, daysUntil, todayISO } from '@/lib/dates';
@@ -54,6 +54,18 @@ function readReference(r: RefDraft): { value: FitnessReference | null; error?: s
   return { value };
 }
 
+/** La meta de tiempo del formulario: "1:50" en una media se lee como 1 min 50 s, así que se valida contra la distancia. */
+function readGoal(text: string, distanceKm: number | null | undefined): { value: number | null; error?: string } {
+  if (!text.trim()) return { value: null };
+  const value = parseTime(text);
+  if (value == null) return { value: null, error: 'La meta de tiempo se escribe como 56:00 o 1:50:00.' };
+  if (distanceKm) {
+    const index = fitnessIndex(distanceKm, value);
+    if (!(index >= 15 && index <= 90)) return { value: null, error: `La meta de ${text.trim()} no cuadra con ${dec(distanceKm)} km: para horas usa h:mm:ss (por ejemplo 1:50:00).` };
+  }
+  return { value };
+}
+
 /**
  * Agente principal en la ficha del atleta: su memoria, la propuesta de la semana siguiente y
  * los ajustes puntuales que pide el coach, para aprobar, editar o descartar.
@@ -71,6 +83,8 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   const [draft, setDraft] = useState('');
   const [ref, setRef] = useState<RefDraft>(EMPTY_REF);
   const [goalTime, setGoalTime] = useState('');
+  const formFor = useRef<string | null>(null); // atleta cuya ficha está en el formulario
+  const shownUid = useRef(uid); // atleta en pantalla: una respuesta de otro atleta se descarta
   const aiConsent = athlete.consent?.optional?.ai === true;
 
   const load = useCallback(async () => {
@@ -78,20 +92,33 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
       const res = await fetch(`/api/admin/proposals?uid=${uid}`, { headers: await authHeaders() });
       if (!res.ok) throw new Error();
       const data = await res.json();
+      if (shownUid.current !== uid) return;
       setProposals(data.proposals);
-      setFicha(data.memory?.ficha ?? '');
-      const r = parseReference(data.memory?.reference);
-      setRef(r ? { label: r.label, distanceKm: String(r.distanceKm).replace('.', ','), time: fmtTime(r.timeMin), date: r.date, maxEffort: r.maxEffort } : EMPTY_REF);
-      setGoalTime(typeof data.memory?.goalTimeMin === 'number' ? fmtTime(data.memory.goalTimeMin) : '');
       setHistory(Array.isArray(data.memory?.history) ? data.memory.history : []);
       setAgentReady(!!data.agentReady);
+      // La ficha se llena una sola vez por atleta: recargar las propuestas no pisa lo que el coach está escribiendo.
+      if (formFor.current !== uid) {
+        setFicha(data.memory?.ficha ?? '');
+        const r = parseReference(data.memory?.reference);
+        setRef(r ? { label: r.label, distanceKm: String(r.distanceKm).replace('.', ','), time: fmtTime(r.timeMin), date: r.date, maxEffort: r.maxEffort } : EMPTY_REF);
+        setGoalTime(typeof data.memory?.goalTimeMin === 'number' ? fmtTime(data.memory.goalTimeMin) : '');
+        formFor.current = uid;
+      }
     } catch {
+      if (shownUid.current !== uid) return;
       setProposals([]);
       setMsg('No se pudieron leer las propuestas.');
     }
   }, [uid, authHeaders]);
 
+  // Al cambiar de atleta, nada del anterior queda en pantalla y la ficha no se guarda hasta leer la nueva.
+  useEffect(() => {
+    shownUid.current = uid;
+    formFor.current = null;
+    setProposals(null); setHistory([]); setFicha(''); setRef(EMPTY_REF); setGoalTime(''); setEditing(null); setRequest(''); setMsg('');
+  }, [uid]);
   useEffect(() => { load(); }, [load]);
+  const formReady = formFor.current === uid;
 
   async function post(url: string, body: unknown) {
     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await authHeaders()) }, body: JSON.stringify(body) });
@@ -150,11 +177,11 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   async function saveFicha() {
     const reference = readReference(ref);
     if (reference.error) { setMsg(reference.error); return; }
-    const goalTimeMin = goalTime.trim() ? parseTime(goalTime) : null;
-    if (goalTime.trim() && goalTimeMin == null) { setMsg('La meta de tiempo se escribe como 56:00 o 1:50:00.'); return; }
+    const goal = readGoal(goalTime, athlete.goalRace?.distanceKm);
+    if (goal.error) { setMsg(goal.error); return; }
     setBusy('ficha'); setMsg('');
     try {
-      const { ok, data } = await post('/api/admin/memory', { uid, ficha, reference: reference.value, goalTimeMin });
+      const { ok, data } = await post('/api/admin/memory', { uid, ficha, reference: reference.value, goalTimeMin: goal.value });
       setMsg(ok ? 'Ficha guardada.' : data.error ?? 'No se pudo guardar la ficha.');
     } catch {
       setMsg('Sin conexión.');
@@ -253,7 +280,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
         <label className="field"><span>Meta de tiempo{athlete.goalRace ? ` en ${athlete.goalRace.name}` : ''} (opcional)</span>
           <input value={goalTime} placeholder="1:50:00" onChange={(e) => setGoalTime(e.target.value)} /></label>
         <FitnessPreview draft={ref} goalTime={goalTime} race={athlete.goalRace ?? null} />
-        <button type="button" className="btn small" disabled={!!busy} onClick={saveFicha}>{busy === 'ficha' ? 'Guardando…' : 'Guardar ficha'}</button>
+        <button type="button" className="btn small" disabled={!!busy || !formReady} onClick={saveFicha}>{busy === 'ficha' ? 'Guardando…' : 'Guardar ficha'}</button>
         {history.length > 0 && (
           <>
             <h4>Historial de decisiones</h4>
@@ -281,18 +308,21 @@ function FitnessPreview({ draft, goalTime, race }: { draft: RefDraft; goalTime: 
   if (!r) return null;
   const index = fitnessIndex(r.distanceKm, r.timeMin);
   const p = trainingPaces(index);
-  const goal = parseTime(goalTime);
+  const goal = readGoal(goalTime, race?.distanceKm);
   const age = daysUntil(todayISO(), r.date); // días desde la referencia
   let raceLine = '';
-  if (race?.distanceKm) {
+  if (race?.distanceKm && race.date <= todayISO()) {
+    raceLine = `${race.name} ya se corrió o es hoy: su resultado puede ser la nueva referencia.`;
+  } else if (race?.distanceKm) {
     const weeks = Math.max(0, Math.round(daysUntil(race.date) / 7));
     const [lo, hi] = equivalentRange(r, race.distanceKm);
     raceLine = `Con esta forma, ${race.name} (${dec(race.distanceKm)} km): ${fmtTime(lo)} a ${fmtTime(hi)}.`;
-    if (goal) {
-      const g = goalCheck(r, { distanceKm: race.distanceKm, timeMin: goal }, weeks);
+    if (goal.error) raceLine += ` ${goal.error}`;
+    else if (goal.value) {
+      const g = goalCheck(r, { distanceKm: race.distanceKm, timeMin: goal.value }, weeks);
       raceLine += g.gapPct > 0
-        ? ` La meta de ${fmtTime(goal)} pide ${dec(g.gapPct)} % más rápido, a ${weeks} semanas: ${g.label}.`
-        : ` La meta de ${fmtTime(goal)} ya está al alcance.`;
+        ? ` La meta de ${fmtTime(goal.value)} pide ${dec(g.gapPct)} % más rápido, a ${weeks} semanas: ${g.label}.`
+        : ` La meta de ${fmtTime(goal.value)} ya está al alcance.`;
     }
   }
   return (

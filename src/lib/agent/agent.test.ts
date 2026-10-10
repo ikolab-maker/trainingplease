@@ -148,9 +148,43 @@ test('Guardián: después de una carrera, 1 día suave por cada 3 km', () => {
   const ok = check(tune, { prevKm: 30 });
   assert.deepEqual(ok.issues, []);
   const bad = out([6, 0, 0, 0, 0, 10, 4], 4, [{}, { sport: 'descanso', distanceKm: null, rpe: null, core: false }, {}, {}, {}, { race: true, rpe: 9 }, { rpe: 7, work: work('T', 1) }]);
-  assert.match(check(bad, { prevKm: 30 }).issues.join('|'), /van 4 días suaves.*demasiado pronto/);
+  assert.match(check(bad, { prevKm: 30 }).issues.join('|'), /van 3 días suaves.*demasiado pronto/);
   // La carrera objetivo fue el domingo anterior (media): la semana siguiente empieza suave.
-  assert.match(check(out([8, 8, 10], 4, [{ rpe: 7, work: work('T', 2) }]), { race: { date: '2026-10-11', distanceKm: 21.1 } }).issues.join(), /van 8 días suaves/);
+  assert.match(check(out([8, 8, 10], 4, [{ rpe: 7, work: work('T', 2) }]), { race: { date: '2026-10-11', distanceKm: 21.1 } }).issues.join(), /van 7 días suaves/);
+  // Un test o una carrera de preparación de la semana anterior también pide días suaves.
+  const recentRaces = [{ date: '2026-10-11', distanceKm: 10, title: 'Test 10K' }];
+  assert.match(check(out([8, 8, 10], 4, [{ rpe: 7, work: work('T', 2) }]), { recentRaces }).issues.join(), /Después de "Test 10K".*van 3 días suaves/);
+  const rest = { sport: 'descanso', distanceKm: null, rpe: null, core: false };
+  assert.deepEqual(check(out([8, 0, 0, 8, 0, 10], 4, [{}, rest, rest, { rpe: 7, work: work('T', 2) }, rest]), { recentRaces }).issues, []);
+});
+
+test('Guardián: una descarga no sirve de base y una semana sin km no apaga los topes', () => {
+  // 36 → descarga 22 → 33: la semana siguiente puede mantener 33 aunque hace dos semanas fueron 22.
+  const back = { decision: 'mantener' as const, prevKm: 33, prev2Km: 22, recentMaxKm: 36 };
+  assert.deepEqual(check(out([10, 10, 13]), { ...back, prev2WasDeload: true }).issues, []);
+  assert.match(check(out([10, 10, 13]), back).issues.join(), /dos semanas/);
+  // Semana anterior sin km (dolor): la descarga se mide contra el volumen normal reciente.
+  const r = check(out([10, 10, 15]), { decision: 'descarga', prevKm: 0, prev2Km: 30, recentMaxKm: 30 });
+  assert.match(r.issues.join(), /descarga baja 30–40 %.*máximo 22,5/);
+});
+
+test('Guardián: carreras sin topes por zona ni proporción del fondo; fondo por tiempo hasta 150 min', () => {
+  const race = { race: true, rpe: 9, work: work('T', 7) };
+  assert.deepEqual(check(out([6, 8, 10], 4, [{}, {}, race])).issues, []);
+  assert.match(check(out([8, 8, 0], 4, [{}, {}, { distanceKm: null, durationMin: 180 }])).issues.join(), /dura unos 180 min/);
+  // La marca de carrera se guarda en el plan; el trabajo de calidad no.
+  const p = plan(out([6, 8, 10], 4, [{}, {}, race]))[0].sessions;
+  assert.equal(p[2].race, true);
+  assert.equal('race' in p[0], false);
+  assert.equal('work' in p[2], false);
+});
+
+test('Guardián: en un ajuste no se piden cambios a lo ya pasado o registrado', () => {
+  const adj = { mode: 'ajuste' as const, decision: 'mantener' as const, prevKm: 30, longestRecentKm: 14, illnessAlert: true, lockedIds: ['w42-0', 'w42-2'] };
+  const o = out([6, 8, 16], 4, [{ rpe: 8, work: work('I', 2, 3), tip: 'Si hay fiebre, consulta a un médico.' }]);
+  assert.deepEqual(check(o, adj).issues, []);
+  // Lo que sí se puede cambiar sigue revisado: un RPE 7 sin work es un problema también en un ajuste.
+  assert.match(check(out([6, 8, 16], 4, [{}, { rpe: 7 }]), { ...adj, illnessAlert: false }).issues.join(), /declara en work/);
 });
 
 test('Guardián: en un ajuste las reglas de estructura avisan sin bloquear', () => {
@@ -190,7 +224,7 @@ test('esquema de salida estricto: todo objeto cierra propiedades y las exige', (
 test('Guardián: las propuestas W41 que Chris ya revisó pasan el formato', { skip: !existsSync('/mnt/project-files/train-please/atletas') }, () => {
   for (const name of ['claudia', 'manuel', 'ronnil']) {
     const raw = JSON.parse(readFileSync(`/mnt/project-files/train-please/atletas/${name}/propuestas/2026-W41.json`, 'utf8'));
-    const { issues } = checkProposal(raw, { ...ctx, weekId: '2026-W41', start: '2026-10-05', prevKm: null, race: null });
+    const { issues } = checkProposal(raw, { ...ctx, weekId: '2026-W41', start: '2026-10-05', prevKm: null, recentMaxKm: null, race: null });
     assert.deepEqual(issues, [], name);
   }
 });

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb, verifyRequest } from '@/lib/firebase-admin';
 import { todayISO } from '@/lib/dates';
-import { parseReference } from '@/lib/agent/fitness';
+import { fitnessIndex, parseReference } from '@/lib/agent/fitness';
 
 export const runtime = 'nodejs';
 
@@ -35,8 +35,15 @@ export async function POST(req: Request) {
   }
   if (body.goalTimeMin !== undefined) {
     if (body.goalTimeMin === null) update.goalTimeMin = FieldValue.delete();
-    else if (typeof body.goalTimeMin === 'number' && body.goalTimeMin >= 3 && body.goalTimeMin <= 900) update.goalTimeMin = body.goalTimeMin;
-    else return NextResponse.json({ error: 'La meta de tiempo no es válida.' }, { status: 400 });
+    else {
+      // Contra la distancia de la carrera objetivo: "1:50" leído como minutos en una media no pasa.
+      const goal = body.goalTimeMin;
+      const distanceKm = (await adminDb().doc(`users/${uid}`).get()).get('goalRace.distanceKm');
+      const index = typeof goal === 'number' && typeof distanceKm === 'number' && distanceKm > 0 ? fitnessIndex(distanceKm, goal) : null;
+      const ok = typeof goal === 'number' && goal >= 3 && goal <= 900 && (index == null || (index >= 15 && index <= 90));
+      if (!ok) return NextResponse.json({ error: 'La meta de tiempo no cuadra con la distancia de la carrera objetivo (para horas usa h:mm:ss).' }, { status: 400 });
+      update.goalTimeMin = goal;
+    }
   }
   if (!Object.keys(update).length) return NextResponse.json({ error: 'Nada que guardar.' }, { status: 400 });
 
