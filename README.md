@@ -2,6 +2,11 @@
 
 Panel de coach y plan semanal de cada atleta. Next.js en Vercel, login con Google (Firebase Auth), datos en Firestore y Firebase Admin SDK en rutas API privadas. Proyecto hecho desde cero con Claude Code. El diseño respeta el de la web original del plan de Claudia (rosa, celeste, amarillo y menta; Oswald y Nunito Sans; tarjetas por día con check y cuenta regresiva), con tres temas a elegir: rosa, azul y oscuro.
 
+## Sitio público y acceso a la app
+- `/` es el sitio informativo de Training Please (propósito, cómo funciona, piloto y "Crece con nosotros"). Contenido editable en `src/lib/site.ts` (testimonios, pasos y pilares); estilos en `src/app/site.css`.
+- `/entrar` es el login de la app. Las páginas privadas redirigen ahí si no hay sesión.
+- El formulario "Únete al piloto" guarda la solicitud en `pilotRequests/{correo}` vía `/api/solicitudes`. El coach la ve en **Panel coach › Solicitudes del piloto**: **Aprobar** crea el alta (igual que el alta manual) y **Descartar** la cierra.
+
 ## Cómo funciona el acceso
 - No hay invitación por enlace. El coach da de alta a cada atleta desde **Panel coach › Dar de alta** con su nombre y su correo de Google.
 - Al entrar con Google, `/api/bootstrap` comprueba el correo (lista `ADMIN_EMAILS` o alta del coach), crea `users/{uid}` y pone el rol como *custom claim*. Un correo no registrado no entra.
@@ -12,6 +17,8 @@ Panel de coach y plan semanal de cada atleta. Next.js en Vercel, login con Googl
 |---|---|---|
 | `users/{uid}` | rol, nombre, correo, tema, carrera objetivo, perfil, consentimiento vigente | servidor al crear; el atleta edita tema, perfil, carrera y consentimiento |
 | `allowlist/{correo}` | altas manuales pendientes o usadas | solo servidor |
+| `pilotRequests/{correo}` | solicitudes del sitio: datos de contacto, nivel, carrera, autorización y estado (`pending`, `approved`, `dismissed`) | solo servidor; el coach lee |
+| `investorContacts/{id}` | mensajes de "Crece con nosotros" | solo servidor; el coach lee |
 | `consents/{uid}/events/{id}` | evidencia: versión, finalidades, fecha, navegador, otorgado o revocado | atleta (solo agrega) |
 | `plans/{uid}/weeks/{semanaISO}` | título, fase, objetivo, notas, marca de IA | coach |
 | `plans/{uid}/weeks/{semanaISO}/sessions/{id}` | fecha, deporte, título, duración, distancia, RPE objetivo, instrucciones | coach |

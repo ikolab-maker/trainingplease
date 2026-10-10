@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
 import { useAuth } from '@/components/AuthProvider';
 import { db } from '@/lib/firebase';
 import { fetchAllSessions, fetchLogs } from '@/lib/data';
 import { compliance, daysUntil, isoWeekId, todayISO } from '@/lib/dates';
+import { LEVELS, type InvestorContact, type PilotRequest } from '@/lib/pilot';
 import type { Compliance } from '@/lib/dates';
 import type { GoalRace, UserDoc } from '@/lib/types';
 
@@ -22,6 +23,9 @@ interface AthleteRow {
 }
 
 interface Pending { email: string; name: string; goalRace: GoalRace | null }
+type Created = { createdAt?: { toDate(): Date } | null };
+type PilotRow = PilotRequest & Created;
+type InvestorRow = InvestorContact & Created & { id: string };
 
 export default function CoachPage() {
   return (
@@ -39,6 +43,8 @@ export default function CoachPage() {
 function Dashboard() {
   const [rows, setRows] = useState<AthleteRow[] | null>(null);
   const [pending, setPending] = useState<Pending[]>([]);
+  const [requests, setRequests] = useState<PilotRow[]>([]);
+  const [contacts, setContacts] = useState<InvestorRow[]>([]);
 
   const load = useCallback(async () => {
     const today = todayISO();
@@ -71,6 +77,12 @@ function Dashboard() {
 
     const allow = await getDocs(query(collection(db(), 'allowlist'), where('uid', '==', null)));
     setPending(allow.docs.map((d) => d.data() as Pending));
+
+    const reqs = await getDocs(query(collection(db(), 'pilotRequests'), where('status', '==', 'pending')));
+    setRequests(reqs.docs.map((d) => d.data() as PilotRow)
+      .sort((a, b) => (b.createdAt?.toDate().getTime() ?? 0) - (a.createdAt?.toDate().getTime() ?? 0)));
+    const inv = await getDocs(query(collection(db(), 'investorContacts'), orderBy('createdAt', 'desc')));
+    setContacts(inv.docs.map((d) => ({ id: d.id, ...(d.data() as InvestorContact & Created) })));
   }, []);
 
   useEffect(() => { load().catch(() => setRows([])); }, [load]);
@@ -106,6 +118,14 @@ function Dashboard() {
           </div>
         )}
 
+        {requests.length > 0 && (
+          <>
+            <h3 className="section-title">Solicitudes del piloto</h3>
+            <p className="section-sub">Llegan desde el formulario de la página principal. Al aprobar, el correo queda dado de alta y la persona ya puede entrar con Google; avísale tú por WhatsApp o correo.</p>
+            <PilotRequests requests={requests} onChange={load} />
+          </>
+        )}
+
         {pending.length > 0 && (
           <>
             <h3 className="section-title">Esperando su primer acceso</h3>
@@ -116,8 +136,65 @@ function Dashboard() {
         <h3 className="section-title">Dar de alta un atleta</h3>
         <p className="section-sub">El atleta entra con la cuenta de Google de este correo. No hay invitación por enlace: solo los correos registrados aquí pueden entrar.</p>
         <NewAthleteForm onCreated={load} />
+
+        {contacts.length > 0 && (
+          <>
+            <h3 className="section-title">Crece con nosotros</h3>
+            <p className="section-sub">Mensajes de personas interesadas en sumarse al proyecto.</p>
+            <ul className="pending-list">
+              {contacts.map((c) => (
+                <li key={c.id}>
+                  <span>
+                    <b>{c.name}</b> · <a href={`mailto:${c.email}`}>{c.email}</a>
+                    {c.createdAt && <> · {c.createdAt.toDate().toLocaleDateString('es-PE')}</>}
+                    {c.message && <><br /><i>{c.message}</i></>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </main>
+  );
+}
+
+function PilotRequests({ requests, onChange }: { requests: PilotRow[]; onChange: () => void }) {
+  const { authHeaders } = useAuth();
+  const [busy, setBusy] = useState('');
+  async function act(email: string, action: 'approve' | 'dismiss') {
+    if (action === 'dismiss' && !window.confirm(`¿Descartar la solicitud de ${email}?`)) return;
+    setBusy(email);
+    const res = await fetch('/api/admin/pilot', {
+      method: 'POST', headers: await authHeaders(), body: JSON.stringify({ email, action }),
+    });
+    setBusy('');
+    if (!res.ok) window.alert('No se pudo guardar. Inténtalo otra vez.');
+    onChange();
+  }
+  const level = (k: string) => LEVELS.find((l) => l.key === k)?.label;
+  return (
+    <ul className="pending-list">
+      {requests.map((r) => (
+        <li key={r.email}>
+          <span>
+            <b>{r.name}</b> · {r.email}{r.phone && <> · <a href={`https://wa.me/${r.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">{r.phone}</a></>}
+            <br />
+            <small>
+              {[r.city, level(r.level), r.weeklyKm && `${r.weeklyKm}/semana`,
+                r.raceName && `${r.raceName}${r.raceKm ? ` (${r.raceKm} km)` : ''}${r.raceDate ? ` · ${r.raceDate}` : ''}`,
+                r.createdAt && `enviada el ${r.createdAt.toDate().toLocaleDateString('es-PE')}`]
+                .filter(Boolean).join(' · ')}
+            </small>
+            {r.message && <><br /><i>“{r.message}”</i></>}
+          </span>
+          <span className="actions">
+            <button type="button" className="btn small" disabled={busy === r.email} onClick={() => act(r.email, 'approve')}>Aprobar</button>
+            <button type="button" className="btn small secondary" disabled={busy === r.email} onClick={() => act(r.email, 'dismiss')}>Descartar</button>
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

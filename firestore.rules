@@ -33,6 +33,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Formularios del sitio público: los escribe el servidor; solo el coach los lee.
+    match /pilotRequests/{email} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /investorContacts/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Evidencia del consentimiento: solo se agregan eventos, nunca se editan ni borran.
     match /consents/{uid}/events/{eventId} {
       allow read: if isSelf(uid) || isAdmin();
