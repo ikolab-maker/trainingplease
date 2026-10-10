@@ -48,3 +48,15 @@ En la ficha de cada atleta (panel coach) hay dos paneles:
 
 - **Exportar semana**: descarga o copia un JSON con el perfil del atleta, la semana elegida (y, si se marca, las 4 anteriores), sus sesiones y los registros (hecho, RPE real, comentario, fecha). Los registros solo se incluyen si el atleta tiene el consentimiento vigente.
 - **Importar semana**: pega o sube un JSON con el formato de `scripts/seed-plan.mjs` (`[{ id, week, sessions }]`) o un archivo exportado. Muestra una vista previa y lo guarda por `/api/admin/plan` con el mismo comportamiento que el script: fusiona la semana y crea o reemplaza sus sesiones, sin borrar otras.
+
+## Agente principal (IA)
+Cada domingo a las 12:05 de Lima (cron de Vercel, `vercel.json`) el agente principal analiza la semana que cierra de cada atleta y propone la siguiente. El coach la ve en la ficha del atleta (sección "Agente principal") y la aprueba, la edita o la descarta; también puede pedirla en el momento con "Generar propuesta ahora". Nada llega al atleta sin aprobación.
+
+- Solo trabaja con atletas que marcaron la finalidad opcional de IA en su consentimiento, y solo lee registros si el consentimiento está vigente.
+- `src/lib/agent/metrics.ts` (Análisis): cumplimiento, km, RPE y alertas, en código.
+- `src/lib/agent/methodology.ts` (Ciencia): la metodología vigente que sigue el modelo.
+- `src/lib/agent/headCoach.ts`: llama a Claude (`claude-opus-5-5`, salida JSON con esquema) y corrige hasta 3 veces si el Guardián encuentra problemas.
+- `src/lib/agent/guardrails.ts` (Guardián): reglas duras sobre la propuesta (+10 % de km, descarga, dolor, semana de carrera, formato).
+- Datos: `proposals/{uid}/weeks/{semana}`, `athleteMemory/{uid}` (ficha e historial) y `agentRuns/{id}` (registro con tokens y costo). Solo servidor; las reglas de Firestore ya los niegan al cliente.
+- Variables en Vercel: `ANTHROPIC_API_KEY` (clave de la Claude API) y `CRON_SECRET` (cualquier texto largo; Vercel lo envía al cron).
+- Arquitectura completa: `08-arquitectura-agentes-ia.md` en los documentos del proyecto.

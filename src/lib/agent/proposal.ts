@@ -1,0 +1,61 @@
+// Lo que el agente principal le devuelve al harness: esquema de salida estructurada
+// y su conversión al formato de plan de la app (el mismo de scripts/seed-plan.mjs).
+
+import { SPORT_KEYS } from '../sports.ts';
+import type { PlanWeekFile } from '../planFile.ts';
+import { DECISIONS, type Decision } from './metrics.ts';
+
+export interface AgentOutput {
+  decision: Decision;
+  decisionRule: string;
+  summary: string;
+  alerts: string[];
+  questionsForAthlete: string[];
+  coachMessage: string;
+  memoryRow: string;
+  week: { title: string; phase: string; goal: string; notes: { title: string; body: string }[] };
+  sessions: {
+    id: string; date: string; sport: string; title: string; summary: string;
+    durationMin: number | null; distanceKm: number | null; rpe: number | null;
+    steps: string[]; focus: string; tip: string; core: boolean;
+  }[];
+}
+
+const str = { type: 'string' } as const;
+const strList = { type: 'array', items: str } as const;
+const numOrNull = { anyOf: [{ type: 'number' }, { type: 'null' }] } as const;
+const obj = (properties: Record<string, unknown>) => ({
+  type: 'object', additionalProperties: false, properties, required: Object.keys(properties),
+});
+
+/** Esquema JSON de la salida (structured outputs de la Claude API). */
+export const OUTPUT_SCHEMA = obj({
+  decision: { type: 'string', enum: DECISIONS },
+  decisionRule: str,
+  summary: str,
+  alerts: strList,
+  questionsForAthlete: strList,
+  coachMessage: str,
+  memoryRow: str,
+  week: obj({
+    title: str, phase: str, goal: str,
+    notes: { type: 'array', items: obj({ title: str, body: str }) },
+  }),
+  sessions: {
+    type: 'array',
+    items: obj({
+      id: str, date: str, sport: { type: 'string', enum: SPORT_KEYS }, title: str, summary: str,
+      durationMin: numOrNull, distanceKm: numOrNull, rpe: numOrNull,
+      steps: strList, focus: str, tip: str, core: { type: 'boolean' },
+    }),
+  },
+});
+
+/** Arma el archivo de plan con la semana y el lunes que fija el harness, siempre marcado como IA. */
+export function toPlanFile(out: AgentOutput, weekId: string, start: string): PlanWeekFile[] {
+  return [{
+    id: weekId,
+    week: { start, title: out.week.title, phase: out.week.phase, goal: out.week.goal, aiAssisted: true, notes: out.week.notes },
+    sessions: out.sessions.map((s) => ({ ...s, sport: s.sport as PlanWeekFile['sessions'][number]['sport'] })),
+  }];
+}
