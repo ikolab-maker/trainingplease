@@ -95,6 +95,16 @@ test('allowlist: solo lectura para el coach, nadie escribe desde el cliente', as
   await assertFails(setDoc(doc(coach(), 'allowlist/otro@x.com'), { name: 'x' }));
 });
 
+test('solicitudes del sitio: solo el coach las lee, nadie escribe desde el cliente', async () => {
+  for (const col of ['pilotRequests', 'investorContacts']) {
+    await assertSucceeds(getDocs(collection(coach(), col)));
+    await assertFails(getDocs(collection(ana(), col)));
+    await assertFails(getDocs(collection(anon(), col)));
+    await assertFails(setDoc(doc(anon(), `${col}/x`), { name: 'x' }));
+    await assertFails(setDoc(doc(coach(), `${col}/x`), { name: 'x' }));
+  }
+});
+
 test('nadie crea su propio perfil desde el cliente', async () => {
   const intruso = env.authenticatedContext('intruso', {}).firestore();
   await assertFails(setDoc(doc(intruso, 'users/intruso'), { role: 'admin' }));
