@@ -5,6 +5,7 @@
 import { addDays } from '../dates.ts';
 import { parsePlanFile, type PlanWeekFile } from '../planFile.ts';
 import { RUN_SPORTS, round1, runKm, type Decision } from './metrics.ts';
+import type { Session } from '../types.ts';
 
 export interface GuardContext {
   weekId: string; // semana que se propone
@@ -66,4 +67,20 @@ export function checkProposal(raw: unknown, ctx: GuardContext): { plan: PlanWeek
   const runDays = new Set(w.sessions.filter((s) => RUN_SPORTS.has(s.sport)).map((s) => s.date));
   if (runDays.size > 6) issues.push('Debe quedar al menos un día sin correr.');
   return { plan, issues, km };
+}
+
+/** Reglas extra de un ajuste puntual a una semana ya cargada: mismos ids y nada de lo ya hecho cambia. */
+export function checkAdjustment(plan: PlanWeekFile[], original: Session[], locked: Pick<Session, 'id'>[]): string[] {
+  const issues: string[] = [];
+  const next = new Map((plan[0]?.sessions ?? []).map((s) => [s.id, s]));
+  const missing = original.filter((s) => !next.has(s.id));
+  if (missing.length) issues.push(`Faltan sesiones de la semana cargada (para mover una sesión cambia su fecha, no su id): ${missing.map((s) => `${s.id} (${s.title})`).join(', ')}.`);
+  for (const { id } of locked) {
+    const a = original.find((s) => s.id === id);
+    const b = next.get(id);
+    if (a && b && (a.date !== b.date || a.sport !== b.sport || a.distanceKm !== b.distanceKm || a.title !== b.title)) {
+      issues.push(`La sesión ${id} (${a.title}) ya pasó o está registrada: no se puede cambiar.`);
+    }
+  }
+  return issues;
 }

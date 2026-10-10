@@ -106,3 +106,16 @@ test('Guardián: las propuestas W41 que Chris ya revisó pasan el formato', { sk
     assert.deepEqual(issues, [], name);
   }
 });
+
+test('Ajuste: conserva ids y no toca lo ya registrado', async () => {
+  const { checkAdjustment } = await import('./guardrails.ts');
+  const original = [ses('w41-jue', '2026-10-08', 'running', 8, 4), ses('w41-sab', '2026-10-10', 'fondo', 16, 5), ses('w41-dom', '2026-10-11', 'descanso', null, null, false)];
+  const moved = [{ id: '2026-W41', week: { start: '2026-10-05', title: 'S' }, sessions: [
+    { ...original[0] }, { ...original[1], date: '2026-10-11' }, { ...original[2], date: '2026-10-10' },
+  ] }];
+  assert.deepEqual(checkAdjustment(moved as never, original, [original[0]]), []);
+  const broken = [{ ...moved[0], sessions: [{ ...original[0], date: '2026-10-09' }, { ...original[1], id: 'nuevo' }] }];
+  const issues = checkAdjustment(broken as never, original, [original[0]]).join('|');
+  assert.match(issues, /Faltan sesiones.*w41-sab.*w41-dom/);
+  assert.match(issues, /w41-jue.*no se puede cambiar/);
+});

@@ -1,7 +1,7 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { addDays, dayParts } from '@/lib/dates';
-import { checkProposal, type GuardContext } from './guardrails';
+import { checkAdjustment, checkProposal, type GuardContext } from './guardrails';
 import type { AthleteContext } from './context';
 import { METHODOLOGY, METHODOLOGY_VERSION } from './methodology';
 import { isDeloadPhase, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
@@ -109,8 +109,32 @@ function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string;
 }
 
 /** Corre el agente principal para un atleta: generar → validar (Guardián) → corregir, hasta 3 vueltas. */
-export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; analyzedWeekId: string; target: { id: string; start: string } }): Promise<HeadCoachResult> {
-  const { today, analyzedWeekId, target } = opts;
+function buildAdjustBrief(ctx: AthleteContext, target: { id: string; start: string }, m: WeekMetrics | null, request: string, locked: Set<string>, today: string): string {
+  const out: string[] = [];
+  out.push(`# Atleta: ${ctx.firstName}`);
+  out.push(`Hoy (Lima): ${today}. Tarea: AJUSTE PUNTUAL de la semana ${target.id} (lunes ${target.start} a domingo ${addDays(target.start, 6)}), que el atleta ya tiene cargada.`);
+  if (ctx.goalRace) out.push(`Carrera objetivo: ${ctx.goalRace.name}, ${ctx.goalRace.date}.`);
+  out.push('', '## Pedido del coach', request.trim());
+  out.push('', '## Ficha del atleta (memoria del coach)', ctx.memory.ficha.trim() || '(sin ficha todavía)');
+  const w = ctx.weeks.find((x) => x.id === target.id);
+  out.push('', `## Semana cargada ${target.id}`, `${w?.title ?? ''}${w?.phase ? ` · fase ${w.phase}` : ''}${w?.goal ? `\nObjetivo: ${w.goal}` : ''}`);
+  if (w?.notes?.length) out.push('Notas:', ...w.notes.map((n) => `- ${n.title}: ${n.body.replace(/\n/g, ' / ')}`));
+  for (const s of ctx.sessions[target.id] ?? []) {
+    const r = m?.rows.find((x) => x.id === s.id);
+    out.push(`${sessionLine(s)} · id ${s.id}${locked.has(s.id) ? ' · BLOQUEADA (ya pasó o está registrada)' : ''}${r?.rpeReal != null ? ` · RPE real ${r.rpeReal}` : ''}${r?.comment ? ` · "${r.comment}"` : ''}`);
+    out.push(`    resumen: ${s.summary ?? ''} · duración ${s.durationMin ?? '–'} min · pasos: ${(s.steps ?? []).join(' | ')} · tip: ${s.tip ?? ''} · focus: ${s.focus ?? ''}`);
+  }
+  out.push('', `Devuelve la semana ${target.id} COMPLETA con el ajuste aplicado. Reglas del ajuste:`,
+    '- Conserva el id de cada sesión existente; para mover una sesión cambia su date, no su id. Solo crea ids nuevos para sesiones nuevas.',
+    '- No cambies las sesiones BLOQUEADAS.',
+    '- Cambia solo lo que pide el coach y lo que la metodología exija por ese cambio (por ejemplo, si el fondo se adelanta, que no quede fuerza de pierna intensa 48 h antes; si quedan dos días seguidos de carrera dura, ajusta el otro). Copia el resto tal cual (título, pasos, tips, notas).',
+    '- decision: "mantener" salvo que el pedido sea bajar o descargar. decisionRule: qué se cambió y por qué. summary y coachMessage: el cambio en 1 a 3 líneas. memoryRow: cadena vacía. alerts: solo si el ajuste tiene un riesgo.',
+    '- En el tip de cada sesión que cambie, explica el cambio al atleta en una línea.');
+  return out.join('\n');
+}
+
+export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; analyzedWeekId: string; target: { id: string; start: string }; adjust?: { request: string } }): Promise<HeadCoachResult> {
+  const { today, analyzedWeekId, target, adjust } = opts;
   const analyzedWeek = ctx.weeks.find((w) => w.id === analyzedWeekId);
   const metrics = analyzedWeek ? weekMetrics(analyzedWeek, ctx.sessions[analyzedWeekId] ?? [], ctx.logs, today) : null;
 
@@ -120,23 +144,29 @@ export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; a
   if (weeksSinceDeload === previous.length) weeksSinceDeload = null; // nunca hubo descarga registrada: no se fuerza por calendario
   const emptyMetrics = weekMetrics({ id: analyzedWeekId, start: '', phase: '' }, [], null, today);
   const suggestion = suggestDecision(metrics ?? emptyMetrics, { weeksSinceDeload });
-  const mustDeload = suggestion.decision === 'descarga' && !/calendario/.test(suggestion.rule);
+  const mustDeload = !adjust && suggestion.decision === 'descarga' && !/calendario/.test(suggestion.rule);
+
+  // Sesiones que un ajuste no puede tocar: las ya registradas o pasadas.
+  const original = adjust ? ctx.sessions[target.id] ?? [] : [];
+  const locked = original.filter((s) => s.date < today || ctx.logs?.[s.id]?.done);
 
   const prevKm = analyzedWeek ? runKm(ctx.sessions[analyzedWeekId] ?? []) : null;
   const recent = previous.slice(-4).map((w) => runKm(ctx.sessions[w.id] ?? []));
+  // En un ajuste la referencia es la misma semana tal como estaba: no sube km sin que se pida, y
+  // la semana de carrera ya quedó protegida cuando se aprobó.
   const guardBase: Omit<GuardContext, 'decision'> = {
     weekId: target.id,
     start: target.start,
     painAlert: !!metrics?.painMentions.length,
-    prevKm,
-    recentMaxKm: recent.length ? Math.max(...recent) : null,
-    prevWasDeload: isDeloadPhase(analyzedWeek?.phase),
-    raceDate: ctx.goalRace?.date ?? null,
+    prevKm: adjust ? runKm(original) : prevKm,
+    recentMaxKm: adjust ? null : recent.length ? Math.max(...recent) : null,
+    prevWasDeload: !adjust && isDeloadPhase(analyzedWeek?.phase),
+    raceDate: adjust ? null : ctx.goalRace?.date ?? null,
   };
 
   const client = new Anthropic();
   const messages: Anthropic.Beta.BetaMessageParam[] = [
-    { role: 'user', content: buildBrief(ctx, analyzedWeekId, target, metrics, suggestion, today) },
+    { role: 'user', content: adjust ? buildAdjustBrief(ctx, target, metrics, adjust.request, new Set(locked.map((s) => s.id)), today) : buildBrief(ctx, analyzedWeekId, target, metrics, suggestion, today) },
   ];
   const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0 };
   let last: { output: AgentOutput; plan: PlanWeekFile[]; issues: string[]; km: number } | null = null;
@@ -173,6 +203,7 @@ export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; a
 
     const raw = toPlanFile(output, target.id, target.start);
     const { plan, issues, km } = checkProposal(raw, { ...guardBase, decision: output.decision });
+    if (adjust) issues.push(...checkAdjustment(plan, original, locked));
     if (mustDeload && output.decision !== 'descarga') issues.unshift(`La regla exige descarga (${suggestion.rule}); no se puede cambiar.`);
     last = { output, plan, issues, km };
     if (!issues.length) break;

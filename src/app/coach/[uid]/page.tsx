@@ -81,7 +81,7 @@ function AthleteDetail({ uid }: { uid: string }) {
 
         <AthleteProfile uid={uid} athlete={athlete} />
 
-        <AgentPanel uid={uid} athlete={athlete} onApproved={setWeekId} />
+        <AgentPanel uid={uid} athlete={athlete} weekId={weekId} onApproved={setWeekId} />
 
         <h3 className="section-title">Plan semanal</h3>
         <div className="week-tabs" role="group" aria-label="Semanas">

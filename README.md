@@ -59,6 +59,7 @@ En la ficha de cada atleta (panel coach) hay dos paneles:
 ## Agente principal (IA)
 Cada domingo a las 12:05 de Lima (cron de Vercel, `vercel.json`) el agente principal analiza la semana que cierra de cada atleta y propone la siguiente. El coach la ve en la ficha del atleta (sección "Agente principal") y la aprueba, la edita o la descarta; también puede pedirla en el momento con "Generar propuesta ahora". Nada llega al atleta sin aprobación.
 
+- **Ajustes puntuales:** en la misma sección, el coach elige una semana cargada y escribe qué cambiar ("mueve el fondo del domingo al sábado"). El agente cambia solo eso, conserva los ids de las sesiones, no toca las ya pasadas o registradas y lo deja como propuesta para aprobar.
 - Solo trabaja con atletas que marcaron la finalidad opcional de IA en su consentimiento, y solo lee registros si el consentimiento está vigente.
 - `src/lib/agent/metrics.ts` (Análisis): cumplimiento, km, RPE y alertas, en código.
 - `src/lib/agent/methodology.ts` (Ciencia): la metodología vigente que sigue el modelo.
