@@ -85,7 +85,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   const [goalTime, setGoalTime] = useState('');
   const formFor = useRef<string | null>(null); // atleta cuya ficha está en el formulario
   const shownUid = useRef(uid); // atleta en pantalla: una respuesta de otro atleta se descarta
-  const aiConsent = athlete.consent?.optional?.ai === true;
+  const aiConsent = !!athlete.consent;
 
   const load = useCallback(async () => {
     try {
@@ -201,7 +201,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
         Cada domingo a las 12:05 analiza la semana que cierra y propone la siguiente. También ajusta una semana cargada cuando se lo pides. Nada llega al atleta hasta que lo apruebes.
       </p>
       {!aiConsent && (
-        <p className="alert">Este atleta no marcó en su consentimiento la casilla de planes con IA: el agente no trabaja con sus datos.</p>
+        <p className="alert">Este atleta no tiene consentimiento vigente: el agente no trabaja con sus datos.</p>
       )}
       {!agentReady && <p className="alert">Falta configurar ANTHROPIC_API_KEY en Vercel para que el agente pueda correr.</p>}
 

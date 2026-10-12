@@ -72,8 +72,8 @@ export async function runForAthlete(uid: string, opts: { trigger: Trigger; today
     const ctx = await loadAthleteContext(uid, analyzedWeekId, target.id);
     if (!ctx) return { uid, status: 'skipped', reason: 'No es un atleta.' };
     if (!ctx.aiConsent) {
-      await runRef.set({ ...base, status: 'skipped', reason: 'sin-permiso-ia' });
-      return { uid, status: 'skipped', reason: 'El atleta no autorizó planes con IA en su consentimiento.' };
+      await runRef.set({ ...base, status: 'skipped', reason: 'sin-consentimiento' });
+      return { uid, status: 'skipped', reason: 'El atleta no tiene consentimiento vigente.' };
     }
     const proposalRef = db.doc(`proposals/${uid}/weeks/${target.id}`);
     const existing = await proposalRef.get();
@@ -103,7 +103,7 @@ export async function runAdjustment(uid: string, weekId: string, request: string
   try {
     const ctx = await loadAthleteContext(uid, weekId, weekId);
     if (!ctx) return { uid, status: 'skipped', reason: 'No es un atleta.' };
-    if (!ctx.aiConsent) return { uid, status: 'skipped', reason: 'El atleta no autorizó planes con IA en su consentimiento.' };
+    if (!ctx.aiConsent) return { uid, status: 'skipped', reason: 'El atleta no tiene consentimiento vigente.' };
     const week = ctx.weeks.find((w) => w.id === weekId);
     if (!week || !ctx.sessions[weekId]?.length) return { uid, status: 'skipped', reason: `La semana ${weekId} no está cargada.` };
 
