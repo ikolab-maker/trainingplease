@@ -12,7 +12,7 @@ import type { PlanWeekFile } from '@/lib/planFile';
 export const HEAD_COACH_MODEL = 'claude-opus-5-5';
 const MAX_ATTEMPTS = 3;
 // Precio de lista de Claude Opus 5.5 por millón de tokens (entrada, salida, lectura de caché).
-const PRICE = { input: 4, output: 20, cacheRead: 0.4, cacheWrite: 5 };
+const PRICE = { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5 };
 
 const SYSTEM = `Eres el agente principal (Head Coach) de Training Please, un club de running en Lima.
 Velas por el plan de entrenamiento de un atleta: analizas la semana que cierra y propones la semana siguiente.
