@@ -8,6 +8,7 @@ import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
 import { WeekView } from '@/components/WeekView';
 import { PlanTransfer } from '@/components/PlanTransfer';
+import { AgentPanel } from '@/components/AgentPanel';
 import { SessionEditor, emptySession } from '@/components/SessionEditor';
 import { db } from '@/lib/firebase';
 import { deleteSession, duplicateWeek, saveSession, saveWeek, useLogs, useSessions, useWeeks } from '@/lib/data';
@@ -79,6 +80,8 @@ function AthleteDetail({ uid }: { uid: string }) {
         {!athlete.consent && <p className="alert">Consentimiento pendiente o revocado: no puedes ver sus registros hasta que acepte.</p>}
 
         <AthleteProfile uid={uid} athlete={athlete} />
+
+        <AgentPanel uid={uid} athlete={athlete} weekId={weekId} onApproved={setWeekId} />
 
         <h3 className="section-title">Plan semanal</h3>
         <div className="week-tabs" role="group" aria-label="Semanas">

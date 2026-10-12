@@ -1,0 +1,11 @@
+/* Panel del agente principal en la ficha del atleta (coach). */
+.agent-panel { margin-top: 2rem; }
+.agent-panel h4 { margin: 1rem 0 .4rem; }
+.agent-panel details { margin-top: 1rem; }
+.agent-panel summary { cursor: pointer; font-weight: 700; color: var(--blue-deep); }
+.agent-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1rem 0 .4rem; }
+.agent-list { padding-left: 1.1rem; margin: .4rem 0; }
+.agent-proposal { margin-top: .6rem; }
+.agent-proposal small { color: var(--ink-soft); }
+.agent-item + .agent-item { border-top: 1px solid var(--pink-soft); margin-top: 1rem; padding-top: .6rem; }
+.agent-adjust { margin-top: 1.2rem; }

@@ -55,3 +55,17 @@ En la ficha de cada atleta (panel coach) hay dos paneles:
 
 - **Exportar semana**: descarga o copia un JSON con el perfil del atleta, la semana elegida (y, si se marca, las 4 anteriores), sus sesiones y los registros (hecho, RPE real, comentario, fecha). Los registros solo se incluyen si el atleta tiene el consentimiento vigente.
 - **Importar semana**: pega o sube un JSON con el formato de `scripts/seed-plan.mjs` (`[{ id, week, sessions }]`) o un archivo exportado. Muestra una vista previa y lo guarda por `/api/admin/plan` con el mismo comportamiento que el script: fusiona la semana y crea o reemplaza sus sesiones, sin borrar otras.
+
+## Agente principal (IA)
+Cada domingo a las 12:05 de Lima (cron de Vercel, `vercel.json`) el agente principal analiza la semana que cierra de cada atleta y propone la siguiente. El coach la ve en la ficha del atleta (sección "Agente principal") y la aprueba, la edita o la descarta; también puede pedirla en el momento con "Generar propuesta ahora". Nada llega al atleta sin aprobación.
+
+- **Ajustes puntuales:** en la misma sección, el coach elige una semana cargada y escribe qué cambiar ("mueve el fondo del domingo al sábado"). El agente cambia solo eso, conserva los ids de las sesiones, no toca las ya pasadas o registradas y lo deja como propuesta para aprobar.
+- Solo trabaja con atletas que marcaron la finalidad opcional de IA en su consentimiento, y solo lee registros si el consentimiento está vigente.
+- `src/lib/agent/metrics.ts` (Análisis): cumplimiento, km, RPE y alertas, en código.
+- `src/lib/agent/methodology.ts` (Ciencia): la metodología vigente que sigue el modelo (versión 2: principios publicados de Daniels y reglas de seguridad con estudios; detalle en `09-metodologia-agente-ciencia.md`).
+- `src/lib/agent/fitness.ts` (Ciencia): índice de forma, equivalencias y ritmos por atleta con las ecuaciones de Daniels y Gilbert, a partir del tiempo de referencia que el coach guarda en la ficha (sección "Forma actual").
+- `src/lib/agent/headCoach.ts`: llama a la Claude API (salida JSON con esquema) y corrige hasta 3 veces si el Guardián encuentra problemas.
+- `src/lib/agent/guardrails.ts` (Guardián): reglas duras sobre la propuesta: tope de +20 % de km por semana (+30 % sobre hace dos), ninguna salida más de 10 % sobre la más larga de 30 días, fondo hasta 150 min, topes por tipo de sesión, días duros, taper, días suaves tras una carrera, descarga, dolor, enfermedad y formato. En un ajuste puntual las reglas de estructura quedan como avisos.
+- Datos: `proposals/{uid}/weeks/{semana}`, `athleteMemory/{uid}` (ficha, tiempo de referencia, meta de tiempo e historial) y `agentRuns/{id}` (registro con tokens y costo). Solo servidor; las reglas de Firestore ya los niegan al cliente.
+- Variables en Vercel: `ANTHROPIC_API_KEY` (clave de la Claude API) y `CRON_SECRET` (cualquier texto largo; Vercel lo envía al cron).
+- Arquitectura completa: `08-arquitectura-agentes-ia.md` en los documentos del proyecto.

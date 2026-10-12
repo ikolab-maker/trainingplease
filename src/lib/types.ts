@@ -60,6 +60,7 @@ export interface Session {
   focus?: string;
   tip?: string;
   core: boolean; // cuenta para el cumplimiento
+  race?: boolean; // carrera o test: el agente deja días suaves después
 }
 
 export interface LogEntry {
