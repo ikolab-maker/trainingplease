@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { addDays, dayParts } from '@/lib/dates';
 import { checkAdjustment, checkProposal, easyDaysAfter, LONG_RUN_MAX_MIN, volumeLimits, type GuardContext } from './guardrails';
 import type { AthleteContext } from './context';
+import { noticeId } from '@/lib/notice';
 import { easyPaceMid, equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, trainingPaces } from './fitness';
 import { METHODOLOGY, METHODOLOGY_VERSION } from './methodology';
 import { effectiveKm, isDeloadPhase, longestRecentRun, round1, RUN_SPORTS, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
@@ -136,6 +137,11 @@ function guardLines(g: Omit<GuardContext, 'decision'>, longestSource: 'registros
   return out;
 }
 
+function noticeLines(ctx: AthleteContext, weekId: string): string[] {
+  const text = ctx.logs?.[noticeId(weekId)]?.comment?.trim();
+  return text ? ['', `## Avisos del atleta para ${weekId} (viajes, días sin entrenar, logística)`, `"${text}"`, 'Respétalos: ajusta días y volumen a lo que el atleta puede hacer, sin compensar con más carga otros días. Si algo no queda claro, pregúntalo en questionsForAthlete.'] : [];
+}
+
 function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string; start: string }, m: WeekMetrics | null,
   suggestion: { decision: Decision; rule: string }, today: string, limits: string[]): string {
   const out: string[] = [];
@@ -179,6 +185,7 @@ function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string;
   out.push('', `Decisión sugerida por las reglas: **${suggestion.decision}**. Regla: ${suggestion.rule}`);
   out.push(...scienceLines(ctx, today), ...limits);
 
+  out.push(...noticeLines(ctx, target.id));
   const planned = ctx.sessions[target.id];
   const tw = ctx.weeks.find((w) => w.id === target.id);
   if (tw && planned?.length) {
@@ -197,6 +204,7 @@ function buildAdjustBrief(ctx: AthleteContext, target: { id: string; start: stri
   if (ctx.goalRace) out.push(`Carrera objetivo: ${ctx.goalRace.name}, ${ctx.goalRace.date}.`);
   out.push('', '## Pedido del coach', request.trim());
   out.push('', '## Ficha del atleta (memoria del coach)', ctx.memory.ficha.trim() || '(sin ficha todavía)');
+  out.push(...noticeLines(ctx, target.id));
   const w = ctx.weeks.find((x) => x.id === target.id);
   out.push('', `## Semana cargada ${target.id}`, `${w?.title ?? ''}${w?.phase ? ` · fase ${w.phase}` : ''}${w?.goal ? `\nObjetivo: ${w.goal}` : ''}`);
   if (w?.notes?.length) out.push('Notas:', ...w.notes.map((n) => `- ${n.title}: ${n.body.replace(/\n/g, ' / ')}`));

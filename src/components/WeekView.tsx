@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DayCard } from './DayCard';
 import { Countdown } from './Countdown';
-import { saveLog, useLogs, useSessions, useWeeks } from '@/lib/data';
-import { compliance, daysUntil, longDate, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
+import { saveLog, useLogs, useSessions, useWeeks, type LogMap } from '@/lib/data';
+import { addDays, compliance, daysUntil, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
+import { noticeId } from '@/lib/notice';
 import type { UserDoc } from '@/lib/types';
 
 /** Vista "Mi semana": la del atleta y la vista previa del coach. */
@@ -150,6 +151,8 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
         )}
       </div>
 
+      <div className="wrap"><NextWeekNotice uid={uid} today={today} logs={logs} readOnly={readOnly} /></div>
+
       {celebrate && (
         <div className="confetti" aria-hidden="true">
           {Array.from({ length: 26 }, (_, i) => (
@@ -160,5 +163,43 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
         </div>
       )}
     </>
+  );
+}
+
+/** Avisos del atleta para la semana que viene: los ve el coach y los lee el agente al proponerla. */
+function NextWeekNotice({ uid, today, logs, readOnly }: { uid: string; today: string; logs: LogMap; readOnly?: boolean }) {
+  const start = addDays(mondayOf(today), 7);
+  const weekId = isoWeekId(start);
+  const saved = logs[noticeId(weekId)]?.comment ?? '';
+  const [text, setText] = useState<string | null>(null);
+  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const value = text ?? saved;
+
+  if (readOnly) {
+    return saved ? (
+      <div className="panel"><h3>Avisos del atleta para la semana del {rangeLabel(start)}</h3><p style={{ whiteSpace: 'pre-line' }}>{saved}</p></div>
+    ) : null;
+  }
+  const save = async () => {
+    setState('saving');
+    try {
+      await saveLog(uid, noticeId(weekId), { done: false, rpe: null, comment: value.trim(), weekId });
+      setState('saved');
+    } catch {
+      setState('error');
+    }
+  };
+  return (
+    <div className="panel">
+      <h3>Avisos para la próxima semana</h3>
+      <p>{rangeLabel(start)}. Cuéntale a tu coach si viajas, si hay días que no podrás entrenar o algo de logística. Se tiene en cuenta al armar tu semana (el domingo al mediodía).</p>
+      <textarea rows={3} maxLength={1000} value={value} placeholder="Ej.: viajo del jueves al sábado, solo podré correr en cinta 30 min."
+        onChange={(e) => { setText(e.target.value); setState('idle'); }} style={{ width: '100%' }} />
+      <button type="button" className="btn small" disabled={state === 'saving' || value.trim() === saved.trim()} onClick={save}>
+        {state === 'saving' ? 'Guardando…' : 'Guardar avisos'}
+      </button>
+      {state === 'saved' && <p className="note">Guardado. Tu coach ya lo ve.</p>}
+      {state === 'error' && <p className="alert">No se pudo guardar. Revisa tu conexión e inténtalo otra vez.</p>}
+    </div>
   );
 }
