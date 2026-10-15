@@ -5,7 +5,7 @@ import { onAuthStateChanged, signInWithPopup, signOut as fbSignOut, type User } 
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db, firebaseConfigured, googleProvider } from '@/lib/firebase';
 import type { UserDoc } from '@/lib/types';
-import { DEFAULT_THEME } from '@/lib/themes';
+import { DEFAULT_COACH_THEME, DEFAULT_THEME } from '@/lib/themes';
 
 type State =
   | { status: 'loading' }
@@ -80,8 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { unsub(); unsubProfile?.(); };
   }, []);
 
-  // Tema elegido por el atleta (rosa por defecto).
-  const theme = state.status === 'ready' ? state.profile.theme ?? DEFAULT_THEME : DEFAULT_THEME;
+  // El atleta usa su tema (azul por defecto); el coach, el del panel (oscuro por defecto).
+  const theme = state.status !== 'ready' ? DEFAULT_THEME
+    : state.profile.role === 'admin' ? state.profile.coachTheme ?? DEFAULT_COACH_THEME
+    : state.profile.theme ?? DEFAULT_THEME;
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
 
   const api: AuthApi = {

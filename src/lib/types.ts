@@ -1,5 +1,6 @@
 export type Role = 'admin' | 'athlete';
 export type Theme = 'rosa' | 'azul' | 'oscuro';
+export type Membership = 'base' | 'ritmo' | 'elite';
 
 export type SportKey =
   | 'running' | 'natacion' | 'ciclismo' | 'voley' | 'futbol'
@@ -23,6 +24,8 @@ export interface UserDoc {
   email: string;
   photoURL?: string | null;
   theme?: Theme;
+  coachTheme?: Theme; // tema del panel coach (solo admin)
+  membership?: Membership;
   goalRace?: GoalRace | null;
   profile?: {
     age?: string;

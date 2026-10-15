@@ -15,6 +15,7 @@ import { deleteSession, duplicateWeek, saveSession, saveWeek, useLogs, useSessio
 import { addDays, compliance, dayParts, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
 import { SPORTS } from '@/lib/sports';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
+import { MEMBERSHIPS, membershipOf } from '@/lib/membership';
 import type { Session, UserDoc, Week } from '@/lib/types';
 
 const STATUS_TXT = { done: 'Realizada', missed: 'No realizada', late: 'Pendiente', today: 'Hoy', upcoming: 'Próxima', rest: 'Descanso' } as const;
@@ -79,11 +80,7 @@ function AthleteDetail({ uid }: { uid: string }) {
         <p><Link href="/coach">‹ Todos los atletas</Link></p>
         {!athlete.consent && <p className="alert">Consentimiento pendiente o revocado: no puedes ver sus registros hasta que acepte.</p>}
 
-        <AthleteProfile uid={uid} athlete={athlete} />
-
-        <AgentPanel uid={uid} athlete={athlete} weekId={weekId} onApproved={setWeekId} />
-
-        <h3 className="section-title">Plan semanal</h3>
+        <h3 className="section-title" style={{ marginTop: '1rem' }}>Plan semanal</h3>
         <div className="week-tabs" role="group" aria-label="Semanas">
           {weeks?.map((w) => (
             <button key={w.id} type="button" aria-pressed={w.id === weekId} onClick={() => setWeekId(w.id)}>{w.title}</button>
@@ -100,7 +97,11 @@ function AthleteDetail({ uid }: { uid: string }) {
           </>
         )}
 
+        <AgentPanel uid={uid} athlete={athlete} weekId={weekId} onApproved={setWeekId} />
+
         <PlanTransfer uid={uid} athlete={athlete} weeks={weeks ?? []} weekId={weekId} onImported={setWeekId} />
+
+        <AthleteProfile uid={uid} athlete={athlete} />
       </div>
     </main>
   );
@@ -114,8 +115,8 @@ function AthleteProfile({ uid, athlete }: { uid: string; athlete: UserDoc }) {
   ];
   const filled = rows.filter(([, v]) => v);
   return (
-    <section className="panel">
-      <h3>Perfil</h3>
+    <details className="panel profile-panel">
+      <summary><h3>Perfil</h3></summary>
       <p className="note">{athlete.email}</p>
       <div className="theme-options" style={{ margin: '.6rem 0' }}>
         {THEMES.map((t) => (
@@ -125,12 +126,21 @@ function AthleteProfile({ uid, athlete }: { uid: string; athlete: UserDoc }) {
           </button>
         ))}
       </div>
+      <p className="note" style={{ marginBottom: '.3rem' }}>Membresía</p>
+      <div className="theme-options" style={{ margin: '0 0 .8rem' }}>
+        {MEMBERSHIPS.map((m) => (
+          <button key={m.key} type="button" className="theme-swatch" aria-pressed={membershipOf(athlete.membership) === m.key}
+            onClick={() => updateDoc(doc(db(), 'users', uid), { membership: m.key, updatedAt: serverTimestamp() })}>
+            {m.label}
+          </button>
+        ))}
+      </div>
       {filled.length === 0 ? <p className="note">El atleta aún no completó su perfil.</p> : (
         <dl style={{ display: 'grid', gap: '.4rem', margin: 0 }}>
           {filled.map(([k, v]) => <div key={k}><dt style={{ fontWeight: 700, display: 'inline' }}>{k}: </dt><dd style={{ display: 'inline', margin: 0 }}>{v}</dd></div>)}
         </dl>
       )}
-    </section>
+    </details>
   );
 }
 
@@ -174,27 +184,11 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
 
   return (
     <>
-      <form className="panel form" onSubmit={saveMeta}>
-        <h3>{rangeLabel(week.start)}</h3>
-        <div className="form-row">
-          <label className="field"><span>Título</span><input value={meta.title} onChange={(e) => setMeta({ ...meta, title: e.target.value })} /></label>
-          <label className="field"><span>Fase</span><input value={meta.phase} placeholder="Base · Construcción · Descarga…" onChange={(e) => setMeta({ ...meta, phase: e.target.value })} /></label>
-        </div>
-        <label className="field"><span>Objetivo de la semana</span><textarea value={meta.goal} onChange={(e) => setMeta({ ...meta, goal: e.target.value })} /></label>
-        <label className="check">
-          <input type="checkbox" checked={meta.aiAssisted} onChange={(e) => setMeta({ ...meta, aiAssisted: e.target.checked })} />
-          <span>Plan generado o asistido por IA (se le indica al atleta).</span>
-        </label>
-        <div className="actions">
-          <button className="btn">Guardar semana</button>
-          <button type="button" className="btn secondary" onClick={duplicate}>Duplicar a la semana siguiente</button>
-          <button type="button" className="btn secondary" onClick={onPreview}>Ver como atleta</button>
-          {msg && <span className="saved" role="status">{msg}</span>}
-        </div>
-      </form>
-
       <section className="panel">
-        <h3>Sesiones {c?.pct != null && <small style={{ fontSize: '1rem', color: 'var(--ink-soft)' }}>· cumplimiento {c.pct}% ({c.done}/{c.planned})</small>}</h3>
+        <div className="week-head">
+          <h3>{week.title} · {rangeLabel(week.start)}</h3>
+          <p className="pct">{c?.pct != null ? `${c.pct}%` : '–'}<small>cumplimiento{c?.pct != null ? ` (${c.done}/${c.planned})` : ': sin sesiones vencidas aún'}</small></p>
+        </div>
         {sessions === null ? <p className="loading">Cargando…</p> : (
           <div className="table-wrap">
             <table className="sessions">
@@ -239,6 +233,25 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
           </div>
         )}
       </section>
+
+      <form className="panel form" onSubmit={saveMeta}>
+        <h3>Datos de la semana</h3>
+        <div className="form-row">
+          <label className="field"><span>Título</span><input value={meta.title} onChange={(e) => setMeta({ ...meta, title: e.target.value })} /></label>
+          <label className="field"><span>Fase</span><input value={meta.phase} placeholder="Base · Construcción · Descarga…" onChange={(e) => setMeta({ ...meta, phase: e.target.value })} /></label>
+        </div>
+        <label className="field"><span>Objetivo de la semana</span><textarea value={meta.goal} onChange={(e) => setMeta({ ...meta, goal: e.target.value })} /></label>
+        <label className="check">
+          <input type="checkbox" checked={meta.aiAssisted} onChange={(e) => setMeta({ ...meta, aiAssisted: e.target.checked })} />
+          <span>Plan generado o asistido por IA (se le indica al atleta).</span>
+        </label>
+        <div className="actions">
+          <button className="btn">Guardar semana</button>
+          <button type="button" className="btn secondary" onClick={duplicate}>Duplicar a la semana siguiente</button>
+          <button type="button" className="btn secondary" onClick={onPreview}>Ver como atleta</button>
+          {msg && <span className="saved" role="status">{msg}</span>}
+        </div>
+      </form>
     </>
   );
 }
