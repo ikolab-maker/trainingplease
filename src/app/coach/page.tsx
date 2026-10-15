@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, orderBy, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
 import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
 import { useAuth } from '@/components/AuthProvider';
@@ -11,6 +11,7 @@ import { fetchAllSessions, fetchLogs } from '@/lib/data';
 import { compliance, daysUntil, isoWeekId, todayISO } from '@/lib/dates';
 import { LEVELS, type InvestorContact, type PilotRequest } from '@/lib/pilot';
 import type { Compliance } from '@/lib/dates';
+import { DEFAULT_COACH_THEME, THEMES } from '@/lib/themes';
 import type { GoalRace, UserDoc } from '@/lib/types';
 
 interface AthleteRow {
@@ -154,8 +155,29 @@ function Dashboard() {
             </ul>
           </>
         )}
+
+        <CoachTheme />
       </div>
     </main>
+  );
+}
+
+function CoachTheme() {
+  const { state } = useAuth();
+  if (state.status !== 'ready') return null;
+  const current = state.profile.coachTheme ?? DEFAULT_COACH_THEME;
+  return (
+    <section className="panel" style={{ marginTop: '2.4rem' }}>
+      <h3>Tema del panel</h3>
+      <div className="theme-options">
+        {THEMES.map((t) => (
+          <button key={t.key} type="button" className="theme-swatch" aria-pressed={current === t.key}
+            onClick={() => updateDoc(doc(db(), 'users', state.user.uid), { coachTheme: t.key, updatedAt: serverTimestamp() })}>
+            <i style={{ background: t.color }} /> {t.label}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
