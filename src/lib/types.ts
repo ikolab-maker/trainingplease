@@ -1,6 +1,6 @@
 export type Role = 'admin' | 'athlete';
 export type Theme = 'rosa' | 'azul' | 'oscuro';
-export type Membership = 'basica' | 'media' | 'premium';
+export type Membership = 'base' | 'ritmo' | 'elite';
 
 export type SportKey =
   | 'running' | 'natacion' | 'ciclismo' | 'voley' | 'futbol'

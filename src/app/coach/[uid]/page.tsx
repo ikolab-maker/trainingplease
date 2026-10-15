@@ -15,7 +15,7 @@ import { deleteSession, duplicateWeek, saveSession, saveWeek, useLogs, useSessio
 import { addDays, compliance, dayParts, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
 import { SPORTS } from '@/lib/sports';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
-import { DEFAULT_MEMBERSHIP, MEMBERSHIPS } from '@/lib/membership';
+import { MEMBERSHIPS, membershipOf } from '@/lib/membership';
 import type { Session, UserDoc, Week } from '@/lib/types';
 
 const STATUS_TXT = { done: 'Realizada', missed: 'No realizada', late: 'Pendiente', today: 'Hoy', upcoming: 'Próxima', rest: 'Descanso' } as const;
@@ -129,7 +129,7 @@ function AthleteProfile({ uid, athlete }: { uid: string; athlete: UserDoc }) {
       <p className="note" style={{ marginBottom: '.3rem' }}>Membresía</p>
       <div className="theme-options" style={{ margin: '0 0 .8rem' }}>
         {MEMBERSHIPS.map((m) => (
-          <button key={m.key} type="button" className="theme-swatch" aria-pressed={(athlete.membership ?? DEFAULT_MEMBERSHIP) === m.key}
+          <button key={m.key} type="button" className="theme-swatch" aria-pressed={membershipOf(athlete.membership) === m.key}
             onClick={() => updateDoc(doc(db(), 'users', uid), { membership: m.key, updatedAt: serverTimestamp() })}>
             {m.label}
           </button>
