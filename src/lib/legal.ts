@@ -6,7 +6,7 @@ export const LEGAL_VERSION = '1.2';
 export const LEGAL_IS_DRAFT = false;
 
 export const OWNER = 'TRAINING PLEASE';
-export const PRIVACY_EMAIL = 'christianikolai@gmail.com';
+export const PRIVACY_EMAIL = 'hola@trainingplease.app';
 
 export const REQUIRED_CHECKS = [
   { key: 'adult', text: 'Soy mayor de 18 años.' },
