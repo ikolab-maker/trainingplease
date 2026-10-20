@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb, verifyRequest } from '@/lib/firebase-admin';
+import { APP_URL, addContact, sendEmail } from '@/lib/email';
 import { parsePlanFile } from '@/lib/planFile';
 import { writePlan } from '@/lib/planWrite';
 
@@ -78,5 +79,22 @@ export async function POST(req: Request) {
       history: FieldValue.arrayUnion({ weekId: snap.get('analyzedWeekId'), decision: snap.get('decision'), row }),
     }, { merge: true });
   }
+  await notifyAthlete(uid, plan[0].week.title || weekId).catch((e) => console.error('aviso semana', e));
   return NextResponse.json({ ok: true, ...written });
+}
+
+/** Aviso por correo al atleta de que su semana ya está en la app. Sin RESEND_API_KEY no hace nada. */
+async function notifyAthlete(uid: string, title: string) {
+  const user = await adminDb().doc(`users/${uid}`).get();
+  const email = user.get('email');
+  if (typeof email !== 'string' || !email) return;
+  const name = String(user.get('name') ?? '').split(' ')[0];
+  await addContact(email, name, 'atletas');
+  await sendEmail(
+    email,
+    'Tu semana de entrenamiento está lista',
+    name ? `${name}, tu semana está lista` : 'Tu semana está lista',
+    [`Tu coach aprobó tu plan: ${title}.`, 'Revísalo, organiza tus días y marca cada sesión al terminarla.'],
+    { label: 'Ver mi semana', url: `${APP_URL}/plan` },
+  );
 }
