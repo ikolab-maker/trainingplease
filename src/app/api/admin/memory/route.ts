@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 /**
  * Guarda la ficha del atleta que lee el agente principal (meta, reglas personales, lesiones),
  * su tiempo de referencia (para el índice de forma y los ritmos) y su meta de tiempo.
- * Cada campo es opcional; null borra la referencia o la meta.
+ * También la nota del coach para la próxima semana. Cada campo es opcional; null borra la referencia, la meta o la nota.
  */
 export async function POST(req: Request) {
   const token = await verifyRequest(req);
@@ -44,6 +44,13 @@ export async function POST(req: Request) {
       if (!ok) return NextResponse.json({ error: 'La meta de tiempo no cuadra con la distancia de la carrera objetivo (para horas usa h:mm:ss).' }, { status: 400 });
       update.goalTimeMin = goal;
     }
+  }
+  if (body.weekNote !== undefined) {
+    const n = body.weekNote;
+    if (n === null) update.weekNote = FieldValue.delete();
+    else if (typeof n?.weekId === 'string' && /^\d{4}-W\d{2}$/.test(n.weekId) && typeof n?.text === 'string' && n.text.length <= 2000) {
+      update.weekNote = { weekId: n.weekId, text: n.text.trim() };
+    } else return NextResponse.json({ error: 'La nota de la semana debe ser texto (máximo 2000 caracteres).' }, { status: 400 });
   }
   if (!Object.keys(update).length) return NextResponse.json({ error: 'Nada que guardar.' }, { status: 400 });
 

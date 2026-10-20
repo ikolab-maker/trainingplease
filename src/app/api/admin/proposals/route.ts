@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb, verifyRequest } from '@/lib/firebase-admin';
-import { parsePlanFile } from '@/lib/planFile';
-import { writePlan } from '@/lib/planWrite';
+import { applyProposal } from '@/lib/agent/approve';
 
 export const runtime = 'nodejs';
 
@@ -63,20 +62,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const weekId = String(snap.get('weekId') ?? '');
-  const { plan, errors } = parsePlanFile(body?.plan ?? snap.get('plan'));
-  if (errors.length) return NextResponse.json({ error: 'invalid', errors }, { status: 400 });
-  if (plan.length !== 1 || plan[0].id !== weekId) return NextResponse.json({ error: `La propuesta debe ser solo la semana ${weekId}.` }, { status: 400 });
-  plan[0].week.aiAssisted = true;
-
-  const written = await writePlan(db, uid, plan);
-  const edited = body?.plan != null;
-  await ref.update({ status: 'approved', edited, approvedPlan: plan, reviewedAt: FieldValue.serverTimestamp(), reviewedBy: token.email ?? token.uid });
-  const row = snap.get('memoryRow');
-  if (typeof row === 'string' && row) {
-    await db.doc(`athleteMemory/${uid}`).set({
-      history: FieldValue.arrayUnion({ weekId: snap.get('analyzedWeekId'), decision: snap.get('decision'), row }),
-    }, { merge: true });
-  }
-  return NextResponse.json({ ok: true, ...written });
+  const r = await applyProposal(db, uid, snap, { plan: body?.plan ?? undefined, by: token.email ?? token.uid });
+  if (!r.ok) return NextResponse.json({ error: 'invalid', errors: r.errors }, { status: 400 });
+  return NextResponse.json(r);
 }

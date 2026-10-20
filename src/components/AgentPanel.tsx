@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import './agent.css';
-import { dayParts, daysUntil, todayISO } from '@/lib/dates';
+import { addDays, dayParts, daysUntil, isoWeekId, mondayOf, rangeLabel, todayISO } from '@/lib/dates';
 import { equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, parseReference, parseTime, trainingPaces, type FitnessReference } from '@/lib/agent/fitness';
 import { parsePlanFile, type PlanWeekFile } from '@/lib/planFile';
 import { SPORTS } from '@/lib/sports';
@@ -76,13 +76,16 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   const [ficha, setFicha] = useState('');
   const [history, setHistory] = useState<{ weekId: string; row: string }[]>([]);
   const [agentReady, setAgentReady] = useState(true);
-  const [busy, setBusy] = useState<'' | 'run' | 'adjust' | 'approve' | 'discard' | 'ficha'>('');
+  const [busy, setBusy] = useState<'' | 'run' | 'adjust' | 'approve' | 'discard' | 'ficha' | 'nota'>('');
   const [msg, setMsg] = useState('');
   const [editing, setEditing] = useState<string | null>(null); // id de la propuesta en edición
   const [request, setRequest] = useState('');
   const [draft, setDraft] = useState('');
   const [ref, setRef] = useState<RefDraft>(EMPTY_REF);
   const [goalTime, setGoalTime] = useState('');
+  const [weekNote, setWeekNote] = useState('');
+  const nextStart = addDays(mondayOf(todayISO()), 7);
+  const nextWeekId = isoWeekId(nextStart);
   const formFor = useRef<string | null>(null); // atleta cuya ficha está en el formulario
   const shownUid = useRef(uid); // atleta en pantalla: una respuesta de otro atleta se descarta
   const aiConsent = !!athlete.consent;
@@ -102,6 +105,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
         const r = parseReference(data.memory?.reference);
         setRef(r ? { label: r.label, distanceKm: String(r.distanceKm).replace('.', ','), time: fmtTime(r.timeMin), date: r.date, maxEffort: r.maxEffort } : EMPTY_REF);
         setGoalTime(typeof data.memory?.goalTimeMin === 'number' ? fmtTime(data.memory.goalTimeMin) : '');
+        setWeekNote(data.memory?.weekNote?.weekId === nextWeekId ? data.memory.weekNote.text ?? '' : '');
         formFor.current = uid;
       }
     } catch {
@@ -109,13 +113,13 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
       setProposals([]);
       setMsg('No se pudieron leer las propuestas.');
     }
-  }, [uid, authHeaders]);
+  }, [uid, authHeaders, nextWeekId]);
 
   // Al cambiar de atleta, nada del anterior queda en pantalla y la ficha no se guarda hasta leer la nueva.
   useEffect(() => {
     shownUid.current = uid;
     formFor.current = null;
-    setProposals(null); setHistory([]); setFicha(''); setRef(EMPTY_REF); setGoalTime(''); setEditing(null); setRequest(''); setMsg('');
+    setProposals(null); setHistory([]); setFicha(''); setRef(EMPTY_REF); setGoalTime(''); setWeekNote(''); setEditing(null); setRequest(''); setMsg('');
   }, [uid]);
   useEffect(() => { load(); }, [load]);
   const formReady = formFor.current === uid;
@@ -188,6 +192,16 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
     } finally { setBusy(''); }
   }
 
+  async function saveWeekNote() {
+    setBusy('nota'); setMsg('');
+    try {
+      const { ok, data } = await post('/api/admin/memory', { uid, weekNote: weekNote.trim() ? { weekId: nextWeekId, text: weekNote } : null });
+      setMsg(ok ? 'Nota guardada: el agente la lee el domingo a las 4 pm.' : data.error ?? 'No se pudo guardar la nota.');
+    } catch {
+      setMsg('Sin conexión.');
+    } finally { setBusy(''); }
+  }
+
   const pending = proposals?.filter((p) => p.status === 'pending') ?? [];
   const shown = pending.length ? pending : proposals?.slice(0, 1) ?? [];
   const older = proposals?.filter((p) => !shown.includes(p)) ?? [];
@@ -198,7 +212,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
     <section className="panel agent-panel">
       <h3>Agente principal</h3>
       <p className="note">
-        Cada domingo a las 12:05 analiza la semana que cierra y propone la siguiente. También ajusta una semana cargada cuando se lo pides. Nada llega al atleta hasta que lo apruebes.
+        Cada domingo a las 4 pm analiza la semana que cierra y carga sola la siguiente si el Guardián no encuentra problemas; si encuentra, te la deja aquí para revisar. Puedes corregir cualquier semana después. También ajusta una semana cargada cuando se lo pides.
       </p>
       {!aiConsent && (
         <p className="alert">Este atleta no tiene consentimiento vigente: el agente no trabaja con sus datos.</p>
@@ -253,6 +267,14 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
         </button>
       </div>
       {msg && <p className="note" role="status">{msg}</p>}
+
+      <h4>Nota para la semana {rangeLabel(nextStart)}</h4>
+      <p className="note">Lo que quieres que el agente tenga en cuenta al armar la próxima semana de este atleta (por ejemplo: "esta semana sin series, viene de gripe"). Déjala antes del domingo a las 4 pm.</p>
+      <label className="field">
+        <span>Nota del coach</span>
+        <textarea value={weekNote} onChange={(e) => setWeekNote(e.target.value)} rows={3} maxLength={2000} />
+      </label>
+      <button type="button" className="btn small" disabled={!!busy || !formReady} onClick={saveWeekNote}>{busy === 'nota' ? 'Guardando…' : 'Guardar nota'}</button>
 
       <details>
         <summary>Ficha del atleta para el agente</summary>

@@ -17,7 +17,7 @@ const PRICE = { input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2.5 };
 
 const SYSTEM = `Eres el agente principal (Head Coach) de Training Please, un club de running en Lima.
 Velas por el plan de entrenamiento de un atleta: analizas la semana que cierra y propones la semana siguiente.
-Tu propuesta la revisa y aprueba el coach (Chris) antes de que llegue al atleta. Escribes en español peruano, cercano y concreto.
+Si el Guardián no encuentra problemas, tu propuesta se carga sola en el plan del atleta el domingo a las 4 pm; si encuentra, queda para que el coach (Chris) la revise. El coach puede corregir cualquier semana después. Escribes en español peruano, cercano y concreto.
 
 Trabajas con tres especialistas que ya hicieron su parte:
 - Análisis: te da las métricas de la semana calculadas en código. Son hechos: no los recalcules ni los contradigas.
@@ -138,8 +138,14 @@ function guardLines(g: Omit<GuardContext, 'decision'>, longestSource: 'registros
 }
 
 function noticeLines(ctx: AthleteContext, weekId: string): string[] {
+  const out: string[] = [];
+  const note = ctx.memory.weekNote;
+  if (note?.weekId === weekId) {
+    out.push('', `## Nota del coach para ${weekId}`, note.text, 'Es una indicación del coach: aplícala salvo que rompa una regla del Guardián; si choca, dilo en alerts.');
+  }
   const text = ctx.logs?.[noticeId(weekId)]?.comment?.trim();
-  return text ? ['', `## Avisos del atleta para ${weekId} (viajes, días sin entrenar, logística)`, `"${text}"`, 'Respétalos: ajusta días y volumen a lo que el atleta puede hacer, sin compensar con más carga otros días. Si algo no queda claro, pregúntalo en questionsForAthlete.'] : [];
+  if (text) out.push('', `## Avisos del atleta para ${weekId} (viajes, días sin entrenar, logística)`, `"${text}"`, 'Respétalos: ajusta días y volumen a lo que el atleta puede hacer, sin compensar con más carga otros días. Si algo no queda claro, pregúntalo en questionsForAthlete.');
+  return out;
 }
 
 function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string; start: string }, m: WeekMetrics | null,

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 /**
- * Loop semanal: Vercel Cron lo llama el domingo a las 12:05 de Lima (vercel.json)
+ * Loop semanal: Vercel Cron lo llama el domingo a las 4 pm de Lima (vercel.json; en el plan Hobby puede correr hasta las 4:59)
  * con el encabezado Authorization: Bearer $CRON_SECRET.
  */
 export async function GET(req: Request) {
