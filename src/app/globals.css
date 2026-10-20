@@ -112,7 +112,7 @@ ul { margin: 0; padding-left: 1.2em; }
   position: relative;
   overflow: hidden;
   background: var(--hero);
-  padding: 2.6rem 1.1rem 2.4rem;
+  padding: 1.6rem 1.1rem 1.4rem;
 }
 
 .hero::before,
@@ -152,7 +152,7 @@ ul { margin: 0; padding-left: 1.2em; }
 
 .hero h1 {
   grid-area: title;
-  font-size: clamp(3.2rem, 17vw, 6.8rem);
+  font-size: clamp(2.3rem, 10vw, 4.6rem);
   font-weight: 700;
   color: #fff;
   -webkit-text-stroke: 3px var(--blue-deep);
@@ -165,22 +165,22 @@ ul { margin: 0; padding-left: 1.2em; }
   grid-area: sub;
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(1.6rem, 7vw, 2.6rem);
+  font-size: clamp(1.3rem, 5.5vw, 2rem);
   line-height: 1.05;
   text-transform: uppercase;
   color: var(--yellow);
   text-shadow: 2px 2px 0 var(--pink-dark);
-  margin: .15em 0 1.2rem;
+  margin: .15em 0 .8rem;
 }
 
-.hero-tags { grid-area: tags; display: grid; gap: 1.1rem; align-content: center; }
+.hero-tags { grid-area: tags; display: grid; gap: .7rem; align-content: center; }
 
 .tag-row { display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; }
 
 .tag {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   text-transform: uppercase;
   letter-spacing: .03em;
   color: var(--yellow);
@@ -194,7 +194,7 @@ ul { margin: 0; padding-left: 1.2em; }
 .tag-text {
   font-family: var(--display);
   font-weight: 500;
-  font-size: 1.45rem;
+  font-size: 1.2rem;
   line-height: 1.15;
   text-transform: uppercase;
   color: var(--ink);
@@ -202,7 +202,7 @@ ul { margin: 0; padding-left: 1.2em; }
 .tag-text small { font-size: .95rem; font-weight: 400; letter-spacing: .04em; }
 
 @media (min-width: 760px) {
-  .hero { padding: 3.4rem 1.5rem 3.2rem; }
+  .hero { padding: 2rem 1.5rem 1.8rem; }
   .hero-inner {
     grid-template-columns: 1.15fr 1fr;
     grid-template-areas:
@@ -221,7 +221,7 @@ ul { margin: 0; padding-left: 1.2em; }
   grid-template-columns: repeat(5, 1fr);
   background: var(--pink);
   color: #fff;
-  padding: 1.2rem .4rem 1rem;
+  padding: .7rem .4rem .6rem;
 }
 
 .cd-cell {
@@ -236,14 +236,14 @@ ul { margin: 0; padding-left: 1.2em; }
 .cd-num {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(2.2rem, 10.5vw, 5.2rem);
+  font-size: clamp(1.7rem, 7.5vw, 3.2rem);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .cd-label {
   font-family: var(--display);
   font-weight: 500;
-  font-size: clamp(.8rem, 3vw, 1.15rem);
+  font-size: clamp(.7rem, 2.6vw, .95rem);
   letter-spacing: .1em;
   text-transform: uppercase;
   margin-top: .3rem;
@@ -1048,21 +1048,24 @@ ul { margin: 0; padding-left: 1.2em; }
 .race-strip b { font-size: clamp(1.8rem, 8vw, 2.6rem); color: var(--yellow); }
 
 /* Panel coach */
-.athletes { display: grid; gap: .9rem; }
-@media (min-width: 720px) { .athletes { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
+.athletes { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+@media (min-width: 720px) { .athletes { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); } }
 .athlete-card {
   display: block;
   text-decoration: none;
   color: inherit;
   background: var(--surface);
   border: 3px solid var(--pink-soft);
-  border-radius: 22px;
-  padding: 1rem 1.1rem 1.1rem;
+  border-radius: 16px;
+  padding: .7rem .8rem .8rem;
   transition: border-color .2s, transform .15s;
 }
 .athlete-card:hover { border-color: var(--pink); }
-.athlete-card h4 { font-size: 1.7rem; color: var(--pink-dark); }
-.athlete-card .meta { color: var(--ink-soft); font-size: .95rem; margin: .2rem 0 .7rem; }
+.athlete-card h4 { font-size: 1.25rem; color: var(--pink-dark); }
+.athlete-card .meta { color: var(--ink-soft); font-size: .82rem; margin: .1rem 0 .4rem; }
+.athlete-card .pct { font-size: 1.8rem; }
+.athlete-card .pct small { font-size: .78rem; display: block; margin: .15rem 0 0; }
+.athlete-card .alert { font-size: .82rem; padding: .5rem .6rem; }
 .pct {
   font-family: var(--display);
   font-weight: 700;
@@ -1152,3 +1155,27 @@ table.sessions td.comment { color: var(--ink-soft); font-style: italic; max-widt
 /* Solicitudes del piloto en el panel coach */
 .pending-list li .actions { display: flex; gap: .4rem; flex: none; margin: 0; }
 @media (max-width: 600px) { .pending-list li { flex-wrap: wrap; } }
+
+/* Ficha del atleta (coach): semana primero, perfil plegado */
+.week-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .4rem 1rem; margin-bottom: .8rem; }
+.week-head h3 { margin: 0; }
+.week-head .pct small { margin-left: .5rem; }
+.profile-panel > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: .5rem; }
+.profile-panel > summary::-webkit-details-marker { display: none; }
+.profile-panel > summary::after { content: "▾"; color: var(--ink-soft); font-size: 1.2rem; }
+.profile-panel[open] > summary::after { content: "▴"; }
+.profile-panel > summary h3 { margin: 0; }
+.profile-panel[open] > summary { margin-bottom: .8rem; }
+
+/* Etiqueta de membresía en la cabecera del atleta */
+.member-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: .5rem;
+  padding: .1em .6em;
+  border-radius: 999px;
+  background: var(--blue-deep);
+  color: var(--yellow);
+  font-size: .8rem;
+  letter-spacing: .1em;
+}

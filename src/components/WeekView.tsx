@@ -6,6 +6,7 @@ import { Countdown } from './Countdown';
 import { saveLog, useLogs, useSessions, useWeeks, type LogMap } from '@/lib/data';
 import { addDays, compliance, daysUntil, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
 import { noticeId } from '@/lib/notice';
+import { membershipLabel } from '@/lib/membership';
 import type { UserDoc } from '@/lib/types';
 
 /** Vista "Mi semana": la del atleta y la vista previa del coach. */
@@ -58,7 +59,7 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
     <>
       <header className="hero">
         <div className="hero-inner">
-          <p className="hero-kicker">Tu plan de entrenamiento</p>
+          <p className="hero-kicker">Tu plan de entrenamiento <span className="member-badge">{membershipLabel(profile.membership)}</span></p>
           <h1>¡Hola {first}!</h1>
           <p className="hero-sub">{race ? `Tu camino a ${race.name}` : 'Vamos por tu meta'}</p>
           <div className="hero-tags">
