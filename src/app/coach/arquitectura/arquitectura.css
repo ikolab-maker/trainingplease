@@ -1,0 +1,105 @@
+/* Sección "Arquitectura" del panel coach. Usa solo variables del tema activo. */
+.arch { max-width: 980px; }
+.arch .section-sub { max-width: 72ch; }
+.arch h3.section-title { margin-top: 2.4rem; }
+.arch h4 { font-size: 1.25rem; color: var(--blue-deep); margin: 1.2rem 0 .4rem; }
+.arch p, .arch li { max-width: 78ch; }
+.arch li { margin-bottom: .35em; }
+.arch code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .88em;
+  background: var(--sky-pale, rgba(47, 156, 196, .12));
+  color: var(--ink);
+  padding: .05em .35em;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.arch-toc { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.arch-toc a {
+  display: inline-block;
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-size: .9rem;
+  text-decoration: none;
+  color: var(--ink);
+  border: 2px solid var(--blue-deep);
+  border-radius: 999px;
+  padding: .2rem .8rem;
+}
+.arch-toc a:hover { background: var(--yellow); color: #16283b; border-color: var(--yellow); }
+
+.arch-figure {
+  margin: 1rem 0 0;
+  background: var(--surface);
+  border: 3px solid var(--blue-deep);
+  border-radius: 22px;
+  padding: .8rem;
+  overflow-x: auto;
+}
+.arch-figure svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.arch-figure figcaption { font-size: .88rem; color: var(--ink-soft); margin: .5rem .3rem 0; }
+
+/* Piezas de los diagramas */
+.arch svg text { font-family: var(--body); fill: var(--ink); font-size: 13px; }
+.arch svg .t-title { font-family: var(--display); font-size: 15px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; }
+.arch svg .t-small { font-size: 11.5px; fill: var(--ink-soft); }
+.arch svg .t-dark { fill: #16283b; }
+.arch svg .zone { fill: none; stroke: var(--ink-soft); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.arch svg .zone-label { font-family: var(--display); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; fill: var(--ink-soft); }
+.arch svg .box { fill: var(--surface); stroke: var(--blue-deep); stroke-width: 2.5; }
+.arch svg .box-accent { fill: var(--yellow); stroke: var(--yellow); }
+.arch svg .box-mint { fill: var(--mint); stroke: var(--mint); }
+.arch svg .box-sky { fill: var(--sky-pale, #eaf6fb); stroke: var(--blue-deep); stroke-width: 1.5; }
+.arch svg .box-ext { fill: var(--surface); stroke: var(--ink-soft); stroke-width: 2; stroke-dasharray: 4 3; }
+.arch svg .arrow { fill: none; stroke: var(--blue-deep); stroke-width: 2; }
+.arch svg .arrow-y { fill: none; stroke: var(--yellow); stroke-width: 2.5; }
+.arch svg .arrow-soft { fill: none; stroke: var(--ink-soft); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.arch svg .head { fill: var(--blue-deep); }
+.arch svg .head-y { fill: var(--yellow); }
+.arch svg .head-soft { fill: var(--ink-soft); }
+.arch svg .line { stroke: var(--ink-soft); stroke-width: 2; }
+.arch svg .dot { fill: var(--blue-deep); }
+.arch svg .dot-y { fill: var(--yellow); stroke: var(--blue-deep); stroke-width: 2; }
+
+/* Tablas */
+.arch .table-wrap { margin-top: .6rem; }
+.arch table.sessions td:first-child { white-space: nowrap; font-weight: 700; }
+.arch table.sessions td { font-size: .92rem; }
+
+/* Tarjetas de agentes */
+.arch-cards { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: .8rem; }
+.arch-card {
+  background: var(--surface);
+  border: 3px solid var(--blue-deep);
+  border-radius: 18px;
+  padding: .8rem .95rem .9rem;
+}
+.arch-card.accent { border-color: var(--yellow); }
+.arch-card h5 {
+  margin: 0 0 .3rem;
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-size: 1.15rem;
+  color: var(--blue-deep);
+}
+.arch-card p { font-size: .92rem; margin: 0 0 .4rem; }
+.arch-card small { color: var(--ink-soft); display: block; }
+.arch .pill {
+  display: inline-block;
+  font-family: var(--display);
+  font-size: .75rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: .05em .6em;
+  border-radius: 999px;
+  background: var(--yellow);
+  color: #16283b;
+  vertical-align: middle;
+}
+.arch .pill.mint { background: var(--mint); color: #183a35; }
+@media (max-width: 600px) {
+  .arch table.sessions td:first-child { white-space: normal; }
+  .arch table.sessions td, .arch table.sessions th { padding: .45rem .35rem; font-size: .85rem; }
+}

@@ -1,6 +1,7 @@
 import 'server-only';
 import { adminDb } from '@/lib/firebase-admin';
 import type { GoalRace, LogEntry, Session, UserDoc, Week } from '@/lib/types';
+import { noticeId } from '@/lib/notice';
 import { parseReference, type FitnessReference } from './fitness';
 
 export interface MemoryRow { weekId: string; decision: string; row: string }
@@ -9,6 +10,7 @@ export interface AthleteMemory {
   history: MemoryRow[];
   reference: FitnessReference | null; // tiempo de referencia para el índice de forma y los ritmos
   goalTimeMin: number | null; // meta de tiempo en la carrera objetivo
+  weekNote: { weekId: string; text: string } | null; // nota del coach para una semana puntual
 }
 
 export interface AthleteContext {
@@ -54,7 +56,7 @@ export async function loadAthleteContext(uid: string, analyzedWeekId: string, ta
     const snap = await db.collection(`logs/${uid}/entries`).get();
     for (const d of snap.docs) {
       const l = d.data() as LogEntry;
-      if (wanted.includes(l.weekId)) logs[d.id] = { done: !!l.done, rpe: l.rpe ?? null, comment: l.comment ?? '', weekId: l.weekId };
+      if (wanted.includes(l.weekId) || d.id === noticeId(targetWeekId)) logs[d.id] = { done: !!l.done, rpe: l.rpe ?? null, comment: l.comment ?? '', weekId: l.weekId };
     }
   }
 
@@ -71,6 +73,7 @@ export async function loadAthleteContext(uid: string, analyzedWeekId: string, ta
       history: Array.isArray(mem.history) ? mem.history : [],
       reference: parseReference(mem.reference),
       goalTimeMin: typeof mem.goalTimeMin === 'number' && mem.goalTimeMin > 0 ? mem.goalTimeMin : null,
+      weekNote: typeof mem.weekNote?.weekId === 'string' && typeof mem.weekNote?.text === 'string' && mem.weekNote.text ? { weekId: mem.weekNote.weekId, text: mem.weekNote.text } : null,
     },
     weeks,
     sessions,

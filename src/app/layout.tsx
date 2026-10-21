@@ -2,13 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/components/AuthProvider';
 import './globals.css';
 
+// Íconos azul y amarillo por convención de Next (src/app/favicon.ico, icon.svg y apple-icon.png):
+// sus URLs llevan un hash, así Vercel, GitHub y los navegadores no se quedan con el ícono rosado viejo.
 export const metadata: Metadata = {
   title: 'Training Please',
   description: 'Planes de entrenamiento semanales con tu coach.',
-  icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }, { url: '/favicon-32.png', sizes: '32x32' }],
-    apple: '/apple-touch-icon.png',
-  },
 };
 
 export const viewport: Viewport = {

@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { addDays, dayParts } from '@/lib/dates';
 import { checkAdjustment, checkProposal, easyDaysAfter, LONG_RUN_MAX_MIN, volumeLimits, type GuardContext } from './guardrails';
 import type { AthleteContext } from './context';
+import { noticeId } from '@/lib/notice';
 import { easyPaceMid, equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, trainingPaces } from './fitness';
 import { METHODOLOGY, METHODOLOGY_VERSION } from './methodology';
 import { effectiveKm, isDeloadPhase, longestRecentRun, round1, RUN_SPORTS, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
@@ -16,7 +17,7 @@ const PRICE = { input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2.5 };
 
 const SYSTEM = `Eres el agente principal (Head Coach) de Training Please, un club de running en Lima.
 Velas por el plan de entrenamiento de un atleta: analizas la semana que cierra y propones la semana siguiente.
-Tu propuesta la revisa y aprueba el coach (Chris) antes de que llegue al atleta. Escribes en español peruano, cercano y concreto.
+Si el Guardián no encuentra problemas, tu propuesta se carga sola en el plan del atleta el domingo a las 4 pm; si encuentra, queda para que el coach (Chris) la revise. El coach puede corregir cualquier semana después. Escribes en español peruano, cercano y concreto.
 
 Trabajas con tres especialistas que ya hicieron su parte:
 - Análisis: te da las métricas de la semana calculadas en código. Son hechos: no los recalcules ni los contradigas.
@@ -136,6 +137,17 @@ function guardLines(g: Omit<GuardContext, 'decision'>, longestSource: 'registros
   return out;
 }
 
+function noticeLines(ctx: AthleteContext, weekId: string): string[] {
+  const out: string[] = [];
+  const note = ctx.memory.weekNote;
+  if (note?.weekId === weekId) {
+    out.push('', `## Nota del coach para ${weekId}`, note.text, 'Es una indicación del coach: aplícala salvo que rompa una regla del Guardián; si choca, dilo en alerts.');
+  }
+  const text = ctx.logs?.[noticeId(weekId)]?.comment?.trim();
+  if (text) out.push('', `## Avisos del atleta para ${weekId} (viajes, días sin entrenar, logística)`, `"${text}"`, 'Respétalos: ajusta días y volumen a lo que el atleta puede hacer, sin compensar con más carga otros días. Si algo no queda claro, pregúntalo en questionsForAthlete.');
+  return out;
+}
+
 function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string; start: string }, m: WeekMetrics | null,
   suggestion: { decision: Decision; rule: string }, today: string, limits: string[]): string {
   const out: string[] = [];
@@ -179,6 +191,7 @@ function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string;
   out.push('', `Decisión sugerida por las reglas: **${suggestion.decision}**. Regla: ${suggestion.rule}`);
   out.push(...scienceLines(ctx, today), ...limits);
 
+  out.push(...noticeLines(ctx, target.id));
   const planned = ctx.sessions[target.id];
   const tw = ctx.weeks.find((w) => w.id === target.id);
   if (tw && planned?.length) {
@@ -197,6 +210,7 @@ function buildAdjustBrief(ctx: AthleteContext, target: { id: string; start: stri
   if (ctx.goalRace) out.push(`Carrera objetivo: ${ctx.goalRace.name}, ${ctx.goalRace.date}.`);
   out.push('', '## Pedido del coach', request.trim());
   out.push('', '## Ficha del atleta (memoria del coach)', ctx.memory.ficha.trim() || '(sin ficha todavía)');
+  out.push(...noticeLines(ctx, target.id));
   const w = ctx.weeks.find((x) => x.id === target.id);
   out.push('', `## Semana cargada ${target.id}`, `${w?.title ?? ''}${w?.phase ? ` · fase ${w.phase}` : ''}${w?.goal ? `\nObjetivo: ${w.goal}` : ''}`);
   if (w?.notes?.length) out.push('Notas:', ...w.notes.map((n) => `- ${n.title}: ${n.body.replace(/\n/g, ' / ')}`));
