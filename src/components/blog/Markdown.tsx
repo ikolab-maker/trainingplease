@@ -1,5 +1,7 @@
 import { Fragment } from 'react';
 import { parseMarkdown, type Inline } from '@/lib/markdown';
+import type { Lang } from '@/lib/i18n';
+import { BlogWidget } from './Widgets';
 
 function Spans({ c }: { c: Inline[] }) {
   return (
@@ -19,8 +21,8 @@ function Spans({ c }: { c: Inline[] }) {
   );
 }
 
-/** Texto de un post con el formato simple de markdown.ts. */
-export function Markdown({ source, className }: { source: string; className?: string }) {
+/** Texto de un post con el formato simple de markdown.ts. `lang` es el idioma del texto (para las infografías). */
+export function Markdown({ source, className, lang = 'es' }: { source: string; className?: string; lang?: Lang }) {
   return (
     <div className={className}>
       {parseMarkdown(source).map((b, i) => {
@@ -39,6 +41,10 @@ export function Markdown({ source, className }: { source: string; className?: st
                 </table>
               </div>
             );
+          case 'img':
+            // eslint-disable-next-line @next/next/no-img-element
+            return <figure key={i} className="md-img"><img src={b.src} alt={b.alt} loading="lazy" />{b.alt && <figcaption>{b.alt}</figcaption>}</figure>;
+          case 'widget': return <BlogWidget key={i} name={b.name} lang={lang} />;
           default: return <p key={i}><Spans c={b.c} /></p>;
         }
       })}
