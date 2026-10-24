@@ -3,25 +3,27 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthProvider';
+import { useI18n } from './I18nProvider';
 
 export function TopNav() {
   const { state, signOut } = useAuth();
+  const { t } = useI18n();
   const path = usePathname();
   if (state.status !== 'ready') return null;
   const isAdmin = state.profile.role === 'admin';
 
   const links = isAdmin
-    ? [{ href: '/coach', label: 'Atletas' }, { href: '/coach/docs', label: 'Docs' }]
-    : [{ href: '/plan', label: 'Mi semana' }, { href: '/ajustes', label: 'Ajustes' }];
+    ? [{ href: '/coach', label: t.nav.athletes }, { href: '/coach/docs', label: t.nav.docs }]
+    : [{ href: '/plan', label: t.nav.myWeek }, { href: '/ajustes', label: t.nav.settings }];
 
   return (
-    <nav className="topnav" aria-label="Secciones">
+    <nav className="topnav" aria-label={t.nav.sections}>
       {links.map((l) => (
         <Link key={l.href} href={l.href} aria-current={isCurrent(path, l.href, links.map((x) => x.href)) ? 'page' : undefined}>
           {l.label}
         </Link>
       ))}
-      <button type="button" className="linklike" onClick={() => signOut()}>Salir</button>
+      <button type="button" className="linklike" onClick={() => signOut()}>{t.nav.signOut}</button>
     </nav>
   );
 }

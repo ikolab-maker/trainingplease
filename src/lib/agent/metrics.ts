@@ -7,10 +7,10 @@ import type { LogEntry, Session, Week } from '../types.ts';
 /** Deportes que suman km de carrera. */
 export const RUN_SPORTS = new Set(['running', 'fondo', 'tecnica']);
 
-/** Palabras en los comentarios que el Guardián trata como posible dolor o lesión. */
-const PAIN_RE = /dolor|duel[eo]|molest|lesi[oó]n|rodilla|tobillo|cadera|gemelo|pantorrilla|isquio|pinchazo|calambre|tir[oó]n|inflama|fisio/i;
+/** Palabras en los comentarios (en español o inglés) que el Guardián trata como posible dolor o lesión. */
+const PAIN_RE = /dolor|duel[eo]|molest|lesi[oó]n|rodilla|tobillo|cadera|gemelo|pantorrilla|isquio|pinchazo|calambre|tir[oó]n|inflama|fisio|\bpain|hurt|\bsore|injur|\bknee|ankle|\bhip\b|\bcalf|calves|hamstring|cramp|strain|swell|physio/i;
 /** Palabras que el Guardián trata como posible enfermedad (consenso del COI 2022: con fiebre o síntomas en el pecho no se entrena). */
-const ILLNESS_RE = /fiebre|gripe|resfr[ií]|covid|enferm|infecci[oó]n|\btos\b|escalofr|pecho|palpitaci|mareo/i;
+const ILLNESS_RE = /fiebre|gripe|resfr[ií]|covid|enferm|infecci[oó]n|\btos\b|escalofr|pecho|palpitaci|mareo|fever|\bflu\b|\ba cold\b|\bsick|\bill\b|infection|cough|chills|chest|palpitation|dizz/i;
 
 export type Decision = 'descarga' | 'bajar' | 'mantener' | 'progresar' | 'sin-datos';
 export const DECISIONS: Decision[] = ['descarga', 'bajar', 'mantener', 'progresar', 'sin-datos'];

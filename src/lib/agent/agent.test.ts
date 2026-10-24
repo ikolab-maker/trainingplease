@@ -39,6 +39,16 @@ test('métricas: dolor en el comentario manda descarga', () => {
   assert.equal(suggestDecision(m).decision, 'descarga');
 });
 
+test('métricas: dolor o enfermedad escritos en inglés también mandan descarga', () => {
+  const pain = weekMetrics(week, sessions, { mar: { done: true, rpe: 4, comment: 'My right knee hurt at the end' } }, '2026-10-12');
+  assert.equal(pain.painMentions.length, 1);
+  assert.equal(suggestDecision(pain).decision, 'descarga');
+  const ill = weekMetrics(week, sessions, { mar: { done: true, rpe: 4, comment: 'Felt sick, had a fever on Tuesday' } }, '2026-10-12');
+  assert.equal(ill.illnessMentions.length, 1);
+  const fine = weekMetrics(week, sessions, { mar: { done: true, rpe: 4, comment: 'Felt great, I will push next week' } }, '2026-10-12');
+  assert.equal(fine.painMentions.length + fine.illnessMentions.length, 0);
+});
+
 test('métricas: RPE alto dos veces en rodaje suave manda descarga; sin registros, sin datos', () => {
   const logs = { mar: { done: true, rpe: 8, comment: '' }, jue: { done: true, rpe: 9, comment: '' } };
   assert.equal(suggestDecision(weekMetrics(week, sessions, logs, '2026-10-12')).decision, 'descarga');

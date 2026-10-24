@@ -1,9 +1,19 @@
 import type { LogEntry, Session, SessionStatus } from './types';
+import type { Lang } from './i18n';
 
 const TZ = 'America/Lima';
-const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-const MES_LARGO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-const DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const NAMES: Record<Lang, { mes: string[]; mesLargo: string[]; dow: string[] }> = {
+  es: {
+    mes: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
+    mesLargo: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+    dow: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+  },
+  en: {
+    mes: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    mesLargo: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  },
+};
 
 /** Fecha de hoy en Lima como YYYY-MM-DD. */
 export function todayISO(now: Date = new Date()): string {
@@ -43,23 +53,27 @@ export function isoWeekId(iso: string): string {
   return `${year}-W${String(week).padStart(2, '0')}`;
 }
 
-export function dayParts(iso: string): { dow: string; num: number; mes: string } {
+export function dayParts(iso: string, lang: Lang = 'es'): { dow: string; num: number; mes: string } {
   const d = parse(iso);
-  return { dow: DOW[d.getUTCDay()], num: d.getUTCDate(), mes: MES[d.getUTCMonth()] };
+  const n = NAMES[lang];
+  return { dow: n.dow[d.getUTCDay()], num: d.getUTCDate(), mes: n.mes[d.getUTCMonth()] };
 }
 
-export function rangeLabel(startIso: string): string {
+/** "19 al 25 de octubre" o, en inglés, "October 19 to 25". */
+export function rangeLabel(startIso: string, lang: Lang = 'es'): string {
   const a = parse(startIso);
   const b = parse(addDays(startIso, 6));
-  if (a.getUTCMonth() === b.getUTCMonth()) {
-    return `${a.getUTCDate()} al ${b.getUTCDate()} de ${MES_LARGO[b.getUTCMonth()]}`;
-  }
-  return `${a.getUTCDate()} de ${MES_LARGO[a.getUTCMonth()]} al ${b.getUTCDate()} de ${MES_LARGO[b.getUTCMonth()]}`;
+  const ma = NAMES[lang].mesLargo[a.getUTCMonth()];
+  const mb = NAMES[lang].mesLargo[b.getUTCMonth()];
+  const same = a.getUTCMonth() === b.getUTCMonth();
+  if (lang === 'en') return same ? `${mb} ${a.getUTCDate()} to ${b.getUTCDate()}` : `${ma} ${a.getUTCDate()} to ${mb} ${b.getUTCDate()}`;
+  return same ? `${a.getUTCDate()} al ${b.getUTCDate()} de ${mb}` : `${a.getUTCDate()} de ${ma} al ${b.getUTCDate()} de ${mb}`;
 }
 
-export function longDate(iso: string): string {
+export function longDate(iso: string, lang: Lang = 'es'): string {
   const d = parse(iso);
-  return `${d.getUTCDate()} de ${MES_LARGO[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
+  const m = NAMES[lang].mesLargo[d.getUTCMonth()];
+  return lang === 'en' ? `${m} ${d.getUTCDate()}, ${d.getUTCFullYear()}` : `${d.getUTCDate()} de ${m} de ${d.getUTCFullYear()}`;
 }
 
 export function daysUntil(targetIso: string, today: string = todayISO()): number {

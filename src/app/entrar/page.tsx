@@ -5,15 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { needsConsent } from '@/components/Gate';
-
-const DENIED: Record<string, string> = {
-  not_registered: 'Tu cuenta de Google no está registrada. Pide a tu coach que te dé de alta con este correo.',
-  email_not_verified: 'Tu correo de Google no está verificado.',
-  network: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.',
-  unauthenticated: 'El servidor no pudo validar tu sesión (revisa la cuenta de servicio en Vercel).',
-  server: 'Error de configuración del servidor.',
-  profile: 'No se pudo leer tu perfil (revisa que las reglas de Firestore estén publicadas).',
-};
+import { LangSwitch, useI18n } from '@/components/I18nProvider';
 
 function GoogleIcon() {
   return (
@@ -28,6 +20,7 @@ function GoogleIcon() {
 
 export default function LoginPage() {
   const { state, signIn, signOut } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const [error, setError] = useState('');
 
@@ -44,10 +37,10 @@ export default function LoginPage() {
       if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
         setError(
           code === 'auth/unauthorized-domain'
-            ? `Este dominio (${window.location.hostname}) no está autorizado en Firebase › Authentication › Authorized domains.`
+            ? t.login.unauthorizedDomain(window.location.hostname)
             : code === 'auth/popup-blocked'
-              ? 'El navegador bloqueó la ventana de Google. Permite las ventanas emergentes e inténtalo otra vez.'
-              : `No se pudo iniciar sesión con Google. Inténtalo otra vez. (Código: ${code ?? 'desconocido'})`,
+              ? t.login.popupBlocked
+              : t.login.genericError(code ?? t.login.unknown),
         );
       }
     }
@@ -57,37 +50,38 @@ export default function LoginPage() {
     <main>
       <header className="hero">
         <div className="hero-inner">
-          <p className="hero-kicker">Tu plan de entrenamiento</p>
+          <p className="hero-kicker">{t.login.kicker}</p>
           <h1>Training Please</h1>
-          <p className="hero-sub">Entrena con tu coach</p>
+          <p className="hero-sub">{t.login.sub}</p>
         </div>
       </header>
 
       <div className="wrap">
         <div className="login-card">
           {state.status === 'unconfigured' && (
-            <p className="alert error">Falta configurar Firebase (variables NEXT_PUBLIC_FIREBASE_*).</p>
+            <p className="alert error">{t.login.unconfigured}</p>
           )}
           {state.status === 'denied' && (
             <>
-              <p className="alert error">{DENIED[state.reason] ?? 'No pudimos darte acceso.'}</p>
-              <p className="note">Código: {state.reason}{state.detail ? ` · ${state.detail}` : ''}</p>
-              <p>Entraste como <b>{state.user.email}</b>.</p>
-              <button type="button" className="btn secondary" onClick={() => signOut()}>Usar otra cuenta</button>
+              <p className="alert error">{t.login.denied[state.reason] ?? t.login.deniedDefault}</p>
+              <p className="note">{t.login.code}: {state.reason}{state.detail ? ` · ${state.detail}` : ''}</p>
+              <p>{t.login.signedInAs} <b>{state.user.email}</b>.</p>
+              <button type="button" className="btn secondary" onClick={() => signOut()}>{t.login.otherAccount}</button>
             </>
           )}
           {error && <p className="alert error">{error}</p>}
           {(state.status === 'signedOut' || state.status === 'loading') && (
             <>
-              <p>Entra con la cuenta de Google que registró tu coach.</p>
+              <p>{t.login.useGoogle}</p>
               <button type="button" className="btn google" onClick={onSignIn} disabled={state.status === 'loading'}>
-                <GoogleIcon /> {state.status === 'loading' ? 'Entrando…' : 'Entrar con Google'}
+                <GoogleIcon /> {state.status === 'loading' ? t.login.signingIn : t.login.google}
               </button>
-              <p className="note">¿Aún no tienes cuenta? <Link href="/#piloto">Únete al piloto</Link></p>
+              <p className="note">{t.login.noAccount} <Link href="/#piloto">{t.login.joinPilot}</Link></p>
             </>
           )}
         </div>
-        <p className="note" style={{ textAlign: 'center' }}><Link href="/">← Volver a Training Please</Link></p>
+        <p className="note" style={{ textAlign: 'center' }}><LangSwitch /></p>
+        <p className="note" style={{ textAlign: 'center' }}><Link href="/">{t.login.backHome}</Link></p>
       </div>
     </main>
   );

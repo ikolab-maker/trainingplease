@@ -34,6 +34,17 @@ async function notifyAthlete(db: Firestore, uid: string, title: string) {
   if (typeof email !== 'string' || !email) return;
   const name = String(user.get('name') ?? '').split(' ')[0];
   await addContact(email, name, 'atletas');
+  if (user.get('lang') === 'en') {
+    await sendEmail(
+      email,
+      'Your training week is ready',
+      name ? `${name}, your week is ready` : 'Your week is ready',
+      [`Your plan is in the app: ${title}.`, 'Check it, plan your days and tick off each session when you finish it.'],
+      { label: 'See my week', url: `${APP_URL}/plan` },
+      'en',
+    );
+    return;
+  }
   await sendEmail(
     email,
     'Tu semana de entrenamiento está lista',
