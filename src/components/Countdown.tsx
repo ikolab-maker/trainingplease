@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from './I18nProvider';
 
 function remaining(now: Date, target: Date) {
   if (target <= now) return { months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -19,6 +20,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 /** Cuenta regresiva a la carrera (hora de Lima, 6:00 por defecto). */
 export function Countdown({ date, label }: { date: string; label: string }) {
+  const { t } = useI18n();
   const target = new Date(`${date}T06:00:00-05:00`);
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -27,11 +29,10 @@ export function Countdown({ date, label }: { date: string; label: string }) {
     return () => clearInterval(t);
   }, []);
   const r = now ? remaining(now, target) : null;
-  const cells: [string, number | undefined][] = [
-    ['Meses', r?.months], ['Días', r?.days], ['Horas', r?.hours], ['Min', r?.minutes], ['Seg', r?.seconds],
-  ];
+  const values = [r?.months, r?.days, r?.hours, r?.minutes, r?.seconds];
+  const cells = t.countdown.cells.map((l, i) => [l, values[i]] as const);
   return (
-    <div className="countdown" role="timer" aria-label={`Cuenta regresiva a ${label}`}>
+    <div className="countdown" role="timer" aria-label={t.countdown.aria(label)}>
       {cells.map(([l, v]) => (
         <div className="cd-cell" key={l}>
           <span className="cd-num">{v === undefined ? '00' : pad(v)}</span>

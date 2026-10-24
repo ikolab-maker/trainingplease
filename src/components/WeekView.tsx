@@ -3,14 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DayCard } from './DayCard';
 import { Countdown } from './Countdown';
+import { useI18n } from './I18nProvider';
 import { saveLog, useLogs, useSessions, useWeeks, type LogMap } from '@/lib/data';
 import { addDays, compliance, daysUntil, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
 import { noticeId } from '@/lib/notice';
-import { membershipLabel } from '@/lib/membership';
+import { membershipOf } from '@/lib/membership';
 import type { UserDoc } from '@/lib/types';
 
 /** Vista "Mi semana": la del atleta y la vista previa del coach. */
 export function WeekView({ uid, profile, readOnly }: { uid: string; profile: UserDoc; readOnly?: boolean }) {
+  const { t, lang } = useI18n();
   const today = todayISO();
   const weeks = useWeeks(uid);
   const [idx, setIdx] = useState<number | null>(null);
@@ -59,22 +61,22 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
     <>
       <header className="hero">
         <div className="hero-inner">
-          <p className="hero-kicker">Tu plan de entrenamiento <span className="member-badge">{membershipLabel(profile.membership)}</span></p>
-          <h1>¡Hola {first}!</h1>
-          <p className="hero-sub">{race ? `Tu camino a ${race.name}` : 'Vamos por tu meta'}</p>
+          <p className="hero-kicker">{t.week.kicker} <span className="member-badge">{t.settings.tiers[membershipOf(profile.membership)]}</span></p>
+          <h1>{t.week.hello(first)}</h1>
+          <p className="hero-sub">{race ? t.week.roadTo(race.name) : t.week.goForIt}</p>
           <div className="hero-tags">
             {week && (
               <div className="tag-row">
-                <span className="tag">Esta semana</span>
-                <span className="tag-text">{rangeLabel(week.start)}</span>
+                <span className="tag">{t.week.thisWeek}</span>
+                <span className="tag-text">{rangeLabel(week.start, lang)}</span>
               </div>
             )}
             {race && (
               <div className="tag-row">
-                <span className="tag">La meta</span>
+                <span className="tag">{t.week.theGoal}</span>
                 <span className="tag-text">
-                  {race.name}{race.distanceKm ? ` · ${String(race.distanceKm).replace('.', ',')} km` : ''}<br />
-                  <small>{longDate(race.date)}</small>
+                  {race.name}{race.distanceKm ? ` · ${lang === 'es' ? String(race.distanceKm).replace('.', ',') : race.distanceKm} km` : ''}<br />
+                  <small>{longDate(race.date, lang)}</small>
                 </span>
               </div>
             )}
@@ -86,45 +88,45 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
 
       <div className="wrap">
         {weeks === null || idx === null ? (
-          <p className="loading">Cargando tu semana…</p>
+          <p className="loading">{t.week.loadingWeek}</p>
         ) : weeks.length === 0 ? (
           <div className="panel">
-            <h3>Tu plan está en camino</h3>
-            <p>Tu coach todavía no publicó tu primera semana. Vuelve pronto.</p>
+            <h3>{t.week.emptyTitle}</h3>
+            <p>{t.week.emptyText}</p>
           </div>
         ) : week && (
           <>
             <div className="week-head">
               <div className="week-nav">
-                <button type="button" aria-label="Semana anterior" disabled={idx === 0} onClick={() => setIdx(idx - 1)}>‹</button>
+                <button type="button" aria-label={t.week.prevWeek} disabled={idx === 0} onClick={() => setIdx(idx - 1)}>‹</button>
                 <h2 className="week-title">{week.title}</h2>
-                <button type="button" aria-label="Semana siguiente" disabled={idx >= weeks.length - 1} onClick={() => setIdx(idx + 1)}>›</button>
+                <button type="button" aria-label={t.week.nextWeek} disabled={idx >= weeks.length - 1} onClick={() => setIdx(idx + 1)}>›</button>
               </div>
-              <p className="week-range">{rangeLabel(week.start)}</p>
+              <p className="week-range">{rangeLabel(week.start, lang)}</p>
               {week.phase && <span className="week-phase">{week.phase}</span>}
-              {week.aiAssisted && <span className="week-phase ai-flag" style={{ marginLeft: '.4rem' }}>Asistido por IA</span>}
+              {week.aiAssisted && <span className="week-phase ai-flag" style={{ marginLeft: '.4rem' }}>{t.week.aiFlag}</span>}
               {week.goal && <p className="week-goal">{week.goal}</p>}
             </div>
 
             <div className={`progress${allDone ? ' done' : ''}`}>
               <div className="progress-top">
-                <span>Sesiones de la semana</span>
-                <b>{weekProgress.n} de {weekProgress.total}</b>
+                <span>{t.week.sessionsOfWeek}</span>
+                <b>{t.week.nOfTotal(weekProgress.n, weekProgress.total)}</b>
               </div>
               <div className="bar"><div className="bar-fill" style={{ width: `${pct}%` }} /></div>
               <p className="progress-msg">
-                {allDone ? '¡Semana completa! Eso es constancia.' :
-                  overall?.pct != null ? `Cumplimiento a la fecha: ${overall.pct}% (${overall.done} de ${overall.planned}).` :
-                    'Marca cada sesión cuando la termines.'}
+                {allDone ? t.week.allDone :
+                  overall?.pct != null ? t.week.complianceSoFar(overall.pct, overall.done, overall.planned) :
+                    t.week.markEach}
               </p>
             </div>
 
             {logsError && readOnly && (
-              <p className="alert">El atleta revocó su consentimiento: sus registros no están disponibles.</p>
+              <p className="alert">{t.week.revoked}</p>
             )}
 
             <div className="days">
-              {sessions === null ? <p className="loading">Cargando sesiones…</p> : sessions.map((s) => (
+              {sessions === null ? <p className="loading">{t.week.loadingSessions}</p> : sessions.map((s) => (
                 <DayCard
                   key={s.id}
                   session={s}
@@ -140,7 +142,7 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
 
             {week.notes && week.notes.length > 0 && (
               <>
-                <h3 className="section-title rules-title">Para esta semana</h3>
+                <h3 className="section-title rules-title">{t.week.forThisWeek}</h3>
                 <div className="rules">
                   {week.notes.map((n, i) => (
                     <div className="rule" key={i}><h4>{n.title}</h4><p style={{ whiteSpace: 'pre-line' }}>{n.body}</p></div>
@@ -169,6 +171,7 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
 
 /** Avisos del atleta para la semana que viene: los ve el coach y los lee el agente al proponerla. */
 function NextWeekNotice({ uid, today, logs, readOnly }: { uid: string; today: string; logs: LogMap; readOnly?: boolean }) {
+  const { t, lang } = useI18n();
   const start = addDays(mondayOf(today), 7);
   const weekId = isoWeekId(start);
   const saved = logs[noticeId(weekId)]?.comment ?? '';
@@ -178,7 +181,7 @@ function NextWeekNotice({ uid, today, logs, readOnly }: { uid: string; today: st
 
   if (readOnly) {
     return saved ? (
-      <div className="panel"><h3>Avisos del atleta para la semana del {rangeLabel(start)}</h3><p style={{ whiteSpace: 'pre-line' }}>{saved}</p></div>
+      <div className="panel"><h3>{t.notice.coachTitle(rangeLabel(start, lang))}</h3><p style={{ whiteSpace: 'pre-line' }}>{saved}</p></div>
     ) : null;
   }
   const save = async () => {
@@ -192,15 +195,15 @@ function NextWeekNotice({ uid, today, logs, readOnly }: { uid: string; today: st
   };
   return (
     <div className="panel">
-      <h3>Avisos para la próxima semana</h3>
-      <p>{rangeLabel(start)}. Cuéntale a tu coach si viajas, si hay días que no podrás entrenar o algo de logística. Se tiene en cuenta al armar tu semana (el domingo al mediodía).</p>
-      <textarea rows={3} maxLength={1000} value={value} placeholder="Ej.: viajo del jueves al sábado, solo podré correr en cinta 30 min."
+      <h3>{t.notice.title}</h3>
+      <p>{t.notice.text(rangeLabel(start, lang))}</p>
+      <textarea rows={3} maxLength={1000} value={value} placeholder={t.notice.placeholder}
         onChange={(e) => { setText(e.target.value); setState('idle'); }} style={{ width: '100%' }} />
       <button type="button" className="btn small" disabled={state === 'saving' || value.trim() === saved.trim()} onClick={save}>
-        {state === 'saving' ? 'Guardando…' : 'Guardar avisos'}
+        {state === 'saving' ? t.common.saving : t.notice.save}
       </button>
-      {state === 'saved' && <p className="note">Guardado. Tu coach ya lo ve.</p>}
-      {state === 'error' && <p className="alert">No se pudo guardar. Revisa tu conexión e inténtalo otra vez.</p>}
+      {state === 'saved' && <p className="note">{t.notice.saved}</p>}
+      {state === 'error' && <p className="alert">{t.notice.error}</p>}
     </div>
   );
 }

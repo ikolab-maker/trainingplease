@@ -1,4 +1,5 @@
 import 'server-only';
+import type { Lang } from './i18n';
 
 // Correo con Resend (https://resend.com). Sin RESEND_API_KEY no se envía nada y la app sigue igual.
 // - EMAIL_FROM: remitente verificado en Resend (por defecto avisos@trainingplease.app).
@@ -29,7 +30,7 @@ async function call(path: string, body: unknown): Promise<boolean> {
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /** Plantilla simple con los colores de la marca. `paragraphs` es texto plano; `cta` agrega un botón. */
-function layout(title: string, paragraphs: string[], cta?: { label: string; url: string }): string {
+function layout(title: string, paragraphs: string[], cta?: { label: string; url: string }, lang: Lang = 'es'): string {
   const body = paragraphs.map((p) => `<p style="margin:0 0 14px;line-height:1.5">${esc(p)}</p>`).join('');
   const button = cta
     ? `<p style="margin:22px 0"><a href="${esc(cta.url)}" style="background:#1d4e89;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:700">${esc(cta.label)}</a></p>`
@@ -37,15 +38,15 @@ function layout(title: string, paragraphs: string[], cta?: { label: string; url:
   return `<div style="font-family:Arial,sans-serif;color:#0f2a44;max-width:520px;margin:auto;padding:24px">
 <p style="font-weight:800;letter-spacing:.5px;color:#1d4e89;margin:0 0 18px">TRAINING <span style="color:#f2b705">PLEASE</span></p>
 <h1 style="font-size:22px;margin:0 0 16px">${esc(title)}</h1>${body}${button}
-<p style="font-size:12px;color:#6b7c8f;margin-top:28px">Training Please · Lima, Perú</p></div>`;
+<p style="font-size:12px;color:#6b7c8f;margin-top:28px">Training Please · Lima, ${lang === 'en' ? 'Peru' : 'Perú'}</p></div>`;
 }
 
-export function sendEmail(to: string, subject: string, title: string, paragraphs: string[], cta?: { label: string; url: string }) {
+export function sendEmail(to: string, subject: string, title: string, paragraphs: string[], cta?: { label: string; url: string }, lang: Lang = 'es') {
   return call('/emails', {
     from: process.env.EMAIL_FROM ?? 'Training Please <avisos@trainingplease.app>',
     to: [to],
     subject,
-    html: layout(title, paragraphs, cta),
+    html: layout(title, paragraphs, cta, lang),
     text: [title, ...paragraphs, cta ? `${cta.label}: ${cta.url}` : ''].filter(Boolean).join('\n\n'),
   });
 }

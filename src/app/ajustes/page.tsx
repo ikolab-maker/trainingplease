@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react';
 import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Gate } from '@/components/Gate';
 import { useDialogs } from '@/components/Dialogs';
+import { LangSwitch, useI18n } from '@/components/I18nProvider';
 import { TopNav } from '@/components/TopNav';
 import { db } from '@/lib/firebase';
 import { grantConsent, revokeConsent } from '@/lib/consent';
-import { OPTIONAL_CHECKS } from '@/lib/legal';
-import { MEMBERSHIPS, membershipOf, priceLabel } from '@/lib/membership';
+import { legalText } from '@/lib/legalText';
+import { MEMBERSHIPS, PILOT, membershipOf } from '@/lib/membership';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
 import type { Theme, UserDoc } from '@/lib/types';
 
@@ -47,6 +48,7 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
     distanceKm: profile.goalRace?.distanceKm?.toString() ?? '',
   });
   const { confirm, toast } = useDialogs();
+  const { t, lang } = useI18n();
   const userRef = doc(db(), 'users', uid);
 
   async function setTheme(theme: Theme) {
@@ -60,22 +62,22 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
       : null;
     try {
       await updateDoc(userRef, { profile: p, goalRace, updatedAt: serverTimestamp() });
-      toast('Perfil guardado.');
+      toast(t.settings.profileSaved);
     } catch {
-      toast('No se pudo guardar.', 'error');
+      toast(t.common.saveError, 'error');
     }
   }
 
   async function toggleOptional(key: 'ai' | 'marketing' | 'stats', value: boolean) {
     const current = profile.consent?.optional ?? { ai: false, marketing: false, stats: false };
-    await grantConsent(uid, { ...current, [key]: value });
+    await grantConsent(uid, { ...current, [key]: value }, lang);
   }
 
   async function revoke() {
     const ok = await confirm({
-      title: 'Revocar consentimiento',
-      message: 'Tu coach dejará de ver tus registros al instante y no podrás usar la app hasta que vuelvas a aceptar.',
-      confirmLabel: 'Revocar',
+      title: t.settings.revokeTitle,
+      message: t.settings.revokeText,
+      confirmLabel: t.settings.revokeConfirm,
       danger: true,
     });
     if (ok) await revokeConsent(uid);
@@ -93,60 +95,66 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
 
   return (
     <main>
-      <header className="banner"><h2>Ajustes</h2><p>{profile.email}</p></header>
+      <header className="banner"><h2>{t.settings.title}</h2><p>{profile.email}</p></header>
       <div className="wrap" style={{ maxWidth: 760 }}>
-        {first && <p className="alert">¡Bienvenida o bienvenido! Completa tu perfil para que tu coach ajuste tu plan.</p>}
+        {first && <p className="alert">{t.settings.welcome}</p>}
+
+        <section className="panel" id="idioma">
+          <h3>{t.lang.title}</h3>
+          <p className="note">{t.lang.hint}</p>
+          <LangSwitch />
+        </section>
 
         <section className="panel">
-          <h3>Tema</h3>
+          <h3>{t.settings.theme}</h3>
           <div className="theme-options">
-            {THEMES.map((t) => (
-              <button key={t.key} type="button" className="theme-swatch" aria-pressed={(profile.theme ?? DEFAULT_THEME) === t.key} onClick={() => setTheme(t.key)}>
-                <i style={{ background: t.color }} /> {t.label}
+            {THEMES.map((th) => (
+              <button key={th.key} type="button" className="theme-swatch" aria-pressed={(profile.theme ?? DEFAULT_THEME) === th.key} onClick={() => setTheme(th.key)}>
+                <i style={{ background: th.color }} /> {t.settings.themes[th.key]}
               </button>
             ))}
           </div>
         </section>
 
         <form className="panel form" onSubmit={saveProfile}>
-          <h3>Mi perfil deportivo</h3>
+          <h3>{t.settings.profile}</h3>
           <div className="form-row">
-            <label className="field"><span>Carrera objetivo</span>
-              <input value={race.name} placeholder="Media Maratón de Lima" onChange={(e) => setRace({ ...race, name: e.target.value })} /></label>
-            <label className="field"><span>Fecha</span>
+            <label className="field"><span>{t.settings.race}</span>
+              <input value={race.name} placeholder={t.settings.racePlaceholder} onChange={(e) => setRace({ ...race, name: e.target.value })} /></label>
+            <label className="field"><span>{t.settings.date}</span>
               <input type="date" value={race.date} onChange={(e) => setRace({ ...race, date: e.target.value })} /></label>
-            <label className="field"><span>Distancia (km)</span>
-              <input inputMode="decimal" value={race.distanceKm} placeholder="21,1" onChange={(e) => setRace({ ...race, distanceKm: e.target.value })} /></label>
+            <label className="field"><span>{t.settings.distance}</span>
+              <input inputMode="decimal" value={race.distanceKm} placeholder={lang === 'es' ? '21,1' : '21.1'} onChange={(e) => setRace({ ...race, distanceKm: e.target.value })} /></label>
           </div>
           <div className="form-row">
-            <label className="field"><span>Edad</span>
+            <label className="field"><span>{t.settings.age}</span>
               <input inputMode="numeric" value={p.age} placeholder="35" onChange={(e) => setP({ ...p, age: e.target.value })} /></label>
-            <label className="field"><span>Talla (cm)</span>
+            <label className="field"><span>{t.settings.height}</span>
               <input inputMode="numeric" value={p.heightCm} placeholder="165" onChange={(e) => setP({ ...p, heightCm: e.target.value })} /></label>
-            <label className="field"><span>Peso (kg)</span>
+            <label className="field"><span>{t.settings.weight}</span>
               <input inputMode="decimal" value={p.weightKg} placeholder="60" onChange={(e) => setP({ ...p, weightKg: e.target.value })} /></label>
           </div>
-          {field('level', 'Nivel actual', 'Km por semana y salida más larga reciente')}
-          {field('availability', 'Disponibilidad', 'Días y horarios en que puedes entrenar')}
-          {field('equipment', 'Equipo', 'Reloj, gimnasio, bici, piscina…')}
-          {field('goals', 'Objetivos', undefined, true)}
-          {field('limitations', 'Lesiones o limitaciones', 'Dato de salud: solo lo ve tu coach', true)}
+          {field('level', t.settings.level, t.settings.levelHint)}
+          {field('availability', t.settings.availability, t.settings.availabilityHint)}
+          {field('equipment', t.settings.equipment, t.settings.equipmentHint)}
+          {field('goals', t.settings.goals, undefined, true)}
+          {field('limitations', t.settings.limitations, t.settings.limitationsHint, true)}
           <div className="actions">
-            <button className="btn" type="submit">Guardar perfil</button>
+            <button className="btn" type="submit">{t.settings.saveProfile}</button>
           </div>
         </form>
 
         <section className="panel" id="suscripcion">
-          <h3>Suscripción</h3>
-          <p className="note">Tu nivel lo define tu coach. Durante el piloto no tiene costo.</p>
+          <h3>{t.settings.subscription}</h3>
+          <p className="note">{t.settings.subscriptionNote}</p>
           <ul className="plan-tiers">
             {MEMBERSHIPS.map((m) => {
               const current = membershipOf(profile.membership) === m.key;
               return (
                 <li key={m.key} className={current ? 'current' : undefined} aria-current={current ? 'true' : undefined}>
-                  <b>{m.label}</b>
-                  <span>{priceLabel(current)}</span>
-                  {current && <i>Tu nivel</i>}
+                  <b>{t.settings.tiers[m.key]}</b>
+                  {PILOT && <span>{current ? t.settings.pilotPrice : t.settings.priceTbd}</span>}
+                  {current && <i>{t.settings.yourTier}</i>}
                 </li>
               );
             })}
@@ -154,12 +162,12 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
         </section>
 
         <section className="panel" id="privacidad">
-          <h3>Privacidad</h3>
+          <h3>{t.settings.privacy}</h3>
           <p className="note">
-            Aceptaste la versión {profile.consent?.version} de los términos. <Link href="/legal">Leer términos y política de datos</Link>.
+            {t.settings.acceptedVersion(profile.consent?.version ?? '')} <Link href="/legal">{t.settings.readLegal}</Link>.
           </p>
           <div className="form">
-            {OPTIONAL_CHECKS.map((c) => (
+            {legalText(lang).optional.map((c) => (
               <label className="check" key={c.key}>
                 <input type="checkbox" checked={!!profile.consent?.optional?.[c.key]} onChange={(e) => toggleOptional(c.key, e.target.checked)} />
                 <span>{c.text}</span>
@@ -167,7 +175,7 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
             ))}
           </div>
           <div className="actions" style={{ marginTop: '1rem' }}>
-            <button type="button" className="btn danger" onClick={revoke}>Revocar consentimiento</button>
+            <button type="button" className="btn danger" onClick={revoke}>{t.settings.revoke}</button>
           </div>
         </section>
       </div>

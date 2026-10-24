@@ -2,25 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { useDialogs } from '@/components/Dialogs';
+import { useI18n } from '@/components/I18nProvider';
 import { activityLink, activityLinkLabel } from '@/lib/activityLink';
 import { SPORTS } from '@/lib/sports';
 import { dayParts } from '@/lib/dates';
+import type { Lang } from '@/lib/i18n';
 import type { LogEntry, Session, SessionStatus } from '@/lib/types';
 
-const STATUS_LABEL: Record<SessionStatus, string> = {
-  done: 'Realizada',
-  missed: 'No realizada',
-  late: 'Pendiente',
-  today: 'Hoy',
-  upcoming: 'Próxima',
-  rest: 'Descanso',
-};
-
-function metaLine(s: Session) {
+function metaLine(s: Session, lang: Lang) {
   if (s.summary) return s.summary;
   const parts: string[] = [];
   if (s.durationMin) parts.push(`${s.durationMin} min`);
-  if (s.distanceKm) parts.push(`${String(s.distanceKm).replace('.', ',')} km`);
+  if (s.distanceKm) parts.push(`${lang === 'es' ? String(s.distanceKm).replace('.', ',') : s.distanceKm} km`);
   if (s.rpe) parts.push(`RPE ${s.rpe}`);
   return parts.join(' · ');
 }
@@ -34,8 +27,10 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
   onSave?: (entry: { done: boolean; rpe: number | null; comment: string; link: string }) => Promise<void>;
   readOnly?: boolean;
 }) {
-  const sport = SPORTS[s.sport] ?? SPORTS.otro;
-  const { dow, num } = dayParts(s.date);
+  const { t, lang } = useI18n();
+  const sportKey = SPORTS[s.sport] ? s.sport : 'otro';
+  const sport = SPORTS[sportKey];
+  const { dow, num } = dayParts(s.date, lang);
   const done = !!log?.done;
   const [rpe, setRpe] = useState<number | null>(log?.rpe ?? null);
   const [comment, setComment] = useState(log?.comment ?? '');
@@ -49,13 +44,13 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
 
   async function save(nextDone: boolean) {
     if (!onSave) return;
-    if (link.trim() && !activityLink(link)) { toast('El enlace debe empezar con https://', 'error'); return; }
+    if (link.trim() && !activityLink(link)) { toast(t.day.linkError, 'error'); return; }
     setSaving(true);
     try {
       await onSave({ done: nextDone, rpe, comment, link });
-      toast('Guardado');
+      toast(t.common.saved);
     } catch {
-      toast('No se pudo guardar. Revisa tu conexión.', 'error');
+      toast(t.common.saveErrorNetwork, 'error');
     } finally {
       setSaving(false);
     }
@@ -71,11 +66,11 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
         <button type="button" className="day-toggle" aria-expanded={open} onClick={onToggle}>
           <span className="day-date"><b>{dow}</b><i>{num}</i></span>
           <span className="day-main">
-            <span className="badge">{sport.label}</span>
-            <span className={`status ${status}`}>{STATUS_LABEL[status]}</span>
-            {!s.core && s.sport !== 'descanso' && <span className="extra-flag">extra</span>}
+            <span className="badge">{t.sports[sportKey]}</span>
+            <span className={`status ${status}`}>{t.day.status[status as SessionStatus]}</span>
+            {!s.core && s.sport !== 'descanso' && <span className="extra-flag">{t.day.extra}</span>}
             <span className="day-title">{s.title}</span>
-            <span className="day-meta">{metaLine(s)}</span>
+            <span className="day-meta">{metaLine(s, lang)}</span>
           </span>
           <span className="chev" aria-hidden="true">›</span>
         </button>
@@ -85,7 +80,7 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
               type="button"
               className="day-check"
               aria-pressed={done}
-              aria-label={done ? 'Marcar como no realizada' : 'Marcar como realizada'}
+              aria-label={done ? t.day.markUndone : t.day.markDone}
               disabled={saving}
               onClick={() => save(!done)}
             >✓</button>
@@ -101,29 +96,29 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
 
             {canLog && (
               <div className="log-box">
-                <h5>¿Cómo te sentiste?</h5>
+                <h5>{t.day.howFelt}</h5>
                 <div>
-                  <small>Esfuerzo real (1 muy suave · 10 máximo)</small>
-                  <div className="rpe-scale" role="group" aria-label="Esfuerzo percibido">
+                  <small>{t.day.rpeScale}</small>
+                  <div className="rpe-scale" role="group" aria-label={t.day.rpeAria}>
                     {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                       <button key={n} type="button" aria-pressed={rpe === n} onClick={() => setRpe(rpe === n ? null : n)}>{n}</button>
                     ))}
                   </div>
                 </div>
                 <label className="field">
-                  <span>Comentario para tu coach</span>
+                  <span>{t.day.comment}</span>
                   <textarea value={comment} maxLength={1000} onChange={(e) => setComment(e.target.value)}
-                    placeholder="Sensaciones, molestias, sueño, lo que quieras contar" />
+                    placeholder={t.day.commentPlaceholder} />
                 </label>
                 <label className="field">
-                  <span>Enlace a tu actividad (opcional)</span>
+                  <span>{t.day.link}</span>
                   <input type="url" inputMode="url" value={link} maxLength={300} onChange={(e) => setLink(e.target.value)}
                     placeholder="https://www.strava.com/activities/…" />
-                  <small>En Strava: Compartir › Copiar enlace.</small>
+                  <small>{t.day.linkHint}</small>
                 </label>
                 <div className="actions">
                   <button type="button" className="btn small" disabled={saving} onClick={() => save(true)}>
-                    {done ? 'Actualizar' : 'Guardar y marcar realizada'}
+                    {done ? t.day.update : t.day.saveDone}
                   </button>
                 </div>
               </div>
@@ -131,10 +126,10 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
 
             {readOnly && log && (log.rpe || log.comment || log.link) && (
               <div className="log-box">
-                <h5>Registro del atleta</h5>
-                {log.rpe && <p>RPE real: <b>{log.rpe}</b></p>}
+                <h5>{t.day.athleteLog}</h5>
+                {log.rpe && <p>{t.day.realRpe} <b>{log.rpe}</b></p>}
                 {log.comment && <p><i>“{log.comment}”</i></p>}
-                {log.link && <p><a href={log.link} target="_blank" rel="noreferrer">Ver actividad en {activityLinkLabel(log.link)}</a></p>}
+                {log.link && <p><a href={log.link} target="_blank" rel="noreferrer">{t.day.seeActivity(activityLinkLabel(log.link))}</a></p>}
               </div>
             )}
           </div>

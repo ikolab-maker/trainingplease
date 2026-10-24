@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useI18n } from './I18nProvider';
 
 // Ventanas propias de Training Please en lugar de window.confirm y window.alert:
 // - confirm(): diálogo modal con <dialog> (Esc y clic afuera cancelan, el foco queda dentro;
@@ -34,6 +35,7 @@ export function useDialogs(): Dialogs {
 const TOAST_MS = 3500;
 
 export function DialogsProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const ref = useRef<HTMLDialogElement>(null);
   const resolver = useRef<((ok: boolean) => void) | null>(null);
   const [opts, setOpts] = useState<ConfirmOptions | null>(null);
@@ -79,10 +81,10 @@ export function DialogsProvider({ children }: { children: React.ReactNode }) {
             {opts.message && <p>{opts.message}</p>}
             <div className="actions">
               <button type="button" className="btn small secondary" autoFocus={opts.danger} onClick={() => close(false)}>
-                {opts.cancelLabel ?? 'Cancelar'}
+                {opts.cancelLabel ?? t.common.cancel}
               </button>
               <button type="button" className={`btn small${opts.danger ? ' danger' : ''}`} autoFocus={!opts.danger} onClick={() => close(true)}>
-                {opts.confirmLabel ?? 'Aceptar'}
+                {opts.confirmLabel ?? t.common.accept}
               </button>
             </div>
           </div>

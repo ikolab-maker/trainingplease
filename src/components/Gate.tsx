@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './AuthProvider';
+import { useI18n } from './I18nProvider';
 import { LEGAL_VERSION } from '@/lib/legal';
 import type { Role, UserDoc } from '@/lib/types';
 import type { User } from 'firebase/auth';
@@ -39,5 +40,6 @@ export function Gate({ role, allowNoConsent, children }: {
 }
 
 export function Loading() {
-  return <div className="loading" role="status">Cargando…</div>;
+  const { t } = useI18n();
+  return <div className="loading" role="status">{t.common.loading}</div>;
 }

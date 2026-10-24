@@ -2,6 +2,7 @@ import 'server-only';
 import { adminDb } from '@/lib/firebase-admin';
 import type { GoalRace, LogEntry, Session, UserDoc, Week } from '@/lib/types';
 import { noticeId } from '@/lib/notice';
+import type { Lang } from '@/lib/i18n';
 import { parseReference, type FitnessReference } from './fitness';
 
 export interface MemoryRow { weekId: string; decision: string; row: string }
@@ -16,6 +17,7 @@ export interface AthleteMemory {
 export interface AthleteContext {
   uid: string;
   firstName: string;
+  lang: Lang; // idioma del atleta: el plan que ve se escribe en él
   goalRace: GoalRace | null;
   profile: NonNullable<UserDoc['profile']>;
   hasConsent: boolean; // consentimiento vigente: sin él no se leen registros
@@ -65,6 +67,7 @@ export async function loadAthleteContext(uid: string, analyzedWeekId: string, ta
   return {
     uid,
     firstName: (user.name ?? '').trim().split(/\s+/)[0] || 'Atleta',
+    lang: user.lang === 'en' ? 'en' : 'es',
     goalRace: user.goalRace ?? null,
     profile: user.profile ?? {},
     hasConsent,

@@ -57,6 +57,8 @@ test('el atleta no escribe planes; el coach sí', async () => {
 test('el atleta no puede cambiarse el rol', async () => {
   await assertFails(updateDoc(doc(ana(), 'users/ana'), { role: 'admin' }));
   await assertSucceeds(updateDoc(doc(ana(), 'users/ana'), { theme: 'oscuro' }));
+  await assertSucceeds(updateDoc(doc(ana(), 'users/ana'), { lang: 'en' }));
+  await assertFails(updateDoc(doc(ana(), 'users/ana'), { lang: 'fr' }));
 });
 
 test('el coach no puede tocar rol ni consentimiento', async () => {

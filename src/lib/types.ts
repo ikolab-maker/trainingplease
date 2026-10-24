@@ -1,3 +1,5 @@
+import type { Lang } from './i18n';
+
 export type Role = 'admin' | 'athlete';
 export type Theme = 'rosa' | 'azul' | 'oscuro';
 export type Membership = 'base' | 'ritmo' | 'elite';
@@ -26,6 +28,7 @@ export interface UserDoc {
   theme?: Theme;
   coachTheme?: Theme; // tema del panel coach (solo admin)
   membership?: Membership;
+  lang?: Lang; // idioma elegido por el usuario; el agente y los correos lo usan
   goalRace?: GoalRace | null;
   profile?: {
     age?: string;

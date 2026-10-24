@@ -198,8 +198,16 @@ function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string;
     out.push('', `## Plan previsto para ${target.id} (ajústalo, no lo reemplaces sin motivo)`, `${tw.title}${tw.phase ? ` · fase ${tw.phase}` : ''}${tw.goal ? `\nObjetivo: ${tw.goal}` : ''}`);
     out.push(...planned.map((s) => `${sessionLine(s)}${s.steps?.length ? `\n    pasos: ${s.steps.join(' | ')}` : ''}`));
   }
-  out.push('', 'Devuelve la propuesta en el formato pedido.');
+  out.push(...langLines(ctx), '', 'Devuelve la propuesta en el formato pedido.');
   return out.join('\n');
+}
+
+/** El atleta eligió inglés: lo que ve va en inglés; lo que lee el coach sigue en español. */
+function langLines(ctx: AthleteContext): string[] {
+  if (ctx.lang !== 'en') return [];
+  return ['', '## Idioma del atleta: inglés',
+    'Escribe en inglés claro y cercano todo lo que ve el atleta: título, fase, objetivo y notas de la semana, y en cada sesión title, summary, focus, steps y tip.',
+    'summary, alerts, coachMessage, decisionRule y memoryRow siguen en español para el coach. Los comentarios del atleta pueden venir en inglés: léelos igual.'];
 }
 
 /** Corre el agente principal para un atleta: generar → validar (Guardián) → corregir, hasta 3 vueltas. */
@@ -219,7 +227,7 @@ function buildAdjustBrief(ctx: AthleteContext, target: { id: string; start: stri
     out.push(`${sessionLine(s)} · id ${s.id}${locked.has(s.id) ? ' · BLOQUEADA (ya pasó o está registrada)' : ''}${r?.rpeReal != null ? ` · RPE real ${r.rpeReal}` : ''}${r?.comment ? ` · "${r.comment}"` : ''}`);
     out.push(`    resumen: ${s.summary ?? ''} · duración ${s.durationMin ?? '–'} min · pasos: ${(s.steps ?? []).join(' | ')} · tip: ${s.tip ?? ''} · focus: ${s.focus ?? ''}`);
   }
-  out.push(...scienceLines(ctx, today), ...limits);
+  out.push(...scienceLines(ctx, today), ...limits, ...langLines(ctx));
   out.push('', `Devuelve la semana ${target.id} COMPLETA con el ajuste aplicado. Reglas del ajuste:`,
     '- Conserva el id de cada sesión existente; para mover una sesión cambia su date, no su id. Solo crea ids nuevos para sesiones nuevas.',
     '- No cambies las sesiones BLOQUEADAS.',

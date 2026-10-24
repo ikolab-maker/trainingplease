@@ -3,6 +3,7 @@
 import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { LEGAL_VERSION } from './legal';
+import type { Lang } from './i18n';
 
 export type OptionalPurposes = { ai: boolean; marketing: boolean; stats: boolean };
 
@@ -10,11 +11,12 @@ export type OptionalPurposes = { ai: boolean; marketing: boolean; stats: boolean
  * Guarda la evidencia (consents/{uid}/events) y el estado vigente (users/{uid}.consent)
  * en una sola escritura atómica.
  */
-export async function grantConsent(uid: string, optional: OptionalPurposes) {
+export async function grantConsent(uid: string, optional: OptionalPurposes, lang: Lang = 'es') {
   const batch = writeBatch(db());
   batch.set(doc(collection(db(), 'consents', uid, 'events')), {
     action: 'granted',
     version: LEGAL_VERSION,
+    lang, // idioma del texto que vio (el inglés es traducción de referencia; vale el español)
     required: ['adult', 'health', 'risk', 'terms', 'data'],
     optional,
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 300) : '',
