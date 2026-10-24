@@ -31,6 +31,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'posts/privado'), { ...post('published', true), slug: 'privado' });
     await setDoc(doc(db, 'posts/borrador'), { ...post('draft', false), slug: 'borrador' });
     await setDoc(doc(db, 'posts/publico/likes/ana'), { kind: 'user' });
+    await setDoc(doc(db, 'posts/para-ana'), { ...post('personal', true), slug: 'para-ana', athletes: ['ana'] });
   });
 });
 
@@ -138,6 +139,22 @@ test('blog: públicos para todos, privados para quien tiene cuenta, borradores s
   await assertSucceeds(getDocs(query(collection(anon(), 'posts'), where('status', '==', 'published'), where('private', '==', false))));
   await assertFails(getDocs(query(collection(anon(), 'posts'), where('status', '==', 'published'))));
   await assertSucceeds(getDocs(query(collection(ana(), 'posts'), where('status', '==', 'published'))));
+});
+
+test('blog: un post personal solo lo ve su atleta (y el coach)', async () => {
+  await assertSucceeds(getDoc(doc(ana(), 'posts/para-ana')));
+  await assertFails(getDoc(doc(beto(), 'posts/para-ana')));
+  await assertFails(getDoc(doc(anon(), 'posts/para-ana')));
+  await assertSucceeds(getDoc(doc(coach(), 'posts/para-ana')));
+  // La lista general no lo trae; la consulta personal solo funciona con el propio uid
+  await assertSucceeds(getDocs(query(collection(ana(), 'posts'), where('status', '==', 'personal'), where('athletes', 'array-contains', 'ana'))));
+  await assertFails(getDocs(query(collection(beto(), 'posts'), where('status', '==', 'personal'), where('athletes', 'array-contains', 'ana'))));
+  await assertFails(getDocs(query(collection(beto(), 'posts'), where('status', '==', 'personal'))));
+  // El coach lo crea con destinatarios y siempre privado
+  await assertSucceeds(setDoc(doc(coach(), 'posts/nuevo'), newPost({ status: 'personal', private: true, athletes: ['beto'] })));
+  await assertFails(setDoc(doc(coach(), 'posts/otro'), newPost({ slug: 'otro', status: 'personal', private: false, athletes: ['beto'] })));
+  await assertFails(setDoc(doc(coach(), 'posts/otro'), newPost({ slug: 'otro', status: 'personal', private: true })));
+  await assertFails(setDoc(doc(coach(), 'posts/otro'), newPost({ slug: 'otro', private: true, athletes: [] })));
 });
 
 test('blog: solo el coach escribe, sin tocar likes ni envíos', async () => {

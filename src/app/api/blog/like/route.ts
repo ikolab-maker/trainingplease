@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 const hash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);
 
 /**
- * Like o quitar like a un post publicado.
+ * Like o quitar like a un post publicado (o personal, solo sus atletas).
  * - Con sesión: un like por cuenta (likes/{uid}).
  * - Sin sesión: uno por navegador (likes/a_<hash del id anónimo>) y como máximo ANON_LIKES_PER_IP
  *   por post desde la misma conexión. La IP no se guarda: solo un hash con sal.
@@ -29,7 +29,12 @@ export async function POST(req: Request) {
   const db = adminDb();
   const postRef = db.doc(`posts/${slug}`);
   const post = await postRef.get();
-  if (!post.exists || post.get('status') !== 'published') return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  const status = post.get('status');
+  if (!post.exists || (status !== 'published' && status !== 'personal')) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  if (status === 'personal') {
+    const allowed = token && (token.role === 'admin' || ((post.get('athletes') as string[] | undefined) ?? []).includes(token.uid));
+    if (!allowed) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
   if (post.get('private') === true) {
     const member = token && (token.role === 'admin' || (await db.doc(`users/${token.uid}`).get()).exists);
     if (!member) return NextResponse.json({ error: 'not_found' }, { status: 404 });

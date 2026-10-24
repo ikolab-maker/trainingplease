@@ -9,14 +9,20 @@ const LIKED_KEY = 'tp-liked';
 
 const publishedTime = (p: Post) => p.publishedAt?.toDate().getTime() ?? 0;
 
-/** Posts publicados, del más nuevo al más viejo. Sin cuenta, solo los públicos (así lo exigen las reglas). */
-export async function listPosts(member: boolean): Promise<Post[]> {
+/**
+ * Posts publicados, del más nuevo al más viejo. Sin cuenta, solo los públicos (así lo exigen las reglas).
+ * Con `uid`, suma los personales dirigidos a ese atleta.
+ */
+export async function listPosts(member: boolean, uid?: string | null): Promise<Post[]> {
   const base = [where('status', '==', 'published')];
   const q = member
     ? query(collection(db(), 'posts'), ...base)
     : query(collection(db(), 'posts'), ...base, where('private', '==', false));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data() as Post).sort((a, b) => publishedTime(b) - publishedTime(a));
+  const mine = member && uid
+    ? getDocs(query(collection(db(), 'posts'), where('status', '==', 'personal'), where('athletes', 'array-contains', uid)))
+    : null;
+  const snaps = await Promise.all([getDocs(q), mine]);
+  return snaps.flatMap((s) => s?.docs.map((d) => d.data() as Post) ?? []).sort((a, b) => publishedTime(b) - publishedTime(a));
 }
 
 /** Todos los posts, borradores incluidos (solo el coach). */

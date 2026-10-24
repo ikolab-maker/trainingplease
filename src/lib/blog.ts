@@ -8,7 +8,8 @@ export interface PostContent {
   body: string; // texto con formato simple (ver markdown.ts)
 }
 
-export type PostStatus = 'draft' | 'published';
+/** personal: publicado solo para los atletas de `athletes`; no sale en la lista general. */
+export type PostStatus = 'draft' | 'published' | 'personal';
 export type Audience = 'atletas' | 'boletin';
 
 export interface PostSend {
@@ -23,12 +24,18 @@ export interface Post {
   en?: PostContent | null;
   private: boolean; // solo atletas con sesión
   status: PostStatus;
+  athletes?: string[] | null; // uid de los atletas que lo ven; vacío o null = todos según `private`
   likes: number;
   sends?: PostSend[];
   createdAt?: unknown;
   updatedAt?: unknown;
   publishedAt?: { toDate(): Date } | null;
 }
+
+export const isLive = (p: Pick<Post, 'status'>) => p.status === 'published' || p.status === 'personal';
+
+/** Estado al publicar: personal si va dirigido a atletas concretos. */
+export const liveStatus = (athletes: string[] | null | undefined): PostStatus => (athletes?.length ? 'personal' : 'published');
 
 /** Topes que también validan las reglas de Firestore. */
 export const POST_LIMITS = { title: 140, summary: 300, body: 20000, slug: 80 } as const;

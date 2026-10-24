@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
 import { useAuth } from '@/components/AuthProvider';
@@ -11,7 +11,8 @@ import { Markdown } from '@/components/blog/Markdown';
 import { db } from '@/lib/firebase';
 import { listAllPosts } from '@/lib/blogData';
 import { SUGGESTED_POSTS } from '@/content/posts';
-import { POST_LIMITS, postErrors, slugify, type Audience, type Post, type PostContent } from '@/lib/blog';
+import { POST_LIMITS, isLive, liveStatus, postErrors, slugify, type Audience, type Post, type PostContent } from '@/lib/blog';
+import type { UserDoc } from '@/lib/types';
 import '../../site.css';
 import '../../blog/blog.css';
 
@@ -19,6 +20,8 @@ import '../../blog/blog.css';
 
 const EMPTY: PostContent = { title: '', summary: '', body: '' };
 const AUDIENCE: Record<Audience, string> = { atletas: 'los atletas', boletin: 'el boletín' };
+
+type AthleteOpt = { uid: string; name: string };
 
 const updatedTime = (p: Post) => (p.updatedAt as { toDate?(): Date } | undefined)?.toDate?.().getTime() ?? 0;
 
@@ -39,6 +42,16 @@ function BlogAdmin() {
   const { toast } = useDialogs();
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [editing, setEditing] = useState<Post | 'new' | null>(null);
+  const [athletes, setAthletes] = useState<AthleteOpt[]>([]);
+
+  useEffect(() => {
+    getDocs(query(collection(db(), 'users'), where('role', '==', 'athlete')))
+      .then((snap) => setAthletes(snap.docs.map((d) => ({ uid: d.id, name: (d.data() as UserDoc).name || (d.data() as UserDoc).email }))
+        .sort((a, b) => a.name.localeCompare(b.name))))
+      .catch(() => {});
+  }, []);
+  const athleteNames = (uids: string[] | null | undefined) =>
+    (uids ?? []).map((u) => athletes.find((a) => a.uid === u)?.name ?? 'atleta').join(', ');
 
   const load = useCallback(async () => {
     const all = await listAllPosts();
@@ -73,7 +86,7 @@ function BlogAdmin() {
       <header className="banner"><h2>Blog</h2><p>Escribe, publica y envía por correo</p></header>
       <div className="wrap">
         {editing ? (
-          <Editor key={editing === 'new' ? 'new' : editing.slug} initial={editing === 'new' ? null : editing} onDone={reopen} />
+          <Editor key={editing === 'new' ? 'new' : editing.slug} initial={editing === 'new' ? null : editing} athletes={athletes} onDone={reopen} />
         ) : (
           <>
             <div className="actions" style={{ justifyContent: 'space-between' }}>
@@ -81,7 +94,8 @@ function BlogAdmin() {
               <button type="button" className="btn small" onClick={() => setEditing('new')}>Nuevo post</button>
             </div>
             <p className="section-sub">
-              Los públicos los lee cualquiera en <Link href="/blog">/blog</Link>; los «Solo atletas», quien entra con su cuenta.
+              Los públicos los lee cualquiera en <Link href="/blog">/blog</Link>; los «Solo atletas», quien entra con su cuenta;
+              los «Solo para…», únicamente los atletas elegidos.
               Los me gusta llegan de atletas y de visitantes (con tope por conexión). No hay comentarios.
             </p>
             {posts === null ? <p className="loading">Cargando…</p> : posts.length === 0 ? (
@@ -94,8 +108,8 @@ function BlogAdmin() {
                       <b>{p.es.title}</b>
                       <br />
                       <small>
-                        {p.status === 'published' ? 'Publicado' : 'Borrador'}
-                        {p.private && ' · Solo atletas'}
+                        {isLive(p) ? 'Publicado' : 'Borrador'}
+                        {p.athletes?.length ? ` · Solo para ${athleteNames(p.athletes)}` : p.private && ' · Solo atletas'}
                         {p.en?.title && ' · ES/EN'}
                         {' · '}♥ {p.likes ?? 0}
                         {p.sends?.length ? ` · enviado ${p.sends.length} ${p.sends.length === 1 ? 'vez' : 'veces'}` : ''}
@@ -164,18 +178,21 @@ function ContentFields({ value, onChange, lang }: { value: PostContent; onChange
   );
 }
 
-function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: string | null) => void }) {
+function Editor({ initial, athletes, onDone }: { initial: Post | null; athletes: AthleteOpt[]; onDone: (slug: string | null) => void }) {
   const { authHeaders } = useAuth();
   const { confirm, toast } = useDialogs();
   const isNew = !initial;
   const [es, setEs] = useState<PostContent>(initial?.es ?? EMPTY);
   const [en, setEn] = useState<PostContent>(initial?.en ?? EMPTY);
   const [priv, setPriv] = useState(initial?.private ?? false);
+  // Atletas elegidos: si hay alguno, el post es solo para ellos (nadie más lo ve ni en la lista).
+  const [only, setOnly] = useState<string[]>(initial?.athletes ?? []);
+  const personal = only.length > 0;
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(false);
   const [preview, setPreview] = useState<'es' | 'en' | null>(null);
   const [busy, setBusy] = useState('');
-  const published = initial?.status === 'published';
+  const published = !!initial && isLive(initial);
   const hasEn = !!(en.title.trim() || en.summary.trim() || en.body.trim());
   const effectiveSlug = isNew && !slugTouched ? slugify(es.title) : slug;
   // Si el post vino de un borrador sugerido y ese texto cambió en la app, se puede traer la versión nueva.
@@ -184,6 +201,14 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
 
   function data() {
     return { slug: effectiveSlug, es, en: hasEn ? en : null };
+  }
+  // Privado y destinatarios van juntos; si ya está publicado, el estado sigue a los destinatarios.
+  function audienceFields() {
+    return {
+      private: priv || personal,
+      athletes: personal ? only : null,
+      ...(published ? { status: liveStatus(only) } : {}),
+    };
   }
 
   /** Guarda lo escrito. `extra` cambia el estado (publicar o pasar a borrador). */
@@ -196,12 +221,12 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
       if (isNew) {
         if ((await getDoc(ref)).exists()) { toast('Ya hay un post con esa dirección. Cámbiala.', 'error'); return null; }
         await setDoc(ref, {
-          ...d, private: priv, status: 'draft', likes: 0,
+          ...d, ...audienceFields(), status: 'draft', likes: 0,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp(), publishedAt: null,
         });
         if (Object.keys(extra).length) await updateDoc(ref, { ...extra, updatedAt: serverTimestamp() });
       } else {
-        await updateDoc(ref, { es: d.es, en: d.en, private: priv, ...extra, updatedAt: serverTimestamp() });
+        await updateDoc(ref, { es: d.es, en: d.en, ...audienceFields(), ...extra, updatedAt: serverTimestamp() });
       }
       return d.slug;
     } catch {
@@ -220,13 +245,15 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
   async function onPublish() {
     if (!await confirm({
       title: 'Publicar post',
-      message: priv
+      message: personal
+        ? `Solo lo verán ${athletes.filter((a) => only.includes(a.uid)).map((a) => a.name).join(', ')}, con su cuenta. Ningún otro atleta lo ve.`
+        : priv
         ? 'Quedará visible en el blog solo para quienes entran con su cuenta. Luego puedes enviarlo por correo.'
         : 'Quedará visible para cualquiera en trainingplease.app/blog. Luego puedes enviarlo por correo.',
       confirmLabel: 'Publicar',
     })) return;
     setBusy('publish');
-    const s = await save({ status: 'published', publishedAt: initial?.publishedAt ?? serverTimestamp() });
+    const s = await save({ status: liveStatus(only), publishedAt: initial?.publishedAt ?? serverTimestamp() });
     setBusy('');
     if (s) { toast('Publicado'); onDone(s); }
   }
@@ -266,7 +293,9 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
     const before = (initial.sends ?? []).filter((s) => s.audience === audience);
     const last = before.at(-1);
     const message = [
-      audience === 'atletas'
+      audience === 'atletas' && personal
+        ? 'Solo los atletas elegidos reciben un correo con el resumen y el enlace.'
+        : audience === 'atletas'
         ? 'Cada atleta con consentimiento recibe un correo, en su idioma, con el resumen y el enlace al post.'
         : 'Se envía un broadcast de Resend, en español, a todo el segmento del boletín, con el resumen y el enlace.',
       last ? `Ya lo enviaste a ${AUDIENCE[audience]} el ${new Date(last.at).toLocaleString('es-PE')}: lo recibirían otra vez.` : '',
@@ -327,10 +356,27 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
             <small>trainingplease.app/blog/{effectiveSlug || '…'}{!isNew && ' · no cambia una vez creado, para no romper enlaces.'}</small>
           </label>
           <label className="check">
-            <input type="checkbox" checked={priv} onChange={(e) => setPriv(e.target.checked)} />
+            <input type="checkbox" checked={priv || personal} disabled={personal} onChange={(e) => setPriv(e.target.checked)} />
             <span>Solo atletas: lo ven solo quienes entran con su cuenta y no se puede enviar al boletín.</span>
           </label>
         </div>
+
+        <fieldset className="field" style={{ marginTop: '1rem', border: 0, padding: 0 }}>
+          <span>Solo para estos atletas (opcional)</span>
+          <div className="actions" style={{ flexWrap: 'wrap' }}>
+            {athletes.map((a) => (
+              <label key={a.uid} className="check">
+                <input
+                  type="checkbox"
+                  checked={only.includes(a.uid)}
+                  onChange={(e) => setOnly(e.target.checked ? [...only, a.uid] : only.filter((u) => u !== a.uid))}
+                />
+                <span>{a.name}</span>
+              </label>
+            ))}
+          </div>
+          <small>Si eliges alguno, el post solo lo ven ellos: no sale en el blog de los demás ni en el boletín. Para planes y estrategias personales.</small>
+        </fieldset>
 
         <div className="actions" style={{ marginTop: '1.2rem' }}>
           <button type="button" className="btn" disabled={!!busy} onClick={onSave}>{busy === 'save' ? 'Guardando…' : 'Guardar'}</button>
@@ -370,10 +416,10 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
               <p className="note">El correo lleva el título, el resumen y un botón al post. Se guarda lo escrito antes de enviar.</p>
               <div className="actions">
                 <button type="button" className="btn" disabled={!!busy} onClick={() => onSend('atletas')}>
-                  {busy === 'atletas' ? 'Enviando…' : 'Enviar a los atletas'}
+                  {busy === 'atletas' ? 'Enviando…' : personal ? 'Enviar a los atletas elegidos' : 'Enviar a los atletas'}
                 </button>
-                <button type="button" className="btn secondary" disabled={!!busy || priv} onClick={() => onSend('boletin')}
-                  title={priv ? 'Un post solo para atletas no va al boletín' : undefined}>
+                <button type="button" className="btn secondary" disabled={!!busy || priv || personal} onClick={() => onSend('boletin')}
+                  title={priv || personal ? 'Un post solo para atletas no va al boletín' : undefined}>
                   {busy === 'boletin' ? 'Enviando…' : 'Enviar al boletín'}
                 </button>
               </div>

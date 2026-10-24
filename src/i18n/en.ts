@@ -306,6 +306,7 @@ const en: Messages = {
     title: 'Blog',
     intro: 'Practical ideas to train better, what we learn with our athletes and club news.',
     empty: 'The first post is coming soon.',
+    personalBadge: 'Just for you',
     privateBadge: 'Athletes only',
     privateHint: 'You can see posts marked “Athletes only” because you signed in.',
     minutes: (n: number) => `${n} min read`,

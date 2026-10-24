@@ -73,12 +73,14 @@ service cloud.firestore {
     }
 
     // Blog del club. Publicados: todos leen los públicos; los privados, solo quien tiene cuenta.
-    // Borradores: solo el coach. Los likes y los envíos los escribe el servidor.
+    // Personales (status 'personal'): solo los atletas de `athletes`, para que nada de un atleta
+    // lo vea otro. Borradores: solo el coach. Los likes y los envíos los escribe el servidor.
     function isMember() { return isAdmin() || (signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))); }
 
     match /posts/{slug} {
       allow read: if isAdmin()
-        || (resource.data.status == 'published' && (resource.data.private == false || isMember()));
+        || (resource.data.status == 'published' && (resource.data.private == false || isMember()))
+        || (resource.data.status == 'personal' && signedIn() && request.auth.uid in resource.data.athletes);
       allow create: if isAdmin() && validPost(slug)
         && request.resource.data.likes == 0 && !('sends' in request.resource.data);
       allow update: if isAdmin() && validPost(slug)
@@ -102,12 +104,14 @@ service cloud.firestore {
 
     function validPost(slug) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['slug', 'es', 'en', 'private', 'status', 'likes', 'sends', 'createdAt', 'updatedAt', 'publishedAt'])
+      return d.keys().hasOnly(['slug', 'es', 'en', 'private', 'status', 'athletes', 'likes', 'sends', 'createdAt', 'updatedAt', 'publishedAt'])
         && d.slug == slug && slug.size() <= 80 && slug.matches('[a-z0-9]+(-[a-z0-9]+)*')
         && validContent(d.es)
         && (d.get('en', null) == null || validContent(d.en))
         && d.private is bool
-        && d.status in ['draft', 'published']
+        && d.status in ['draft', 'published', 'personal']
+        && (d.get('athletes', null) == null || (d.athletes is list && d.athletes.size() >= 1 && d.athletes.size() <= 20))
+        && (d.status != 'personal' || (d.get('athletes', null) != null && d.private == true))
         && d.updatedAt == request.time;
     }
 
