@@ -156,6 +156,8 @@ function ContentFields({ value, onChange, lang }: { value: PostContent; onChange
           Formato: línea en blanco entre párrafos · <code>## Título</code> · <code>### Subtítulo</code> · <code>- lista</code> ·{' '}
           <code>1. lista</code> · <code>&gt; cita</code> · <code>**negrita**</code> · <code>*cursiva*</code> ·{' '}
           <code>[texto](https://…)</code> · tablas con <code>| a | b |</code> y una fila <code>|---|---|</code>.
+          <br />En su propia línea: <code>![descripción](https://…/imagen.png)</code> para una imagen,{' '}
+          <code>[[escala-rpe]]</code> para la escala interactiva y <code>[[carga]]</code> para la calculadora de carga.
         </small>
       </label>
     </div>
@@ -176,6 +178,9 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
   const published = initial?.status === 'published';
   const hasEn = !!(en.title.trim() || en.summary.trim() || en.body.trim());
   const effectiveSlug = isNew && !slugTouched ? slugify(es.title) : slug;
+  // Si el post vino de un borrador sugerido y ese texto cambió en la app, se puede traer la versión nueva.
+  const suggestion = SUGGESTED_POSTS.find((sp) => sp.slug === initial?.slug);
+  const suggestionChanged = !!suggestion && (suggestion.es.body !== es.body || suggestion.en.body !== en.body);
 
   function data() {
     return { slug: effectiveSlug, es, en: hasEn ? en : null };
@@ -293,6 +298,15 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
       </p>
       <section className="panel form">
         <h3>{isNew ? 'Nuevo post' : 'Editar post'}</h3>
+        {suggestion && suggestionChanged && !published && (
+          <p className="note">
+            Hay una versión sugerida más nueva de este post.{' '}
+            <button type="button" className="btn small secondary" onClick={() => { setEs(suggestion.es); setEn(suggestion.en); }}>
+              Usar la versión sugerida
+            </button>{' '}
+            Reemplaza el texto en español e inglés; luego guarda.
+          </p>
+        )}
         <ContentFields value={es} onChange={setEs} lang="es" />
 
         <details style={{ marginTop: '1rem' }} open={!!initial?.en}>
@@ -341,7 +355,7 @@ function Editor({ initial, onDone }: { initial: Post | null; onDone: (slug: stri
           <div className="b-article b-narrow">
             <h1>{(preview === 'en' ? en : es).title || 'Sin título'}</h1>
             {(preview === 'en' ? en : es).summary && <p className="b-lead">{(preview === 'en' ? en : es).summary}</p>}
-            <Markdown source={(preview === 'en' ? en : es).body} className="b-body" />
+            <Markdown source={(preview === 'en' ? en : es).body} className="b-body" lang={preview} />
           </div>
         </section>
       )}

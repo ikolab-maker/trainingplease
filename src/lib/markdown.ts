@@ -3,6 +3,8 @@
 //   ## Título · ### Subtítulo · - lista · 1. lista numerada · > cita
 //   | tabla | con | barras | (la segunda fila |---| separa el encabezado)
 //   **negrita** · *cursiva* · [texto](https://enlace) · párrafos separados por una línea en blanco
+//   ![descripción](https://imagen.png) en su propia línea: imagen
+//   [[escala-rpe]] o [[carga]] en su propia línea: infografía interactiva (ver WIDGETS)
 
 export type Inline =
   | { t: 'text'; v: string }
@@ -15,7 +17,17 @@ export type Block =
   | { t: 'h2' | 'h3'; c: Inline[] }
   | { t: 'ul' | 'ol'; items: Inline[][] }
   | { t: 'quote'; c: Inline[] }
-  | { t: 'table'; head: Inline[][]; rows: Inline[][][] };
+  | { t: 'table'; head: Inline[][]; rows: Inline[][][] }
+  | { t: 'img'; src: string; alt: string }
+  | { t: 'widget'; name: Widget };
+
+/** Infografías interactivas que el texto puede insertar con [[nombre]]. */
+export const WIDGETS = ['escala-rpe', 'carga'] as const;
+export type Widget = (typeof WIDGETS)[number];
+const isWidget = (v: string): v is Widget => (WIDGETS as readonly string[]).includes(v);
+
+const IMG = /^\s*!\[([^\]]*)\]\((https:\/\/[^\s)]+)\)\s*$/;
+const WIDGET = /^\s*\[\[([a-z0-9-]+)\]\]\s*$/;
 
 const INLINE_RE = /\*\*(.+?)\*\*|\*(.+?)\*|\[([^\]]+)\]\((https:\/\/[^\s)]+|\/[^\s)]*)\)/g;
 
@@ -48,6 +60,12 @@ export function parseMarkdown(src: string): Block[] {
     const line = lines[i];
     if (!line.trim()) { i++; continue; }
 
+    const img = IMG.exec(line);
+    if (img) { out.push({ t: 'img', alt: img[1].trim(), src: img[2] }); i++; continue; }
+
+    const w = WIDGET.exec(line);
+    if (w && isWidget(w[1])) { out.push({ t: 'widget', name: w[1] }); i++; continue; }
+
     const h = /^(#{2,3})\s+(.*)$/.exec(line);
     if (h) { out.push({ t: h[1].length === 2 ? 'h2' : 'h3', c: parseInline(h[2].trim()) }); i++; continue; }
 
@@ -75,9 +93,12 @@ export function parseMarkdown(src: string): Block[] {
       continue;
     }
 
-    const parts: string[] = [];
+    // Párrafo: la primera línea siempre entra (así un [[nombre]] desconocido queda como texto).
+    const parts: string[] = [line.trim()];
+    i++;
     while (
       i < lines.length && lines[i].trim()
+      && !IMG.test(lines[i]) && !isWidget(WIDGET.exec(lines[i])?.[1] ?? '')
       && !/^#{2,3}\s/.test(lines[i]) && !UL.test(lines[i]) && !OL.test(lines[i]) && !/^\s*>/.test(lines[i])
       && !(ROW.test(lines[i]) && i + 1 < lines.length && SEP.test(lines[i + 1]))
     ) parts.push(lines[i].trim()), i++;

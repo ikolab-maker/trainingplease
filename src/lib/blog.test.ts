@@ -75,3 +75,10 @@ test('parseMarkdown arma bloques', () => {
 test('una línea con barras sin separador es un párrafo', () => {
   assert.equal(parseMarkdown('| solo esto |')[0].t, 'p');
 });
+
+test('imágenes https e infografías en su propia línea', () => {
+  const b = parseMarkdown('Texto\n![Escala](https://x.com/a.png)\n[[escala-rpe]]\n[[no-existe]]\n![mala](http://x.com/a.png)');
+  assert.deepEqual(b.map((x) => x.t), ['p', 'img', 'widget', 'p']);
+  assert.deepEqual(b[1], { t: 'img', alt: 'Escala', src: 'https://x.com/a.png' });
+  assert.deepEqual(b[2], { t: 'widget', name: 'escala-rpe' });
+});
