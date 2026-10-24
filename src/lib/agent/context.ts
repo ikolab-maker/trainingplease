@@ -56,6 +56,7 @@ export async function loadAthleteContext(uid: string, analyzedWeekId: string, ta
     const snap = await db.collection(`logs/${uid}/entries`).get();
     for (const d of snap.docs) {
       const l = d.data() as LogEntry;
+      // Solo RPE y comentario: el enlace a la actividad (Strava) no se le pasa al agente.
       if (wanted.includes(l.weekId) || d.id === noticeId(targetWeekId)) logs[d.id] = { done: !!l.done, rpe: l.rpe ?? null, comment: l.comment ?? '', weekId: l.weekId };
     }
   }

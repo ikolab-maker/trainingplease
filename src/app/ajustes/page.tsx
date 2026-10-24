@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Gate } from '@/components/Gate';
+import { useDialogs } from '@/components/Dialogs';
 import { TopNav } from '@/components/TopNav';
 import { db } from '@/lib/firebase';
 import { grantConsent, revokeConsent } from '@/lib/consent';
 import { OPTIONAL_CHECKS } from '@/lib/legal';
+import { MEMBERSHIPS, membershipOf, priceLabel } from '@/lib/membership';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
 import type { Theme, UserDoc } from '@/lib/types';
 
@@ -44,7 +46,7 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
     date: profile.goalRace?.date ?? '',
     distanceKm: profile.goalRace?.distanceKm?.toString() ?? '',
   });
-  const [msg, setMsg] = useState('');
+  const { confirm, toast } = useDialogs();
   const userRef = doc(db(), 'users', uid);
 
   async function setTheme(theme: Theme) {
@@ -58,9 +60,9 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
       : null;
     try {
       await updateDoc(userRef, { profile: p, goalRace, updatedAt: serverTimestamp() });
-      setMsg('Perfil guardado.');
+      toast('Perfil guardado.');
     } catch {
-      setMsg('No se pudo guardar.');
+      toast('No se pudo guardar.', 'error');
     }
   }
 
@@ -70,9 +72,12 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
   }
 
   async function revoke() {
-    const ok = window.confirm(
-      '¿Revocar tu consentimiento? Tu coach dejará de ver tus registros al instante y no podrás usar la app hasta que vuelvas a aceptar.',
-    );
+    const ok = await confirm({
+      title: 'Revocar consentimiento',
+      message: 'Tu coach dejará de ver tus registros al instante y no podrás usar la app hasta que vuelvas a aceptar.',
+      confirmLabel: 'Revocar',
+      danger: true,
+    });
     if (ok) await revokeConsent(uid);
   }
 
@@ -128,9 +133,25 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
           {field('limitations', 'Lesiones o limitaciones', 'Dato de salud: solo lo ve tu coach', true)}
           <div className="actions">
             <button className="btn" type="submit">Guardar perfil</button>
-            {msg && <span className="saved" role="status">{msg}</span>}
           </div>
         </form>
+
+        <section className="panel" id="suscripcion">
+          <h3>Suscripción</h3>
+          <p className="note">Tu nivel lo define tu coach. Durante el piloto no tiene costo.</p>
+          <ul className="plan-tiers">
+            {MEMBERSHIPS.map((m) => {
+              const current = membershipOf(profile.membership) === m.key;
+              return (
+                <li key={m.key} className={current ? 'current' : undefined} aria-current={current ? 'true' : undefined}>
+                  <b>{m.label}</b>
+                  <span>{priceLabel(current)}</span>
+                  {current && <i>Tu nivel</i>}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
         <section className="panel" id="privacidad">
           <h3>Privacidad</h3>

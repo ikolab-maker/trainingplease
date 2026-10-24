@@ -9,10 +9,12 @@ import { TopNav } from '@/components/TopNav';
 import { WeekView } from '@/components/WeekView';
 import { PlanTransfer } from '@/components/PlanTransfer';
 import { AgentPanel } from '@/components/AgentPanel';
+import { useDialogs } from '@/components/Dialogs';
 import { SessionEditor, emptySession } from '@/components/SessionEditor';
 import { db } from '@/lib/firebase';
 import { deleteSession, duplicateWeek, saveSession, saveWeek, useLogs, useSessions, useWeeks } from '@/lib/data';
 import { addDays, compliance, dayParts, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
+import { activityLinkLabel } from '@/lib/activityLink';
 import { SPORTS } from '@/lib/sports';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
 import { MEMBERSHIPS, membershipOf } from '@/lib/membership';
@@ -152,7 +154,7 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
   const { logs } = useLogs(uid, hasConsent);
   const [meta, setMeta] = useState({ title: week.title, phase: week.phase ?? '', goal: week.goal ?? '', aiAssisted: !!week.aiAssisted });
   const [editing, setEditing] = useState<(Omit<Session, 'id'> & { id?: string }) | null>(null);
-  const [msg, setMsg] = useState('');
+  const { confirm, toast } = useDialogs();
 
   useEffect(() => {
     setMeta({ title: week.title, phase: week.phase ?? '', goal: week.goal ?? '', aiAssisted: !!week.aiAssisted });
@@ -163,23 +165,30 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
 
   async function saveMeta(e: React.FormEvent) {
     e.preventDefault();
-    await saveWeek(uid, { ...week, ...meta });
-    setMsg('Semana guardada.');
-    setTimeout(() => setMsg(''), 2500);
+    try {
+      await saveWeek(uid, { ...week, ...meta });
+      toast('Semana guardada.');
+    } catch {
+      toast('No se pudo guardar la semana.', 'error');
+    }
   }
 
   async function duplicate() {
     if (!sessions) return;
     const start = addDays(week.start, 7);
     const toId = isoWeekId(start);
-    if (weeks.some((w) => w.id === toId)) { setMsg('La semana siguiente ya existe.'); return; }
+    if (weeks.some((w) => w.id === toId)) { toast('La semana siguiente ya existe.', 'error'); return; }
     const n = (week.title.match(/\d+/)?.[0] ?? '');
     await duplicateWeek(uid, week, { id: toId, start, title: n ? `Semana ${Number(n) + 1}` : `${week.title} (copia)` }, sessions, (d) => addDays(d, 7));
     onSelect(toId);
   }
 
   async function remove(s: Session) {
-    if (window.confirm(`¿Borrar “${s.title}” del ${longDate(s.date)}?`)) await deleteSession(uid, week.id, s.id);
+    if (!await confirm({
+      title: 'Borrar sesión', message: `¿Borrar “${s.title}” del ${longDate(s.date)}?`, confirmLabel: 'Borrar', danger: true,
+    })) return;
+    await deleteSession(uid, week.id, s.id);
+    toast('Sesión borrada.');
   }
 
   return (
@@ -204,7 +213,10 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
                       <td>{[s.durationMin && `${s.durationMin} min`, s.distanceKm && `${s.distanceKm} km`, s.rpe && `RPE ${s.rpe}`].filter(Boolean).join(' · ')}</td>
                       <td><span className={`status ${st}`} style={{ marginLeft: 0 }}>{STATUS_TXT[st]}</span></td>
                       <td>{logs[s.id]?.rpe ?? ''}</td>
-                      <td className="comment">{logs[s.id]?.comment ?? ''}</td>
+                      <td className="comment">
+                        {logs[s.id]?.comment ?? ''}
+                        {logs[s.id]?.link && <> <a href={logs[s.id]!.link} target="_blank" rel="noreferrer">{activityLinkLabel(logs[s.id]!.link!)} ↗</a></>}
+                      </td>
                       <td style={{ whiteSpace: 'nowrap' }}>
                         <button type="button" className="btn small secondary" onClick={() => setEditing(s)}>Editar</button>{' '}
                         <button type="button" className="btn small secondary" aria-label="Borrar sesión" onClick={() => remove(s)}>✕</button>
@@ -249,7 +261,6 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
           <button className="btn">Guardar semana</button>
           <button type="button" className="btn secondary" onClick={duplicate}>Duplicar a la semana siguiente</button>
           <button type="button" className="btn secondary" onClick={onPreview}>Ver como atleta</button>
-          {msg && <span className="saved" role="status">{msg}</span>}
         </div>
       </form>
     </>

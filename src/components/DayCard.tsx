@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useDialogs } from '@/components/Dialogs';
+import { activityLink, activityLinkLabel } from '@/lib/activityLink';
 import { SPORTS } from '@/lib/sports';
 import { dayParts } from '@/lib/dates';
 import type { LogEntry, Session, SessionStatus } from '@/lib/types';
@@ -29,7 +31,7 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
   status: SessionStatus;
   open: boolean;
   onToggle: () => void;
-  onSave?: (entry: { done: boolean; rpe: number | null; comment: string }) => Promise<void>;
+  onSave?: (entry: { done: boolean; rpe: number | null; comment: string; link: string }) => Promise<void>;
   readOnly?: boolean;
 }) {
   const sport = SPORTS[s.sport] ?? SPORTS.otro;
@@ -37,22 +39,23 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
   const done = !!log?.done;
   const [rpe, setRpe] = useState<number | null>(log?.rpe ?? null);
   const [comment, setComment] = useState(log?.comment ?? '');
+  const [link, setLink] = useState(log?.link ?? '');
   const [saving, setSaving] = useState(false);
-  const [savedMsg, setSavedMsg] = useState('');
+  const { toast } = useDialogs();
 
-  useEffect(() => { setRpe(log?.rpe ?? null); setComment(log?.comment ?? ''); }, [log?.rpe, log?.comment]);
+  useEffect(() => { setRpe(log?.rpe ?? null); setComment(log?.comment ?? ''); setLink(log?.link ?? ''); }, [log?.rpe, log?.comment, log?.link]);
 
   const canLog = !readOnly && onSave && s.sport !== 'descanso' && status !== 'upcoming';
 
   async function save(nextDone: boolean) {
     if (!onSave) return;
+    if (link.trim() && !activityLink(link)) { toast('El enlace debe empezar con https://', 'error'); return; }
     setSaving(true);
     try {
-      await onSave({ done: nextDone, rpe, comment });
-      setSavedMsg('Guardado');
-      setTimeout(() => setSavedMsg(''), 2500);
+      await onSave({ done: nextDone, rpe, comment, link });
+      toast('Guardado');
     } catch {
-      setSavedMsg('No se pudo guardar. Revisa tu conexión.');
+      toast('No se pudo guardar. Revisa tu conexión.', 'error');
     } finally {
       setSaving(false);
     }
@@ -112,20 +115,26 @@ export function DayCard({ session: s, log, status, open, onToggle, onSave, readO
                   <textarea value={comment} maxLength={1000} onChange={(e) => setComment(e.target.value)}
                     placeholder="Sensaciones, molestias, sueño, lo que quieras contar" />
                 </label>
+                <label className="field">
+                  <span>Enlace a tu actividad (opcional)</span>
+                  <input type="url" inputMode="url" value={link} maxLength={300} onChange={(e) => setLink(e.target.value)}
+                    placeholder="https://www.strava.com/activities/…" />
+                  <small>En Strava: Compartir › Copiar enlace.</small>
+                </label>
                 <div className="actions">
                   <button type="button" className="btn small" disabled={saving} onClick={() => save(true)}>
                     {done ? 'Actualizar' : 'Guardar y marcar realizada'}
                   </button>
-                  {savedMsg && <span className="saved" role="status">{savedMsg}</span>}
                 </div>
               </div>
             )}
 
-            {readOnly && log && (log.rpe || log.comment) && (
+            {readOnly && log && (log.rpe || log.comment || log.link) && (
               <div className="log-box">
                 <h5>Registro del atleta</h5>
                 {log.rpe && <p>RPE real: <b>{log.rpe}</b></p>}
                 {log.comment && <p><i>“{log.comment}”</i></p>}
+                {log.link && <p><a href={log.link} target="_blank" rel="noreferrer">Ver actividad en {activityLinkLabel(log.link)}</a></p>}
               </div>
             )}
           </div>

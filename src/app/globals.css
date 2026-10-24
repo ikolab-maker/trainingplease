@@ -1179,3 +1179,74 @@ table.sessions td.comment { color: var(--ink-soft); font-style: italic; max-widt
   font-size: .8rem;
   letter-spacing: .1em;
 }
+
+/* ---------- Diálogos y avisos propios (Dialogs.tsx) ---------- */
+
+.tp-dialog {
+  border: 3px solid var(--pink-soft);
+  border-radius: 26px;
+  padding: 0;
+  width: min(440px, calc(100vw - 2rem));
+  background: var(--surface);
+  color: var(--ink);
+}
+.tp-dialog::backdrop { background: rgba(10, 20, 35, .55); backdrop-filter: blur(2px); }
+.tp-dialog[open] { animation: tp-pop .18s ease-out; }
+.tp-dialog-box { padding: 1.4rem 1.4rem 1.2rem; }
+.tp-dialog h3 { font-size: 1.5rem; color: var(--pink-dark); margin-bottom: .6rem; }
+.tp-dialog p { color: var(--ink-soft); }
+.tp-dialog .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; margin-top: 1.1rem; }
+[data-theme="oscuro"] .tp-dialog h3 { color: var(--ink); }
+
+.tp-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: grid;
+  gap: .5rem;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  pointer-events: none;
+}
+.tp-toast {
+  margin: 0;
+  padding: .65rem 1.1rem;
+  border-radius: 999px;
+  background: var(--nav);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+  border: 2px solid var(--yellow);
+  animation: tp-pop .18s ease-out;
+}
+.tp-toast.error { background: var(--danger); border-color: var(--danger); }
+
+@keyframes tp-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tp-dialog[open], .tp-toast { animation: none; } }
+
+/* ---------- Suscripción en Ajustes ---------- */
+
+.plan-tiers { list-style: none; padding: 0; margin: .8rem 0 0; display: grid; gap: .7rem; }
+@media (min-width: 560px) { .plan-tiers { grid-template-columns: repeat(3, 1fr); } }
+.plan-tiers li {
+  display: grid;
+  gap: .2rem;
+  justify-items: start;
+  padding: .9rem 1rem;
+  border: 3px solid var(--pink-soft);
+  border-radius: 18px;
+  color: var(--ink-soft);
+}
+.plan-tiers b { font-family: var(--display); font-size: 1.4rem; text-transform: uppercase; color: var(--ink); }
+.plan-tiers li.current { border-color: var(--blue-deep); background: var(--pink-pale); }
+.plan-tiers i {
+  font-style: normal;
+  font-size: .8rem;
+  font-weight: 700;
+  padding: .1em .6em;
+  border-radius: 999px;
+  background: var(--blue-deep);
+  color: var(--yellow);
+}

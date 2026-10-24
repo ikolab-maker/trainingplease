@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { useDialogs } from '@/components/Dialogs';
 import { fetchLogs, fetchWeekSessions } from '@/lib/data';
 import { parsePlanFile, type PlanWeekFile } from '@/lib/planFile';
 import { SPORTS } from '@/lib/sports';
@@ -28,7 +29,7 @@ export function PlanTransfer({ uid, athlete, weeks, weekId, onImported }: {
 
 function ExportWeek({ uid, athlete, weeks, weekId }: { uid: string; athlete: UserDoc; weeks: Week[]; weekId: string | null }) {
   const [withPrevious, setWithPrevious] = useState(false);
-  const [msg, setMsg] = useState('');
+  const { toast } = useDialogs();
   const target = weeks.find((w) => w.id === weekId);
 
   async function build() {
@@ -58,27 +59,25 @@ function ExportWeek({ uid, athlete, weeks, weekId }: { uid: string; athlete: Use
   }
 
   async function download() {
-    setMsg('');
     const data = await build().catch(() => null);
-    if (!data || !target) { setMsg('No se pudo exportar.'); return; }
+    if (!data || !target) { toast('No se pudo exportar.', 'error'); return; }
     const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${slug(athlete.name) || 'atleta'}-${target.id}${withPrevious ? '-y-anteriores' : ''}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    setMsg('Descargado.');
+    toast('Descargado.');
   }
 
   async function copy() {
-    setMsg('');
     const data = await build().catch(() => null);
-    if (!data) { setMsg('No se pudo exportar.'); return; }
+    if (!data) { toast('No se pudo exportar.', 'error'); return; }
     try {
       await navigator.clipboard.writeText(JSON.stringify(data, null, 1));
-      setMsg('Copiado al portapapeles.');
+      toast('Copiado al portapapeles.');
     } catch {
-      setMsg('El navegador no dejó copiar; usa Descargar.');
+      toast('El navegador no dejó copiar; usa Descargar.', 'error');
     }
   }
 
@@ -98,7 +97,6 @@ function ExportWeek({ uid, athlete, weeks, weekId }: { uid: string; athlete: Use
           <div className="actions">
             <button type="button" className="btn" onClick={download}>Descargar JSON</button>
             <button type="button" className="btn secondary" onClick={copy}>Copiar</button>
-            {msg && <span className="saved" role="status">{msg}</span>}
           </div>
         </>
       )}
@@ -113,7 +111,7 @@ function ImportWeeks({ uid, weeks, onImported }: { uid: string; weeks: Week[]; o
   const [errors, setErrors] = useState<string[]>([]);
   const [existing, setExisting] = useState<Record<string, Set<string>>>({});
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState('');
+  const { toast } = useDialogs();
 
   useEffect(() => {
     if (!text.trim()) { setPlan([]); setErrors([]); return; }
@@ -135,7 +133,6 @@ function ImportWeeks({ uid, weeks, onImported }: { uid: string; weeks: Week[]; o
   }, [plan, weeks, uid]);
 
   function edit(value: string) {
-    setMsg('');
     setText(value);
   }
 
@@ -145,7 +142,6 @@ function ImportWeeks({ uid, weeks, onImported }: { uid: string; weeks: Week[]; o
 
   async function submit() {
     setBusy(true);
-    setMsg('');
     try {
       const res = await fetch('/api/admin/plan', {
         method: 'POST',
@@ -155,14 +151,14 @@ function ImportWeeks({ uid, weeks, onImported }: { uid: string; weeks: Week[]; o
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         if (data.errors) setErrors(data.errors);
-        setMsg(typeof data.error === 'string' && data.error !== 'invalid' ? data.error : 'No se pudo importar.');
+        toast(typeof data.error === 'string' && data.error !== 'invalid' ? data.error : 'No se pudo importar.', 'error');
         return;
       }
-      setMsg(`Listo: ${data.weeks} semana(s) y ${data.sessions} sesiones.`);
+      toast(`Listo: ${data.weeks} semana(s) y ${data.sessions} sesiones.`);
       onImported(plan[0].id);
       setText('');
     } catch {
-      setMsg('No se pudo importar (sin conexión).');
+      toast('No se pudo importar (sin conexión).', 'error');
     } finally {
       setBusy(false);
     }
@@ -213,7 +209,6 @@ function ImportWeeks({ uid, weeks, onImported }: { uid: string; weeks: Week[]; o
           </div>
         </>
       )}
-      {msg && <p className="saved" role="status">{msg}</p>}
     </section>
   );
 }

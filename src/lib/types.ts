@@ -70,6 +70,7 @@ export interface LogEntry {
   done: boolean;
   rpe: number | null; // RPE real
   comment: string;
+  link?: string; // enlace a la actividad (Strava, Garmin…); el agente no lo lee
   weekId: string;
   updatedAt?: unknown;
 }
