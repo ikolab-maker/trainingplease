@@ -139,7 +139,7 @@ export function BlogPost({ slug }: { slug: string }) {
         <h1>{content.title}</h1>
         {content.summary && <p className="b-lead">{content.summary}</p>}
         {lang === 'en' && used === 'es' && <p className="b-note" lang="en">{t.blog.onlySpanish}</p>}
-        <Markdown source={content.body} className="b-body" />
+        <Markdown source={content.body} className="b-body" lang={used} />
         <PostActions post={p} />
         {back}
       </article>
