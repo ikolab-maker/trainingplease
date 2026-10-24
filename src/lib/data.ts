@@ -5,6 +5,7 @@ import {
   collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, writeBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { activityLink } from './activityLink';
 import type { LogEntry, Session, Week } from './types';
 
 export type LogMap = Record<string, LogEntry | undefined>;
@@ -71,10 +72,12 @@ export async function fetchLogs(uid: string): Promise<LogMap> {
 // ---- Atleta ----
 
 export async function saveLog(uid: string, sessionId: string, entry: Omit<LogEntry, 'updatedAt'>) {
+  const link = activityLink(entry.link ?? '');
   await setDoc(doc(logsCol(uid), sessionId), {
     done: entry.done,
     rpe: entry.rpe,
     comment: entry.comment.slice(0, 1000),
+    ...(link ? { link } : {}),
     weekId: entry.weekId,
     updatedAt: serverTimestamp(),
   });

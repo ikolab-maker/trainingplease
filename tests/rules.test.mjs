@@ -70,6 +70,9 @@ test('registro del atleta: válido sí, inválido no', async () => {
   await assertFails(setDoc(doc(ana(), 'logs/ana/entries/s1'), log({ rpe: 11 })));
   await assertFails(setDoc(doc(ana(), 'logs/ana/entries/s1'), log({ extra: 'x' })));
   await assertFails(setDoc(doc(ana(), 'logs/ana/entries/s1'), log({ comment: 'x'.repeat(1001) })));
+  await assertSucceeds(setDoc(doc(ana(), 'logs/ana/entries/s1'), log({ link: 'https://www.strava.com/activities/1' })));
+  await assertFails(setDoc(doc(ana(), 'logs/ana/entries/s1'), log({ link: 'http://www.strava.com/activities/1' })));
+  await assertFails(setDoc(doc(ana(), 'logs/ana/entries/s1'), log({ link: `https://x.com/${'a'.repeat(300)}` })));
   await assertFails(setDoc(doc(ana(), 'logs/beto/entries/s1'), log()));
 });
 

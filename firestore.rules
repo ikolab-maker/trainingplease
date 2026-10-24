@@ -73,11 +73,12 @@ service cloud.firestore {
 
     function validLog() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['done', 'rpe', 'comment', 'weekId', 'updatedAt'])
+      return d.keys().hasOnly(['done', 'rpe', 'comment', 'link', 'weekId', 'updatedAt'])
         && d.done is bool
         && d.weekId is string
         && (d.rpe == null || (d.rpe is int && d.rpe >= 1 && d.rpe <= 10))
         && (d.comment is string && d.comment.size() <= 1000)
+        && (!('link' in d) || (d.link is string && d.link.size() <= 300 && d.link.matches('https://.+')))
         && d.updatedAt == request.time;
     }
   }

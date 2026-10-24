@@ -6,6 +6,7 @@ import { collection, doc, getDocs, orderBy, query, serverTimestamp, updateDoc, w
 import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
 import { useAuth } from '@/components/AuthProvider';
+import { useDialogs } from '@/components/Dialogs';
 import { db } from '@/lib/firebase';
 import { fetchAllSessions, fetchLogs } from '@/lib/data';
 import { compliance, daysUntil, isoWeekId, todayISO } from '@/lib/dates';
@@ -183,15 +184,19 @@ function CoachTheme() {
 
 function PilotRequests({ requests, onChange }: { requests: PilotRow[]; onChange: () => void }) {
   const { authHeaders } = useAuth();
+  const { confirm, toast } = useDialogs();
   const [busy, setBusy] = useState('');
   async function act(email: string, action: 'approve' | 'dismiss') {
-    if (action === 'dismiss' && !window.confirm(`¿Descartar la solicitud de ${email}?`)) return;
+    if (action === 'dismiss' && !await confirm({
+      title: 'Descartar solicitud', message: `¿Descartar la solicitud de ${email}?`, confirmLabel: 'Descartar', danger: true,
+    })) return;
     setBusy(email);
     const res = await fetch('/api/admin/pilot', {
       method: 'POST', headers: await authHeaders(), body: JSON.stringify({ email, action }),
     });
     setBusy('');
-    if (!res.ok) window.alert('No se pudo guardar. Inténtalo otra vez.');
+    if (!res.ok) toast('No se pudo guardar. Inténtalo otra vez.', 'error');
+    else toast(action === 'approve' ? `Solicitud de ${email} aprobada.` : 'Solicitud descartada.');
     onChange();
   }
   const level = (k: string) => LEVELS.find((l) => l.key === k)?.label;
@@ -222,8 +227,9 @@ function PilotRequests({ requests, onChange }: { requests: PilotRow[]; onChange:
 
 function PendingList({ pending, onChange }: { pending: Pending[]; onChange: () => void }) {
   const { authHeaders } = useAuth();
+  const { confirm } = useDialogs();
   async function remove(email: string) {
-    if (!window.confirm(`¿Quitar el alta de ${email}?`)) return;
+    if (!await confirm({ title: 'Quitar alta', message: `¿Quitar el alta de ${email}?`, confirmLabel: 'Quitar', danger: true })) return;
     await fetch(`/api/admin/athletes?email=${encodeURIComponent(email)}`, { method: 'DELETE', headers: await authHeaders() });
     onChange();
   }

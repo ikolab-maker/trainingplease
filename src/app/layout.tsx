@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/components/AuthProvider';
+import { DialogsProvider } from '@/components/Dialogs';
 import './globals.css';
 
 // Íconos azul y amarillo por convención de Next (src/app/favicon.ico, icon.svg y apple-icon.png):
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider><DialogsProvider>{children}</DialogsProvider></AuthProvider>
       </body>
     </html>
   );

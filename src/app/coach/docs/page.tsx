@@ -6,7 +6,7 @@ import { LEGAL_VERSION } from '@/lib/legal';
 import './arquitectura.css';
 
 /**
- * Sección "Arquitectura" del panel coach: cómo está construida la app, sus agentes
+ * Sección "Docs" del panel coach (antes "Arquitectura"): cómo está construida la app, sus agentes
  * y sus ciclos automáticos. Es solo lectura y la ve únicamente el coach.
  */
 export default function ArquitecturaPage() {

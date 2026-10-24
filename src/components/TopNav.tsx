@@ -11,7 +11,7 @@ export function TopNav() {
   const isAdmin = state.profile.role === 'admin';
 
   const links = isAdmin
-    ? [{ href: '/coach', label: 'Atletas' }, { href: '/coach/arquitectura', label: 'Arquitectura' }]
+    ? [{ href: '/coach', label: 'Atletas' }, { href: '/coach/docs', label: 'Docs' }]
     : [{ href: '/plan', label: 'Mi semana' }, { href: '/ajustes', label: 'Ajustes' }];
 
   return (
@@ -26,7 +26,7 @@ export function TopNav() {
   );
 }
 
-/** La sección activa es el enlace más largo que calza con la ruta (Arquitectura gana a Atletas). */
+/** La sección activa es el enlace más largo que calza con la ruta (Docs gana a Atletas). */
 function isCurrent(path: string, href: string, all: string[]) {
   const match = (h: string) => path === h || path.startsWith(`${h}/`);
   return match(href) && !all.some((h) => h.length > href.length && match(h));
