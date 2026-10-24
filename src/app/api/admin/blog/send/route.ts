@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb, verifyRequest } from '@/lib/firebase-admin';
 import { APP_URL, emailReady, sendBatch, sendBroadcast, type EmailItem } from '@/lib/email';
-import { SLUG_RE, postContent, type Audience, type Post } from '@/lib/blog';
+import { SLUG_RE, isLive, postContent, type Audience, type Post } from '@/lib/blog';
 import type { Lang } from '@/lib/i18n';
 
 export const runtime = 'nodejs';
@@ -15,6 +15,7 @@ const COPY: Record<Lang, { cta: string; kicker: string; english: string }> = {
 /**
  * El coach envía por correo el enlace a un post publicado.
  * - atletas: un correo a cada atleta con consentimiento, en su idioma (privados incluidos).
+ *   Si el post es personal, solo a sus atletas.
  * - boletin: un broadcast de Resend al segmento del boletín, en español; solo posts públicos.
  * Body: { slug, audience }. Queda registro en posts/{slug}.sends.
  */
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
   const snap = await ref.get();
   if (!snap.exists) return NextResponse.json({ error: 'No existe ese post.' }, { status: 404 });
   const post = snap.data() as Post;
-  if (post.status !== 'published') return NextResponse.json({ error: 'Publica el post antes de enviarlo.' }, { status: 400 });
+  if (!isLive(post)) return NextResponse.json({ error: 'Publica el post antes de enviarlo.' }, { status: 400 });
   if (audience === 'boletin' && post.private) {
     return NextResponse.json({ error: 'Un post solo para atletas no se envía al boletín.' }, { status: 400 });
   }
@@ -54,6 +55,7 @@ export async function POST(req: Request) {
     const users = await db.collection('users').where('role', '==', 'athlete').get();
     const items: EmailItem[] = users.docs
       .filter((d) => d.get('email') && d.get('consent'))
+      .filter((d) => post.status !== 'personal' || (post.athletes ?? []).includes(d.id))
       .map((d) => ({ to: d.get('email') as string, ...mail(d.get('lang') === 'en' ? 'en' : 'es') }));
     if (!items.length) return NextResponse.json({ error: 'No hay atletas con consentimiento a quienes enviar.' }, { status: 400 });
     count = await sendBatch(items);
