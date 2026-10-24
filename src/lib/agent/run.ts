@@ -4,9 +4,10 @@ import { adminDb } from '@/lib/firebase-admin';
 import { addDays, isoWeekId, mondayOf, todayISO } from '@/lib/dates';
 import { loadAthleteContext } from './context';
 import { runHeadCoach, type HeadCoachResult } from './headCoach';
+import { applyProposal } from './approve';
 
 export type RunOutcome =
-  | { uid: string; status: 'proposed'; id: string; weekId: string; decision: string; issues: number; costUsd: number }
+  | { uid: string; status: 'proposed' | 'loaded'; id: string; weekId: string; decision: string; issues: number; costUsd: number }
   | { uid: string; status: 'skipped'; reason: string }
   | { uid: string; status: 'error'; error: string };
 
@@ -84,7 +85,13 @@ export async function runForAthlete(uid: string, opts: { trigger: Trigger; today
     const r = await runHeadCoach(ctx, { today, analyzedWeekId, target });
     await proposalRef.set({ ...proposalDoc(r, analyzedWeekId), kind: 'semanal', runId: runRef.id, trigger: opts.trigger });
     await runRef.set({ ...base, ...runLog(r) });
-    return { uid, status: 'proposed', id: target.id, weekId: target.id, decision: r.output.decision, issues: r.issues.length, costUsd: r.usage.costUsd };
+    // Domingo 4 pm: si el Guardián no dejó problemas, la semana se carga sola; si dejó, queda pendiente para el coach.
+    let status: 'proposed' | 'loaded' = 'proposed';
+    if (opts.trigger === 'cron' && !r.issues.length) {
+      const loaded = await applyProposal(db, uid, await proposalRef.get(), { by: 'agente (carga automática)' });
+      if (loaded.ok) status = 'loaded';
+    }
+    return { uid, status, id: target.id, weekId: target.id, decision: r.output.decision, issues: r.issues.length, costUsd: r.usage.costUsd };
   } catch (e) {
     return fail(uid, runRef, base, e);
   }

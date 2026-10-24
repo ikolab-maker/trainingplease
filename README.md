@@ -57,7 +57,7 @@ En la ficha de cada atleta (panel coach) hay dos paneles:
 - **Importar semana**: pega o sube un JSON con el formato de `scripts/seed-plan.mjs` (`[{ id, week, sessions }]`) o un archivo exportado. Muestra una vista previa y lo guarda por `/api/admin/plan` con el mismo comportamiento que el script: fusiona la semana y crea o reemplaza sus sesiones, sin borrar otras.
 
 ## Agente principal (IA)
-Cada domingo a las 12:05 de Lima (cron de Vercel, `vercel.json`) el agente principal analiza la semana que cierra de cada atleta y propone la siguiente. El coach la ve en la ficha del atleta (sección "Agente principal") y la aprueba, la edita o la descarta; también puede pedirla en el momento con "Generar propuesta ahora". Nada llega al atleta sin aprobación.
+Cada domingo a las 4 pm de Lima (cron de Vercel, `vercel.json`) el agente principal analiza la semana que cierra de cada atleta y arma la siguiente. Si el Guardián no encuentra problemas, la carga sola en el plan del atleta; si encuentra, queda pendiente en la ficha del atleta (sección "Agente principal") para que el coach la apruebe, la edite o la descarte. Antes de las 4 pm el coach puede dejar una nota para la próxima semana de cada atleta, y el atleta sus avisos (viajes, días sin entrenar); el agente lee ambos. El coach también puede pedir la semana en el momento con "Generar la semana siguiente ahora", que siempre queda para aprobar.
 
 - **Ajustes puntuales:** en la misma sección, el coach elige una semana cargada y escribe qué cambiar ("mueve el fondo del domingo al sábado"). El agente cambia solo eso, conserva los ids de las sesiones, no toca las ya pasadas o registradas y lo deja como propuesta para aprobar.
 - Solo trabaja con atletas que marcaron la finalidad opcional de IA en su consentimiento, y solo lee registros si el consentimiento está vigente.
@@ -73,6 +73,6 @@ Cada domingo a las 12:05 de Lima (cron de Vercel, `vercel.json`) el agente princ
 - `RESEND_API_KEY`: sin ella no se envía ningún correo y todo lo demás funciona igual (`/api/health` muestra `email`).
 - `EMAIL_FROM` (opcional, por defecto `Training Please <avisos@trainingplease.app>`): remitente de un dominio verificado en Resend.
 - `RESEND_SEGMENT_BOLETIN` y `RESEND_SEGMENT_ATLETAS` (opcionales): ids de segmentos de Resend.
-- Avisos: al aprobar una propuesta en la ficha, el atleta recibe "Tu semana está lista" y se suma al segmento de atletas.
+- Avisos: cuando una propuesta se carga en el plan (aprobada por el coach o cargada sola por el cron), el atleta recibe "Tu semana está lista" y se suma al segmento de atletas.
 - Boletín: el formulario del sitio (`/#boletin`) guarda `newsletter/{correo}` con su consentimiento y suma el contacto al segmento del boletín. El boletín y los comunicados se escriben y envían desde Broadcasts en Resend, que agrega la baja.
 - Arquitectura completa: `08-arquitectura-agentes-ia.md` en los documentos del proyecto.

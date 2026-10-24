@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>TP</title>
+  <rect width="64" height="64" rx="16" fill="#2F9CC4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7">
+    <g stroke="#164A5E" transform="translate(2.5 2.5)">
+      <path d="M9 19H31M20 19V45"/>
+      <path d="M38 45V19H46C55 19 55 36 46 36H38"/>
+    </g>
+    <g stroke="#FBE83A">
+      <path d="M9 19H31M20 19V45"/>
+      <path d="M38 45V19H46C55 19 55 36 46 36H38"/>
+    </g>
+  </g>
+</svg>
