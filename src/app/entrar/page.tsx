@@ -27,7 +27,10 @@ export default function LoginPage() {
   useEffect(() => {
     if (state.status !== 'ready') return;
     const p = state.profile;
-    router.replace(p.role === 'admin' ? '/coach' : needsConsent(p) ? '/bienvenida' : '/plan');
+    // Desde un post solo para atletas se vuelve al post (solo rutas del blog).
+    const next = new URLSearchParams(window.location.search).get('next') ?? '';
+    const back = /^\/blog\/[a-z0-9-]+$/.test(next) ? next : '';
+    router.replace(p.role === 'admin' ? back || '/coach' : needsConsent(p) ? '/bienvenida' : back || '/plan');
   }, [state, router]);
 
   async function onSignIn() {

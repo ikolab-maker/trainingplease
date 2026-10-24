@@ -1,0 +1,69 @@
+/* Training Please · blog público. Usa la paleta del sitio (site.css); clases con b-. */
+
+.b-main { min-height: 60vh; }
+.b-narrow { max-width: 760px; }
+
+.b-head { background: var(--s-sky-pale); padding: clamp(2.5rem, 6vw, 4rem) 0 2rem; }
+.b-head h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); font-weight: 600; margin: 0 0 .6rem; color: var(--s-navy); }
+.b-lead { font-size: 1.12rem; line-height: 1.55; color: var(--s-ink-soft); margin: 0 0 1rem; }
+.b-note { color: var(--s-ink-soft); font-size: .95rem; }
+
+.b-list { padding-top: 1.5rem; padding-bottom: 4rem; }
+.b-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.b-card {
+  display: block; text-decoration: none; padding: 1.2rem 1.3rem; border-radius: 14px;
+  border: 1px solid var(--s-line); background: var(--s-paper);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.b-card:hover { border-color: var(--s-blue); transform: translateY(-1px); }
+.b-card h2 { font-size: 1.55rem; font-weight: 600; margin: .3rem 0 .4rem; color: var(--s-navy); }
+.b-card p { margin: 0; line-height: 1.5; }
+
+.b-meta { font-size: .86rem; color: var(--s-ink-soft); display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .5rem; }
+.b-card .b-meta:last-child { margin-top: .6rem; }
+.b-badge {
+  display: inline-block; padding: .1rem .55rem; border-radius: 999px;
+  background: var(--s-navy); color: var(--s-yellow); font-weight: 700; font-size: .75rem; letter-spacing: .02em;
+}
+.b-badge.draft { background: var(--s-yellow); color: var(--s-navy); }
+
+.b-article { padding-top: 1.5rem; padding-bottom: 3rem; }
+.b-article > h1 { font-size: clamp(2.1rem, 5.5vw, 3.2rem); font-weight: 600; line-height: 1.08; margin: .4rem 0 .8rem; color: var(--s-navy); }
+.b-back { margin: 0 0 1rem; font-weight: 700; }
+.b-back a { text-decoration: none; color: var(--s-blue); }
+.b-back:last-child { margin-top: 2rem; }
+
+.b-body { font-size: 1.08rem; line-height: 1.7; }
+.b-body h2 { font-size: 1.75rem; font-weight: 600; margin: 2.2rem 0 .7rem; color: var(--s-navy); }
+.b-body h3 { font-size: 1.3rem; font-weight: 600; margin: 1.6rem 0 .5rem; color: var(--s-navy-2); }
+.b-body p, .b-body ul, .b-body ol { margin: 0 0 1.1rem; }
+.b-body ul, .b-body ol { padding-left: 1.4rem; }
+.b-body li { margin-bottom: .35rem; }
+.b-body a { color: var(--s-blue); text-underline-offset: 3px; }
+.b-body blockquote {
+  margin: 1.4rem 0; padding: .9rem 1.2rem; border-left: 4px solid var(--s-yellow);
+  background: var(--s-sky-pale); border-radius: 0 10px 10px 0; font-size: 1.12rem;
+}
+.md-table { overflow-x: auto; margin: 0 0 1.3rem; border: 1px solid var(--s-line); border-radius: 10px; }
+.md-table table { border-collapse: collapse; width: 100%; font-size: .98rem; line-height: 1.45; }
+.md-table th, .md-table td { text-align: left; padding: .55rem .75rem; border-bottom: 1px solid var(--s-line); vertical-align: top; }
+.md-table th { background: var(--s-navy); color: #fff; font-family: var(--display); font-weight: 500; letter-spacing: .03em; }
+.md-table tr:last-child td { border-bottom: 0; }
+.md-table td:first-child { font-weight: 700; white-space: nowrap; }
+
+.b-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 2rem; padding-top: 1.4rem; border-top: 1px solid var(--s-line); }
+.b-like, .b-share {
+  min-height: 44px; padding: .5rem 1.1rem; border-radius: 999px; cursor: pointer;
+  font: inherit; font-weight: 700; border: 2px solid var(--s-navy); background: transparent; color: var(--s-navy);
+}
+.b-like span { font-size: 1.15rem; line-height: 1; }
+.b-like.on { background: var(--s-yellow); border-color: var(--s-yellow); }
+.b-like:disabled { opacity: .6; cursor: default; }
+
+.b-locked { padding: 2rem 0; }
+.b-locked h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 600; color: var(--s-navy); margin: 0 0 .6rem; }
+.b-locked p { margin: 0 0 1.4rem; color: var(--s-ink-soft); }
+
+/* Vista previa en el editor del coach */
+.b-preview { margin-top: 1.4rem; padding: 1.2rem 1.3rem 1.6rem; border-radius: 18px; border: 3px dashed var(--s-line); }
+.b-preview .b-article { padding: 0; }

@@ -1,29 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { AccountLink } from '@/components/site/AccountLink';
 import { InvestorForm, NewsletterForm, PilotForm } from '@/components/site/SiteForms';
-import { LangSwitch, useI18n } from '@/components/I18nProvider';
-import { OWNER, PRIVACY_EMAIL } from '@/lib/legal';
+import { SiteFooter, SiteHeader } from '@/components/site/SiteChrome';
+import { useI18n } from '@/components/I18nProvider';
 import { TESTIMONIALS } from '@/lib/site';
 
 // Contenido del sitio público en el idioma del visitante (textos en src/i18n).
-
-function Mark() {
-  return (
-    <svg className="s-mark" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="16" fill="#2F9CC4" />
-      <g fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="7">
-        <g stroke="#164A5E" transform="translate(2.5 2.5)">
-          <path d="M9 19H31M20 19V45" /><path d="M38 45V19H46C55 19 55 36 46 36H38" />
-        </g>
-        <g stroke="#FBE83A">
-          <path d="M9 19H31M20 19V45" /><path d="M38 45V19H46C55 19 55 36 46 36H38" />
-        </g>
-      </g>
-    </svg>
-  );
-}
 
 /** Maqueta de la app: cuenta regresiva y tarjetas de la semana, sin datos reales. */
 function PhoneMock() {
@@ -56,19 +39,7 @@ export function SiteContent() {
   const s = t.site;
   return (
     <div className="site">
-      <header className="s-nav">
-        <div className="s-container s-nav-inner">
-          <Link href="/" className="s-brand"><Mark /><span>Training <em>Please</em></span></Link>
-          <nav aria-label={s.navAria}>
-            <a href="#por-que">{s.navWhy}</a>
-            <a href="#como">{s.navHow}</a>
-            <a href="#motor">{s.navAi}</a>
-            <a href="#piloto" className="s-nav-cta">{s.navJoin}<span className="s-hide-xs">{s.navJoinRest}</span></a>
-            <AccountLink className="s-nav-account" />
-            <LangSwitch className="s-lang" />
-          </nav>
-        </div>
-      </header>
+      <SiteHeader home />
 
       <main>
         <section className="s-hero">
@@ -250,16 +221,7 @@ export function SiteContent() {
         </section>
       </main>
 
-      <footer className="s-footer">
-        <div className="s-container s-footer-inner">
-          <p className="s-brand"><Mark /><span>Training <em>Please</em></span></p>
-          <p>
-            <Link href="/legal">{s.footerLegal}</Link> · <a href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a> ·{' '}
-            <AccountLink /> · <LangSwitch className="s-lang" />
-          </p>
-          <p className="s-fine">© {new Date().getFullYear()} {OWNER} · Lima, Perú</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
