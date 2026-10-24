@@ -72,6 +72,45 @@ service cloud.firestore {
       allow delete: if isSelf(uid);
     }
 
+    // Blog del club. Publicados: todos leen los públicos; los privados, solo quien tiene cuenta.
+    // Borradores: solo el coach. Los likes y los envíos los escribe el servidor.
+    function isMember() { return isAdmin() || (signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))); }
+
+    match /posts/{slug} {
+      allow read: if isAdmin()
+        || (resource.data.status == 'published' && (resource.data.private == false || isMember()));
+      allow create: if isAdmin() && validPost(slug)
+        && request.resource.data.likes == 0 && !('sends' in request.resource.data);
+      allow update: if isAdmin() && validPost(slug)
+        && request.resource.data.likes == resource.data.likes
+        && request.resource.data.get('sends', null) == resource.data.get('sends', null);
+      allow delete: if isAdmin();
+
+      // Like de cada usuario (id = uid) o anónimo (id = a_<hash>). Cada uno ve solo el suyo.
+      match /likes/{key} {
+        allow read: if isSelf(key);
+        allow write: if false;
+      }
+    }
+
+    function validContent(c) {
+      return c is map && c.keys().hasOnly(['title', 'summary', 'body'])
+        && c.title is string && c.title.size() > 0 && c.title.size() <= 140
+        && c.summary is string && c.summary.size() <= 300
+        && c.body is string && c.body.size() <= 20000;
+    }
+
+    function validPost(slug) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['slug', 'es', 'en', 'private', 'status', 'likes', 'sends', 'createdAt', 'updatedAt', 'publishedAt'])
+        && d.slug == slug && slug.size() <= 80 && slug.matches('[a-z0-9]+(-[a-z0-9]+)*')
+        && validContent(d.es)
+        && (d.get('en', null) == null || validContent(d.en))
+        && d.private is bool
+        && d.status in ['draft', 'published']
+        && d.updatedAt == request.time;
+    }
+
     function validLog() {
       let d = request.resource.data;
       return d.keys().hasOnly(['done', 'rpe', 'comment', 'link', 'weekId', 'updatedAt'])

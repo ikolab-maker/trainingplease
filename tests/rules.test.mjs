@@ -2,7 +2,7 @@
 import { test, before, after, beforeEach } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
 let env;
 const consent = { version: '1.0-borrador', acceptedAt: new Date(), optional: { ai: false, marketing: false, stats: false } };
@@ -26,6 +26,11 @@ beforeEach(async () => {
     await setDoc(doc(db, 'logs/ana/entries/s1'), { done: true, rpe: 5, comment: 'bien', weekId: '2026-W40', updatedAt: new Date() });
     await setDoc(doc(db, 'logs/beto/entries/s9'), { done: true, rpe: 5, comment: 'ok', weekId: '2026-W40', updatedAt: new Date() });
     await setDoc(doc(db, 'allowlist/nuevo@x.com'), { name: 'Nuevo', uid: null });
+    const post = (status, priv) => ({ slug: '', es: { title: 'T', summary: '', body: '' }, en: null, private: priv, status, likes: 3, updatedAt: new Date() });
+    await setDoc(doc(db, 'posts/publico'), { ...post('published', false), slug: 'publico' });
+    await setDoc(doc(db, 'posts/privado'), { ...post('published', true), slug: 'privado' });
+    await setDoc(doc(db, 'posts/borrador'), { ...post('draft', false), slug: 'borrador' });
+    await setDoc(doc(db, 'posts/publico/likes/ana'), { kind: 'user' });
   });
 });
 
@@ -113,4 +118,43 @@ test('solicitudes del sitio: solo el coach las lee, nadie escribe desde el clien
 test('nadie crea su propio perfil desde el cliente', async () => {
   const intruso = env.authenticatedContext('intruso', {}).firestore();
   await assertFails(setDoc(doc(intruso, 'users/intruso'), { role: 'admin' }));
+});
+
+const newPost = (extra = {}) => ({
+  slug: 'nuevo', es: { title: 'Nuevo', summary: 'r', body: 'b' }, en: null, private: false, status: 'draft',
+  likes: 0, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), publishedAt: null, ...extra,
+});
+
+test('blog: públicos para todos, privados para quien tiene cuenta, borradores solo el coach', async () => {
+  await assertSucceeds(getDoc(doc(anon(), 'posts/publico')));
+  await assertFails(getDoc(doc(anon(), 'posts/privado')));
+  await assertFails(getDoc(doc(anon(), 'posts/borrador')));
+  await assertSucceeds(getDoc(doc(beto(), 'posts/privado')));
+  await assertFails(getDoc(doc(ana(), 'posts/borrador')));
+  await assertSucceeds(getDoc(doc(coach(), 'posts/borrador')));
+  const intruso = env.authenticatedContext('intruso', {}).firestore();
+  await assertFails(getDoc(doc(intruso, 'posts/privado')));
+  // Las consultas de la lista del blog
+  await assertSucceeds(getDocs(query(collection(anon(), 'posts'), where('status', '==', 'published'), where('private', '==', false))));
+  await assertFails(getDocs(query(collection(anon(), 'posts'), where('status', '==', 'published'))));
+  await assertSucceeds(getDocs(query(collection(ana(), 'posts'), where('status', '==', 'published'))));
+});
+
+test('blog: solo el coach escribe, sin tocar likes ni envíos', async () => {
+  await assertFails(setDoc(doc(ana(), 'posts/nuevo'), newPost()));
+  await assertSucceeds(setDoc(doc(coach(), 'posts/nuevo'), newPost()));
+  await assertFails(setDoc(doc(coach(), 'posts/otro'), newPost()));
+  await assertFails(setDoc(doc(coach(), 'posts/mal'), newPost({ slug: 'mal', likes: 10 })));
+  await assertFails(setDoc(doc(coach(), 'posts/Mal-Slug'), newPost({ slug: 'Mal-Slug' })));
+  await assertFails(setDoc(doc(coach(), 'posts/x'), newPost({ slug: 'x', es: { title: '', summary: '', body: '' } })));
+  await assertSucceeds(updateDoc(doc(coach(), 'posts/publico'), { status: 'draft', updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(coach(), 'posts/publico'), { likes: 100, updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(coach(), 'posts/publico'), { sends: [], updatedAt: serverTimestamp() }));
+  await assertSucceeds(deleteDoc(doc(coach(), 'posts/borrador')));
+});
+
+test('blog: cada uno ve solo su like y nadie lo escribe desde el cliente', async () => {
+  await assertSucceeds(getDoc(doc(ana(), 'posts/publico/likes/ana')));
+  await assertFails(getDoc(doc(beto(), 'posts/publico/likes/ana')));
+  await assertFails(setDoc(doc(ana(), 'posts/publico/likes/ana'), { kind: 'user' }));
 });

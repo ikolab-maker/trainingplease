@@ -13,8 +13,8 @@ export function TopNav() {
   const isAdmin = state.profile.role === 'admin';
 
   const links = isAdmin
-    ? [{ href: '/coach', label: t.nav.athletes }, { href: '/coach/docs', label: t.nav.docs }]
-    : [{ href: '/plan', label: t.nav.myWeek }, { href: '/ajustes', label: t.nav.settings }];
+    ? [{ href: '/coach', label: t.nav.athletes }, { href: '/coach/blog', label: t.nav.blog }, { href: '/coach/docs', label: t.nav.docs }]
+    : [{ href: '/plan', label: t.nav.myWeek }, { href: '/blog', label: t.nav.blog }, { href: '/ajustes', label: t.nav.settings }];
 
   return (
     <nav className="topnav" aria-label={t.nav.sections}>
@@ -28,7 +28,7 @@ export function TopNav() {
   );
 }
 
-/** La sección activa es el enlace más largo que calza con la ruta (Docs gana a Atletas). */
+/** La sección activa es el enlace más largo que calza con la ruta (Docs o Blog ganan a Atletas). */
 function isCurrent(path: string, href: string, all: string[]) {
   const match = (h: string) => path === h || path.startsWith(`${h}/`);
   return match(href) && !all.some((h) => h.length > href.length && match(h));
