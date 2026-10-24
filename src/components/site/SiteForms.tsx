@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { NEWSLETTER_CONSENT_TEXT } from '@/lib/newsletter';
 import { INVESTOR_CONSENT_TEXT, LEVELS, PILOT_CONSENT_TEXT, WEEKLY_KM } from '@/lib/pilot';
 
 type Status = { kind: 'idle' } | { kind: 'busy' } | { kind: 'ok'; text: string } | { kind: 'error'; text: string };
 
-async function send(payload: Record<string, unknown>): Promise<{ ok: boolean; already?: string; error?: string }> {
+async function send(payload: Record<string, unknown>, url = '/api/solicitudes'): Promise<{ ok: boolean; already?: string; error?: string }> {
   try {
-    const res = await fetch('/api/solicitudes', {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -151,6 +152,43 @@ export function InvestorForm() {
       </label>
       {status.kind === 'error' && <p className="s-error" role="alert">{status.text}</p>}
       <button className="s-btn ghost" disabled={status.kind === 'busy'}>{status.kind === 'busy' ? 'Enviando…' : 'Conversemos'}</button>
+    </form>
+  );
+}
+
+export function NewsletterForm() {
+  const empty = { name: '', email: '', website: '' };
+  const [f, setF] = useState(empty);
+  const [consent, setConsent] = useState(false);
+  const [status, setStatus] = useState<Status>({ kind: 'idle' });
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus({ kind: 'busy' });
+    const r = await send({ ...f, consent, source: 'sitio' }, '/api/boletin');
+    if (!r.ok) { setStatus({ kind: 'error', text: r.error ?? 'No pudimos guardar tu correo.' }); return; }
+    setStatus({ kind: 'ok', text: r.already ? 'Ya estabas suscrito. ¡Nos leemos!' : '¡Listo! Revisa tu correo: te enviamos la bienvenida.' });
+    setF(empty);
+    setConsent(false);
+  }
+
+  if (status.kind === 'ok') return <p className="s-thanks" role="status">✓ {status.text}</p>;
+
+  return (
+    <form className="s-form light" onSubmit={submit}>
+      <div className="s-row">
+        <label><span>Nombre</span>
+          <input autoComplete="given-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+        <label><span>Correo *</span>
+          <input required type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></label>
+      </div>
+      <Trap value={f.website} onChange={(v) => setF({ ...f, website: v })} />
+      <label className="s-consent">
+        <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+        <span>{NEWSLETTER_CONSENT_TEXT} <Link href="/legal" target="_blank">Ver política</Link></span>
+      </label>
+      {status.kind === 'error' && <p className="s-error" role="alert">{status.text}</p>}
+      <button className="s-btn primary" disabled={status.kind === 'busy'}>{status.kind === 'busy' ? 'Enviando…' : 'Quiero el boletín'}</button>
     </form>
   );
 }

@@ -68,4 +68,11 @@ Cada domingo a las 4 pm de Lima (cron de Vercel, `vercel.json`) el agente princi
 - `src/lib/agent/guardrails.ts` (Guardián): reglas duras sobre la propuesta: tope de +20 % de km por semana (+30 % sobre hace dos), ninguna salida más de 10 % sobre la más larga de 30 días, fondo hasta 150 min, topes por tipo de sesión, días duros, taper, días suaves tras una carrera, descarga, dolor, enfermedad y formato. En un ajuste puntual las reglas de estructura quedan como avisos.
 - Datos: `proposals/{uid}/weeks/{semana}`, `athleteMemory/{uid}` (ficha, tiempo de referencia, meta de tiempo e historial) y `agentRuns/{id}` (registro con tokens y costo). Solo servidor; las reglas de Firestore ya los niegan al cliente.
 - Variables en Vercel: `ANTHROPIC_API_KEY` (clave de la Claude API) y `CRON_SECRET` (cualquier texto largo; Vercel lo envía al cron).
+
+### Correo (Resend)
+- `RESEND_API_KEY`: sin ella no se envía ningún correo y todo lo demás funciona igual (`/api/health` muestra `email`).
+- `EMAIL_FROM` (opcional, por defecto `Training Please <avisos@trainingplease.app>`): remitente de un dominio verificado en Resend.
+- `RESEND_SEGMENT_BOLETIN` y `RESEND_SEGMENT_ATLETAS` (opcionales): ids de segmentos de Resend.
+- Avisos: cuando una propuesta se carga en el plan (aprobada por el coach o cargada sola por el cron), el atleta recibe "Tu semana está lista" y se suma al segmento de atletas.
+- Boletín: el formulario del sitio (`/#boletin`) guarda `newsletter/{correo}` con su consentimiento y suma el contacto al segmento del boletín. El boletín y los comunicados se escriben y envían desde Broadcasts en Resend, que agrega la baja.
 - Arquitectura completa: `08-arquitectura-agentes-ia.md` en los documentos del proyecto.

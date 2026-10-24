@@ -2,6 +2,7 @@ import 'server-only';
 import { FieldValue, type DocumentSnapshot, type Firestore } from 'firebase-admin/firestore';
 import { parsePlanFile } from '@/lib/planFile';
 import { writePlan } from '@/lib/planWrite';
+import { APP_URL, addContact, sendEmail } from '@/lib/email';
 
 /**
  * Carga una propuesta pendiente en el plan del atleta y suma su fila al historial.
@@ -22,5 +23,22 @@ export async function applyProposal(db: Firestore, uid: string, snap: DocumentSn
       history: FieldValue.arrayUnion({ weekId: snap.get('analyzedWeekId'), decision: snap.get('decision'), row }),
     }, { merge: true });
   }
+  await notifyAthlete(db, uid, plan[0].week.title || weekId).catch((e) => console.error('aviso semana', e));
   return { ok: true as const, ...written };
+}
+
+/** Aviso por correo al atleta de que su semana ya está en la app. Sin RESEND_API_KEY no hace nada. */
+async function notifyAthlete(db: Firestore, uid: string, title: string) {
+  const user = await db.doc(`users/${uid}`).get();
+  const email = user.get('email');
+  if (typeof email !== 'string' || !email) return;
+  const name = String(user.get('name') ?? '').split(' ')[0];
+  await addContact(email, name, 'atletas');
+  await sendEmail(
+    email,
+    'Tu semana de entrenamiento está lista',
+    name ? `${name}, tu semana está lista` : 'Tu semana está lista',
+    [`Ya tienes tu plan en la app: ${title}.`, 'Revísalo, organiza tus días y marca cada sesión al terminarla.'],
+    { label: 'Ver mi semana', url: `${APP_URL}/plan` },
+  );
 }

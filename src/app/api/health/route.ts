@@ -26,6 +26,7 @@ export async function GET() {
     projectId,
     adminEmails: (process.env.ADMIN_EMAILS ?? '').split(',').filter(Boolean).length,
     adminSdk,
+    email: process.env.RESEND_API_KEY ? 'ok' : 'missing',
     env: process.env.VERCEL_ENV ?? 'local',
   });
 }

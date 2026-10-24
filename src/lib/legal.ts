@@ -2,7 +2,7 @@
 // Al cambiar un texto, sube LEGAL_VERSION:
 // la app pedirá una nueva aceptación en el siguiente acceso.
 
-export const LEGAL_VERSION = '1.2';
+export const LEGAL_VERSION = '1.3';
 export const LEGAL_IS_DRAFT = false;
 
 export const OWNER = 'TRAINING PLEASE';
@@ -67,7 +67,7 @@ export const PRIVACY: LegalSection = {
     `Responsable: ${OWNER}. Banco de datos "Atletas" (inscripción ante la ANPD pendiente). Ley N.º 29733 y su Reglamento (D.S. N.º 016-2024-JUS).`,
     'Datos que tratamos: identificación y contacto (nombre, correo de Google, foto); físicos (edad, talla y peso); deportivos (nivel, objetivos, carreras, disponibilidad, equipo, sesiones realizadas, comentarios y esfuerzo percibido); y datos sensibles de salud que declares (lesiones, limitaciones, condiciones médicas).',
     'Finalidades necesarias: crear y ajustar tu plan, también con ayuda de inteligencia artificial (Claude, de Anthropic) bajo la supervisión de tu coach, que define sus pautas, recibe las semanas con alertas para revisarlas y puede corregir cualquier semana; permitir que tu coach vea tu cumplimiento y comentarios, y gestionar tu cuenta. Finalidades adicionales y opcionales: novedades y estadísticas anonimizadas.',
-    'Transferencia internacional: tus datos se almacenan con Google LLC (Firebase) y Vercel Inc., y se procesan con Anthropic PBC (inteligencia artificial) para preparar tus planes, con servidores fuera del Perú. No vendemos tus datos.',
+    'Transferencia internacional: tus datos se almacenan con Google LLC (Firebase) y Vercel Inc., se procesan con Anthropic PBC (inteligencia artificial) para preparar tus planes, y tu correo se usa con Resend para enviarte avisos de tu plan y, si lo autorizaste, el boletín, con servidores fuera del Perú. No vendemos tus datos.',
     'Conservación: mientras tengas cuenta activa. Tras la baja o la revocación, eliminamos o anonimizamos tus datos en un plazo máximo de [30] días, salvo obligación legal.',
     'Derechos: acceso, rectificación, cancelación y oposición (ARCO) y revocación del consentimiento, sin costo y sin justificarlo.',
     `Cómo revocar: desde Ajustes > Privacidad > Revocar consentimiento (un clic y una confirmación; tu coach deja de ver tus registros al instante) o escribiendo a ${PRIVACY_EMAIL}. Puedes revocar solo las finalidades adicionales y seguir usando la app. La revocación no afecta el tratamiento realizado antes.`,

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AccountLink } from '@/components/site/AccountLink';
-import { InvestorForm, PilotForm } from '@/components/site/SiteForms';
+import { InvestorForm, NewsletterForm, PilotForm } from '@/components/site/SiteForms';
 import { OWNER, PRIVACY_EMAIL } from '@/lib/legal';
 import { AGENTS, LOOPS, PILLARS, STEPS, TESTIMONIALS } from '@/lib/site';
 import './site.css';
@@ -251,7 +251,21 @@ export default function SitePage() {
           </div>
         </section>
 
-        <section id="crece" className="s-section">
+        <section id="boletin" className="s-section">
+          <div className="s-container s-split wide">
+            <div>
+              <p className="s-kicker">Boletín semanal</p>
+              <h2>Entrena con una idea por semana</h2>
+              <p className="s-lead-dark">
+                Un correo corto cada semana con lo que funciona en el entrenamiento, novedades del club y lo que aprendemos con
+                nuestros atletas. Sin spam y con baja en un clic.
+              </p>
+            </div>
+            <NewsletterForm />
+          </div>
+        </section>
+
+        <section id="crece" className="s-section tint">
           <div className="s-container">
             <details className="s-grow">
               <summary>
