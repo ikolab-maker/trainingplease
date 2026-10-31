@@ -171,6 +171,188 @@ This method, known as *session RPE*, was validated by Foster in 2001 against hea
 
 Training with data isn’t about filling the app with numbers: it’s about giving your plan the one piece of information no watch can measure. Take those two seconds. Please.`;
 
+const TEST_ES = `Tu plan dice «suave», «a ritmo» o «series». Para que esas palabras signifiquen algo para ti, y no para un atleta promedio, necesitamos saber dónde estás hoy. La forma más simple y honesta de saberlo es correr.
+
+Por eso, **cada 6 semanas corres un 5K a tope**. No es una carrera ni una prueba de valor. Es una foto de tu forma. Con esa foto se ajustan los ritmos de las semanas siguientes.
+
+> No entrenas para el test. El test te dice cómo entrenar.
+
+## Por qué cada 6 semanas
+
+El cuerpo tarda semanas en asimilar el entrenamiento. Si mides muy seguido, ves ruido: un mal día, una mala noche. Si mides muy de vez en cuando, entrenas semanas con ritmos que ya no son los tuyos.
+
+Seis semanas es nuestro punto medio. Da tiempo a que el entrenamiento se note y mantiene tus ritmos al día. El test va al final de una semana más liviana, para que llegues fresco. Si corriste una carrera a tope hace poco, esa carrera ya es tu foto y el test se corre más adelante.
+
+## Por qué un 5K
+
+- **Es corto pero exigente:** entre 20 y 35 minutos para casi todos. Dice mucho de tu forma sin dejarte destruido una semana.
+- **En pista es exacto:** 12 vueltas y media de 400 m. Sin errores de GPS ni cuestas.
+- **Se puede repetir igual:** misma pista, misma hora, mismo calentamiento. Así comparas tu test de hoy con el de dentro de 6 semanas.
+
+[[test-5k]]
+
+## El día antes
+
+**Descanso, o como mucho 20 minutos muy suaves.** Nada de fuerza de piernas, cuestas ni caminatas largas. Si tu plan dice otra cosa para ese día, manda el test.
+
+**Duerme lo que puedas.** Si los nervios no te dejan dormir, tranquilo: pesa más lo que dormiste las noches anteriores.
+
+**Toma agua durante el día**, sin exagerar, hasta que la orina salga clarita. Y **nada de alcohol**.
+
+## Qué comer
+
+**La cena:**
+- Normal, con una buena porción de arroz, fideos, papa o pan.
+- Nada nuevo, frito ni muy picante, y poca menestra.
+- Cena temprano, unas 10 horas antes del test.
+
+**El desayuno, 1 a 2 horas antes:**
+- Liviano y conocido: pan con mermelada o miel, o un plátano.
+- Café si lo tomas siempre.
+- Uno o dos vasos de agua al despertar.
+
+**La regla de oro:** el día del test no se prueba nada nuevo. Ni comida, ni gel, ni zapatillas.
+
+## Qué llevar
+
+- Ropa liviana y una capa para calentar.
+- Tus zapatillas de siempre.
+- Agua, toalla y un polo de cambio.
+
+## Tu reloj
+
+- **Si tu Garmin tiene un perfil de pista** («Carrera en pista»), úsalo: cuenta bien las vueltas de 400 m.
+- **Si no lo tiene, apaga la vuelta automática de 1 km** (Auto Lap). En la pista el GPS se equivoca y te marcaría kilómetros falsos. Si te sientes cómodo, marca vuelta cada vez que pases por la meta. Si no, no toques nada: tu coach toma el tiempo oficial y los parciales.
+- **Llévalo cargado y con el pulso activo.** Tu frecuencia cardíaca también nos sirve.
+
+## Cómo se corre
+
+1. **Calentamiento de 20 minutos:**
+   - 10 a 12 minutos de trote muy suave.
+   - 5 minutos de movilidad.
+   - 3 o 4 rectas progresivas.
+2. **Las dos primeras vueltas, más lento de lo que te pide el cuerpo.** Es el error más común: salir rápido y pagarlo en el kilómetro 3. Tu coach te dirá a qué tiempo por vuelta ir.
+3. **Del kilómetro 2 al 4, parejo.** Busca el ritmo que sientes que puedes sostener hasta el final.
+4. **El último kilómetro, lo que quede.**
+5. **Si aparece un dolor que te cambia la pisada, mareo o dolor en el pecho, paras.** Un test se repite; una lesión no se borra.
+
+Al terminar, trota o camina 10 minutos, toma agua y come algo.
+
+## Después: tu registro
+
+Ese mismo día, en la app, marca la sesión como hecha. Si fue a tope, tu RPE es **9 o 10**. Escribe en el comentario cómo te fue: cómo dormiste, si saliste rápido, si te dolió algo. Ese comentario decide si tu tiempo se usa tal cual.
+
+## Cómo se arma tu tabla de ritmos
+
+Tu tiempo se convierte en un **número de forma**, con fórmulas de fisiología del ejercicio publicadas hace décadas y usadas por entrenadores en todo el mundo. De ese número salen cinco ritmos, cada uno con su trabajo:
+
+[[ritmos]]
+
+Tres cosas que conviene saber:
+- **Tu tabla se fija con tu forma de hoy, no con tu meta.** Entrenar al ritmo de la meta antes de tiempo es la vía rápida a lesionarse.
+- **Tus ritmos se quedan al menos unas semanas.** Si un entrenamiento se siente fácil, cumplió su objetivo: no hay que hacerlo más difícil.
+- **Un test malo no te baja los ritmos solo.** Si hizo calor, dormiste mal o venías cansado, tu coach lo lee en tu comentario y decide.
+
+## Cuándo no toca un test
+
+- **En las semanas antes de tu carrera.** Ahí manda la reducción de carga (el *tapering*): menos kilómetros, la misma intensidad en tramos cortos, para llegar fresco. Dura 1 a 2 semanas según la distancia.
+- **En los días suaves después de una carrera.** La regla práctica es 1 día suave por cada 3 km corridos: unos 2 días después de un 5K, 3 después de un 10K y una semana después de una media maratón.
+- **Con dolor o enfermedad.** Fiebre, dolor en el pecho, mareos o un dolor que te cambia la pisada. Primero sanar.
+- **Si corriste una carrera a tope hace poco.** Esa carrera ya es tu foto.
+
+En pocas palabras: un test cada 6 semanas, bien preparado y bien registrado, hace que tu plan hable de ti y no de un corredor cualquiera.`;
+
+const TEST_EN = `Your plan says “easy”, “at pace” or “repeats”. For those words to mean something for you, and not for an average runner, we need to know where you are today. The simplest and most honest way to find out is to run.
+
+That’s why **every 6 weeks you run an all-out 5K**. It’s not a race or a test of courage. It’s a snapshot of your fitness. That snapshot sets your paces for the weeks that follow.
+
+> You don’t train for the test. The test tells you how to train.
+
+## Why every 6 weeks
+
+Your body takes weeks to absorb training. Measure too often and you see noise: a bad day, a bad night. Measure too rarely and you train for weeks at paces that are no longer yours.
+
+Six weeks is our middle ground. It gives training time to show and keeps your paces up to date. The test comes at the end of a lighter week, so you arrive fresh. If you recently ran an all-out race, that race is already your snapshot and the test moves later.
+
+## Why a 5K
+
+- **Short but demanding:** between 20 and 35 minutes for almost everyone. It says a lot about your fitness without wrecking you for a week.
+- **Exact on a track:** twelve and a half 400 m laps. No GPS errors, no hills.
+- **Repeatable:** same track, same time, same warm-up. So you can compare today’s test with the one six weeks from now.
+
+[[test-5k]]
+
+## The day before
+
+**Rest, or at most 20 very easy minutes.** No leg strength work, hills or long walks. If your plan says something else for that day, the test comes first.
+
+**Sleep as much as you can.** If nerves keep you awake, don’t worry: the nights before matter more.
+
+**Drink water through the day**, without overdoing it, until your urine is pale. And **no alcohol**.
+
+## What to eat
+
+**Dinner:**
+- A normal meal with a good portion of rice, pasta, potatoes or bread.
+- Nothing new, fried or very spicy, and go light on beans.
+- Eat early, about 10 hours before the test.
+
+**Breakfast, 1 to 2 hours before:**
+- Light and familiar: bread with jam or honey, or a banana.
+- Coffee if you always have it.
+- One or two glasses of water when you wake up.
+
+**The golden rule:** on test day you don’t try anything new. Not food, not gels, not shoes.
+
+## What to bring
+
+- Light clothes and a layer to warm up in.
+- Your usual shoes.
+- Water, a towel and a spare shirt.
+
+## Your watch
+
+- **If your Garmin has a track profile** (“Track Run”), use it: it counts 400 m laps properly.
+- **If it doesn’t, turn off the automatic 1 km lap** (Auto Lap). On a track the GPS gets it wrong and would mark false kilometres. If you feel comfortable, press lap every time you cross the finish line. If not, don’t touch anything: your coach takes the official time and splits.
+- **Charge it and turn on heart rate.** Your heart rate helps us too.
+
+## How to run it
+
+1. **A 20-minute warm-up:**
+   - 10 to 12 minutes of very easy jogging.
+   - 5 minutes of mobility.
+   - 3 or 4 progressive strides.
+2. **The first two laps, slower than your body asks for.** It’s the most common mistake: starting fast and paying for it at kilometre 3. Your coach will tell you what time per lap to aim for.
+3. **From kilometre 2 to 4, even.** Find the pace you feel you can hold to the end.
+4. **The last kilometre, whatever is left.**
+5. **If pain changes your stride, or you feel dizzy or have chest pain, stop.** A test can be repeated; an injury can’t be undone.
+
+When you finish, jog or walk for 10 minutes, drink water and eat something.
+
+## After: your log
+
+That same day, in the app, mark the session as done. If it was all-out, your RPE is **9 or 10**. In the comment, tell us how it went: how you slept, whether you started fast, whether anything hurt. That comment decides whether your time is used as is.
+
+## How your pace table is built
+
+Your time becomes a **fitness number**, using exercise physiology formulas published decades ago and used by coaches around the world. Five paces come out of that number, each with its own job:
+
+[[ritmos]]
+
+Three things worth knowing:
+- **Your table is set by your fitness today, not by your goal.** Training at goal pace too early is the fast lane to injury.
+- **Your paces stay for at least a few weeks.** If a workout feels easy, it did its job: there’s no need to make it harder.
+- **A bad test doesn’t lower your paces on its own.** If it was hot, you slept badly or you were tired, your coach reads it in your comment and decides.
+
+## When it’s not time for a test
+
+- **In the weeks before your race.** That’s when the load reduction (the *taper*) rules: fewer kilometres, the same intensity in short bouts, so you arrive fresh. It lasts 1 to 2 weeks depending on the distance.
+- **In the easy days after a race.** The practical rule is 1 easy day for every 3 km raced: about 2 days after a 5K, 3 after a 10K and a week after a half marathon.
+- **With pain or illness.** Fever, chest pain, dizziness or pain that changes your stride. Heal first.
+- **If you recently ran an all-out race.** That race is already your snapshot.
+
+In short: a test every 6 weeks, well prepared and well logged, makes your plan talk about you and not about just any runner.`;
+
 export const SUGGESTED_POSTS: SuggestedPost[] = [
   {
     slug: 'que-es-el-rpe',
@@ -184,6 +366,19 @@ export const SUGGESTED_POSTS: SuggestedPost[] = [
       title: 'A number and a few lines: why log your RPE and how you felt',
       summary: 'What you write after every workout decides your next week. What RPE is, what to say in the comment and how load is measured.',
       body: RPE_EN,
+    },
+  },  {
+    slug: 'test-5k-cada-6-semanas',
+    private: false,
+    es: {
+      title: 'Tu test de 5K: cómo prepararlo, correrlo y qué hacemos con tu tiempo',
+      summary: 'Cada 6 semanas corres un 5K a tope. De ese tiempo salen los ritmos de tu plan. Qué hacer el día antes, qué comer, cómo correrlo y cuándo no toca.',
+      body: TEST_ES,
+    },
+    en: {
+      title: 'Your 5K test: how to prepare, run it and what we do with your time',
+      summary: 'Every 6 weeks you run an all-out 5K. Your plan’s paces come from that time. What to do the day before, what to eat, how to run it and when not to.',
+      body: TEST_EN,
     },
   },
 ];

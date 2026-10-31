@@ -157,7 +157,8 @@ function ContentFields({ value, onChange, lang }: { value: PostContent; onChange
           <code>1. lista</code> · <code>&gt; cita</code> · <code>**negrita**</code> · <code>*cursiva*</code> ·{' '}
           <code>[texto](https://…)</code> · tablas con <code>| a | b |</code> y una fila <code>|---|---|</code>.
           <br />En su propia línea: <code>![descripción](https://…/imagen.png)</code> para una imagen,{' '}
-          <code>[[escala-rpe]]</code> para la escala interactiva y <code>[[carga]]</code> para la calculadora de carga.
+          <code>[[escala-rpe]]</code> para la escala interactiva, <code>[[carga]]</code> para la calculadora de carga,{' '}
+          <code>[[test-5k]]</code> para el test paso a paso y <code>[[ritmos]]</code> para los cinco ritmos.
         </small>
       </label>
     </div>

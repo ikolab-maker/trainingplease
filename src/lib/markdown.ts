@@ -4,7 +4,7 @@
 //   | tabla | con | barras | (la segunda fila |---| separa el encabezado)
 //   **negrita** · *cursiva* · [texto](https://enlace) · párrafos separados por una línea en blanco
 //   ![descripción](https://imagen.png) en su propia línea: imagen
-//   [[escala-rpe]] o [[carga]] en su propia línea: infografía interactiva (ver WIDGETS)
+//   [[escala-rpe]], [[carga]], [[test-5k]] o [[ritmos]] en su propia línea: infografía interactiva (ver WIDGETS)
 
 export type Inline =
   | { t: 'text'; v: string }
@@ -22,7 +22,7 @@ export type Block =
   | { t: 'widget'; name: Widget };
 
 /** Infografías interactivas que el texto puede insertar con [[nombre]]. */
-export const WIDGETS = ['escala-rpe', 'carga'] as const;
+export const WIDGETS = ['escala-rpe', 'carga', 'test-5k', 'ritmos'] as const;
 export type Widget = (typeof WIDGETS)[number];
 const isWidget = (v: string): v is Widget => (WIDGETS as readonly string[]).includes(v);
 

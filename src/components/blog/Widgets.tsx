@@ -94,7 +94,108 @@ function LoadCalculator({ lang }: { lang: Lang }) {
   );
 }
 
+/** Colores de marca por momento del test: del celeste de la víspera al amarillo del test. */
+const STEP_COLORS = ['#9fd3e6', '#9CCBC4', '#b5d89a', '#2F9CC4', '#FBE83A', '#9CCBC4'];
+
+function TestSteps({ lang }: { lang: Lang }) {
+  const w = words(lang);
+  const [step, setStep] = useState(0);
+  const info = w.steps[step];
+  return (
+    <figure className="bw bw-test">
+      <figcaption>
+        <b>{w.testTitle}</b>
+        <span>{w.testHint}</span>
+      </figcaption>
+      <ol className="bw-cycle" aria-label={w.testHint}>
+        {w.cycle.map((c, i) => (
+          <li key={i} className={i === w.cycle.length - 1 ? 'is-test' : i === w.cycle.length - 2 ? 'is-light' : ''}>
+            <small>{w.cycleLabel} {i + 1}</small>
+            <span>{c}</span>
+          </li>
+        ))}
+      </ol>
+      <div className="bw-steps" role="tablist" aria-label={w.testTitle}>
+        {w.steps.map((s, i) => (
+          <button
+            key={s.when}
+            type="button"
+            role="tab"
+            aria-selected={step === i}
+            style={{ borderColor: STEP_COLORS[i] }}
+            onClick={() => setStep(i)}
+          >
+            <i style={{ background: STEP_COLORS[i] }}>{i + 1}</i>
+            {s.when}
+          </button>
+        ))}
+      </div>
+      <div className="bw-card" aria-live="polite">
+        <p className="bw-big" style={{ borderColor: STEP_COLORS[step] }}>
+          <span>{step + 1}</span>
+          <b>{info.title}</b>
+        </p>
+        <ul className="bw-list">
+          {info.items.map((it) => <li key={it}>{it}</li>)}
+        </ul>
+      </div>
+    </figure>
+  );
+}
+
+/** Cinco ritmos, de lo suave a lo rápido; el ancho de la barra de la semana es ilustrativo. */
+const PACE_COLORS = ['#9fd3e6', '#9CCBC4', '#FBE83A', '#f8961e', '#f3722c'];
+const WEEK_SHARE = [78, 8, 7, 5, 2];
+
+function Paces({ lang }: { lang: Lang }) {
+  const w = words(lang);
+  const [pace, setPace] = useState(0);
+  const info = w.paces[pace];
+  return (
+    <figure className="bw bw-paces">
+      <figcaption>
+        <b>{w.pacesTitle}</b>
+        <span>{w.pacesHint}</span>
+      </figcaption>
+      <div className="bw-pace-list" role="radiogroup" aria-label={w.pacesTitle}>
+        {w.paces.map((p, i) => (
+          <button
+            key={p.name}
+            type="button"
+            role="radio"
+            aria-checked={pace === i}
+            style={{ background: PACE_COLORS[i] }}
+            onClick={() => setPace(i)}
+          >
+            {p.name}
+          </button>
+        ))}
+      </div>
+      <div className="bw-card" aria-live="polite">
+        <p className="bw-big" style={{ borderColor: PACE_COLORS[pace] }}>
+          <span>{pace + 1}</span>
+          <b>{info.name}</b>
+        </p>
+        <dl>
+          <div><dt>{w.paceFeel}</dt><dd>{info.feel}</dd></div>
+          <div><dt>{w.paceTalk}</dt><dd>{info.talk}</dd></div>
+          <div className="bw-tip"><dt>{w.paceUse}</dt><dd>{info.use}</dd></div>
+        </dl>
+      </div>
+      <p className="bw-week-label">{w.weekLabel}</p>
+      <div className="bw-week" aria-hidden="true">
+        {WEEK_SHARE.map((share, i) => (
+          <span key={i} className={pace === i ? 'is-on' : ''} style={{ flexGrow: share, background: PACE_COLORS[i] }} />
+        ))}
+      </div>
+      <p className="bw-note">{w.weekNote}</p>
+    </figure>
+  );
+}
+
 export function BlogWidget({ name, lang }: { name: Widget; lang: Lang }) {
   if (name === 'escala-rpe') return <RpeScale lang={lang} />;
+  if (name === 'test-5k') return <TestSteps lang={lang} />;
+  if (name === 'ritmos') return <Paces lang={lang} />;
   return <LoadCalculator lang={lang} />;
 }

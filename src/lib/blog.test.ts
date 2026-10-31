@@ -82,3 +82,8 @@ test('imágenes https e infografías en su propia línea', () => {
   assert.deepEqual(b[1], { t: 'img', alt: 'Escala', src: 'https://x.com/a.png' });
   assert.deepEqual(b[2], { t: 'widget', name: 'escala-rpe' });
 });
+
+test('infografías del test de 5K y de los ritmos', () => {
+  const b = parseMarkdown('[[test-5k]]\n\n[[ritmos]]');
+  assert.deepEqual(b, [{ t: 'widget', name: 'test-5k' }, { t: 'widget', name: 'ritmos' }]);
+});
