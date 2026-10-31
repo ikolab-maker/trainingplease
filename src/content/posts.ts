@@ -171,25 +171,25 @@ This method, known as *session RPE*, was validated by Foster in 2001 against hea
 
 Training with data isn’t about filling the app with numbers: it’s about giving your plan the one piece of information no watch can measure. Take those two seconds. Please.`;
 
-const TEST_ES = `Tu plan dice «suave», «a ritmo» o «series». Para que esas palabras signifiquen algo para ti, y no para un atleta promedio, necesitamos saber dónde estás hoy. La forma más simple y honesta de saberlo es correr.
+const TEST_ES = `![Tus cinco ritmos: Easy, Marathon, Threshold, Interval y Repetition](https://trainingplease.app/img/blog/ritmos.png)
 
-Por eso, **cada 6 semanas corres un 5K a tope**. No es una carrera ni una prueba de valor. Es una foto de tu forma. Con esa foto se ajustan los ritmos de las semanas siguientes.
+Tu plan dice «suave», «a ritmo» o «series». Para que esas palabras signifiquen algo para ti, y no para un atleta promedio, necesitamos saber dónde estás hoy. La forma más simple y honesta de saberlo es correr.
+
+Por eso, **cada cierto tiempo corres un 5K a tope**. No es una carrera ni una prueba de valor. Es una foto de tu forma. Con esa foto se ajustan los ritmos de las semanas siguientes.
 
 > No entrenas para el test. El test te dice cómo entrenar.
 
-## Por qué cada 6 semanas
+## Por qué se repite
 
 El cuerpo tarda semanas en asimilar el entrenamiento. Si mides muy seguido, ves ruido: un mal día, una mala noche. Si mides muy de vez en cuando, entrenas semanas con ritmos que ya no son los tuyos.
 
-Seis semanas es nuestro punto medio. Da tiempo a que el entrenamiento se note y mantiene tus ritmos al día. El test va al final de una semana más liviana, para que llegues fresco. Si corriste una carrera a tope hace poco, esa carrera ya es tu foto y el test se corre más adelante.
+Por eso tu coach elige el momento: con tiempo para que el entrenamiento se note y antes de que tus ritmos queden viejos. El test va al final de una semana más liviana, para que llegues fresco. Si corriste una carrera a tope hace poco, esa carrera ya es tu foto y el test se corre más adelante.
 
 ## Por qué un 5K
 
 - **Es corto pero exigente:** entre 20 y 35 minutos para casi todos. Dice mucho de tu forma sin dejarte destruido una semana.
 - **En pista es exacto:** 12 vueltas y media de 400 m. Sin errores de GPS ni cuestas.
-- **Se puede repetir igual:** misma pista, misma hora, mismo calentamiento. Así comparas tu test de hoy con el de dentro de 6 semanas.
-
-[[test-5k]]
+- **Se puede repetir igual:** misma pista, misma hora, mismo calentamiento. Así comparas tu test de hoy con el siguiente.
 
 ## El día antes
 
@@ -242,14 +242,20 @@ Al terminar, trota o camina 10 minutos, toma agua y come algo.
 
 Ese mismo día, en la app, marca la sesión como hecha. Si fue a tope, tu RPE es **9 o 10**. Escribe en el comentario cómo te fue: cómo dormiste, si saliste rápido, si te dolió algo. Ese comentario decide si tu tiempo se usa tal cual.
 
-## Cómo se arma tu tabla de ritmos
+## Cómo se arman tus ritmos
 
-Tu tiempo se convierte en un **número de forma**, con fórmulas de fisiología del ejercicio publicadas hace décadas y usadas por entrenadores en todo el mundo. De ese número salen cinco ritmos, cada uno con su trabajo:
+Tu tiempo se convierte en un **número de forma**, con las fórmulas que publicó el fisiólogo y entrenador **Jack Daniels**. De ese número salen sus **cinco intensidades**, cada una con su ritmo por kilómetro y su trabajo. Las llamamos por su nombre original, en inglés, como las verás en tu plan:
 
-[[ritmos]]
+| Ritmo | Cómo se siente | Para qué sirve |
+|---|---|---|
+| **E · Easy** (suave) | Cómodo; frases completas | Rodajes, fondo y recuperación. Es la mayor parte de tu semana |
+| **M · Marathon** (maratón) | Cómodo pero con atención | Acostumbrarte a sostener un ritmo largo |
+| **T · Threshold** (umbral) | Duro pero controlado; frases cortas | Aguantar más tiempo rápido |
+| **I · Interval** (intervalos) | Muy duro, en series de 3 a 5 min; dos o tres palabras | Subir tu motor |
+| **R · Repetition** (repeticiones) | Rápido y suelto, en tramos cortos | Correr más fácil y con mejor técnica |
 
 Tres cosas que conviene saber:
-- **Tu tabla se fija con tu forma de hoy, no con tu meta.** Entrenar al ritmo de la meta antes de tiempo es la vía rápida a lesionarse.
+- **Tus ritmos se fijan con tu forma de hoy, no con tu meta.** Entrenar al ritmo de la meta antes de tiempo es la vía rápida a lesionarse.
 - **Tus ritmos se quedan al menos unas semanas.** Si un entrenamiento se siente fácil, cumplió su objetivo: no hay que hacerlo más difícil.
 - **Un test malo no te baja los ritmos solo.** Si hizo calor, dormiste mal o venías cansado, tu coach lo lee en tu comentario y decide.
 
@@ -260,27 +266,27 @@ Tres cosas que conviene saber:
 - **Con dolor o enfermedad.** Fiebre, dolor en el pecho, mareos o un dolor que te cambia la pisada. Primero sanar.
 - **Si corriste una carrera a tope hace poco.** Esa carrera ya es tu foto.
 
-En pocas palabras: un test cada 6 semanas, bien preparado y bien registrado, hace que tu plan hable de ti y no de un corredor cualquiera.`;
+En pocas palabras: un test de vez en cuando, bien preparado y bien registrado, hace que tu plan hable de ti y no de un corredor cualquiera.`;
 
-const TEST_EN = `Your plan says “easy”, “at pace” or “repeats”. For those words to mean something for you, and not for an average runner, we need to know where you are today. The simplest and most honest way to find out is to run.
+const TEST_EN = `![Your five paces: Easy, Marathon, Threshold, Interval and Repetition](https://trainingplease.app/img/blog/ritmos-en.png)
 
-That’s why **every 6 weeks you run an all-out 5K**. It’s not a race or a test of courage. It’s a snapshot of your fitness. That snapshot sets your paces for the weeks that follow.
+Your plan says “easy”, “at pace” or “repeats”. For those words to mean something for you, and not for an average runner, we need to know where you are today. The simplest and most honest way to find out is to run.
+
+That’s why **every so often you run an all-out 5K**. It’s not a race or a test of courage. It’s a snapshot of your fitness. That snapshot sets your paces for the weeks that follow.
 
 > You don’t train for the test. The test tells you how to train.
 
-## Why every 6 weeks
+## Why it’s repeated
 
 Your body takes weeks to absorb training. Measure too often and you see noise: a bad day, a bad night. Measure too rarely and you train for weeks at paces that are no longer yours.
 
-Six weeks is our middle ground. It gives training time to show and keeps your paces up to date. The test comes at the end of a lighter week, so you arrive fresh. If you recently ran an all-out race, that race is already your snapshot and the test moves later.
+So your coach picks the moment: with time for training to show, and before your paces go stale. The test comes at the end of a lighter week, so you arrive fresh. If you recently ran an all-out race, that race is already your snapshot and the test moves later.
 
 ## Why a 5K
 
 - **Short but demanding:** between 20 and 35 minutes for almost everyone. It says a lot about your fitness without wrecking you for a week.
 - **Exact on a track:** twelve and a half 400 m laps. No GPS errors, no hills.
-- **Repeatable:** same track, same time, same warm-up. So you can compare today’s test with the one six weeks from now.
-
-[[test-5k]]
+- **Repeatable:** same track, same time, same warm-up. So you can compare today’s test with the next one.
 
 ## The day before
 
@@ -335,9 +341,15 @@ That same day, in the app, mark the session as done. If it was all-out, your RPE
 
 ## How your pace table is built
 
-Your time becomes a **fitness number**, using exercise physiology formulas published decades ago and used by coaches around the world. Five paces come out of that number, each with its own job:
+Your time becomes a **fitness number**, using the formulas published by physiologist and coach **Jack Daniels**. His **five intensities** come out of that number, each with its own pace per kilometre and its own job:
 
-[[ritmos]]
+| Pace | How it feels | What it’s for |
+|---|---|---|
+| **E · Easy** | Comfortable; full sentences | Easy runs, long run and recovery. Most of your week |
+| **M · Marathon** | Comfortable but focused | Getting used to holding a long pace |
+| **T · Threshold** | Hard but controlled; short sentences | Holding a fast pace for longer |
+| **I · Interval** | Very hard, in 3 to 5 min repeats; two or three words | Building your engine |
+| **R · Repetition** | Fast and relaxed, in short bouts | Running easier, with better form |
 
 Three things worth knowing:
 - **Your table is set by your fitness today, not by your goal.** Training at goal pace too early is the fast lane to injury.
@@ -351,7 +363,7 @@ Three things worth knowing:
 - **With pain or illness.** Fever, chest pain, dizziness or pain that changes your stride. Heal first.
 - **If you recently ran an all-out race.** That race is already your snapshot.
 
-In short: a test every 6 weeks, well prepared and well logged, makes your plan talk about you and not about just any runner.`;
+In short: a test every so often, well prepared and well logged, makes your plan talk about you and not about just any runner.`;
 
 export const SUGGESTED_POSTS: SuggestedPost[] = [
   {
@@ -368,16 +380,16 @@ export const SUGGESTED_POSTS: SuggestedPost[] = [
       body: RPE_EN,
     },
   },  {
-    slug: 'test-5k-cada-6-semanas',
+    slug: 'test-de-5k',
     private: false,
     es: {
       title: 'Tu test de 5K: cómo prepararlo, correrlo y qué hacemos con tu tiempo',
-      summary: 'Cada 6 semanas corres un 5K a tope. De ese tiempo salen los ritmos de tu plan. Qué hacer el día antes, qué comer, cómo correrlo y cuándo no toca.',
+      summary: 'Cada cierto tiempo corres un 5K a tope. De ese tiempo salen los ritmos de tu plan. Qué hacer el día antes, qué comer, cómo correrlo y cuándo no toca.',
       body: TEST_ES,
     },
     en: {
       title: 'Your 5K test: how to prepare, run it and what we do with your time',
-      summary: 'Every 6 weeks you run an all-out 5K. Your plan’s paces come from that time. What to do the day before, what to eat, how to run it and when not to.',
+      summary: 'Every so often you run an all-out 5K. Your plan’s paces come from that time. What to do the day before, what to eat, how to run it and when not to.',
       body: TEST_EN,
     },
   },
