@@ -8,7 +8,8 @@ import { TopNav } from '@/components/TopNav';
 import { useAuth } from '@/components/AuthProvider';
 import { useDialogs } from '@/components/Dialogs';
 import { db } from '@/lib/firebase';
-import { fetchAllSessions, fetchLogs } from '@/lib/data';
+import { fetchAllSessions, fetchLogs, fetchWeeks } from '@/lib/data';
+import { gamificationOn, summarize } from '@/lib/gamification';
 import { compliance, daysUntil, isoWeekId, todayISO } from '@/lib/dates';
 import { LEVELS, type InvestorContact, type PilotRequest } from '@/lib/pilot';
 import type { Compliance } from '@/lib/dates';
@@ -22,6 +23,7 @@ interface AthleteRow {
   week: Compliance;
   lastComment?: { text: string; date: string };
   revoked: boolean;
+  streak: { now: number; best: number } | null; // null: puntos y racha apagados
 }
 
 interface Pending { email: string; name: string; goalRace: GoalRace | null }
@@ -54,7 +56,7 @@ function Dashboard() {
     const users = await getDocs(query(collection(db(), 'users'), where('role', '==', 'athlete')));
     const out = await Promise.all(users.docs.map(async (d) => {
       const user = d.data() as UserDoc;
-      const sessions = await fetchAllSessions(d.id);
+      const [sessions, weeks] = await Promise.all([fetchAllSessions(d.id), fetchWeeks(d.id)]);
       let logs = {};
       let revoked = !user.consent;
       if (!revoked) {
@@ -69,6 +71,9 @@ function Dashboard() {
         revoked,
         total: compliance(sessions, logs, today),
         week: compliance(sessions.filter((s) => isoWeekId(s.date) === thisWeek), logs, today),
+        streak: !revoked && gamificationOn(user)
+          ? (({ streak, best }) => ({ now: streak, best }))(summarize(weeks, sessions, logs, today))
+          : null,
         lastComment: withComment
           ? { text: (logs as Record<string, { comment: string }>)[withComment.id].comment, date: withComment.date }
           : undefined,
@@ -112,6 +117,7 @@ function Dashboard() {
                   <>
                     <p className="pct">{r.total.pct ?? '–'}{r.total.pct != null && '%'}<small>cumplimiento total ({r.total.done}/{r.total.planned})</small></p>
                     <p className="meta">Esta semana: {r.week.pct != null ? `${r.week.pct}% (${r.week.done}/${r.week.planned})` : 'sin sesiones vencidas aún'}</p>
+                    {r.streak && <p className="meta">🔥 Racha: {r.streak.now} {r.streak.now === 1 ? 'semana' : 'semanas'} · récord {r.streak.best}</p>}
                     {r.lastComment && <p className="meta"><i>“{r.lastComment.text.slice(0, 140)}”</i></p>}
                   </>
                 )}

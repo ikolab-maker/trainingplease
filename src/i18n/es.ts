@@ -61,6 +61,23 @@ const es = {
     forThisWeek: 'Para esta semana',
     footerSafety: 'Si algún dolor pasa de 3 sobre 10 o te cambia la forma de pisar, corta la sesión y avísale a tu coach.',
   },
+  game: {
+    title: 'Tu racha',
+    streak: (n: number) => n === 1 ? '1 semana' : `${n} semanas`,
+    best: (n: number) => `Récord: ${n}`,
+    weekPoints: 'Puntos de esta semana',
+    total: (n: number) => `${n} en total`,
+    state: { ok: 'Semana cumplida: suma a tu racha.', frozen: 'Semana en pausa: tu racha se guarda.', broken: 'Esta semana no llegó al 80 %. La racha vuelve a empezar.', open: 'Llega al 80 % de tus sesiones para sumar a tu racha.' },
+    breakdown: (s: number, r: number, c: number, b: number, n: number) => [s && `${s} sesiones`, r && `${r} RPE`, c && `${c} comentarios`, b && `${b} semana`, n && `${n} avisos`].filter(Boolean).join(' · '),
+    how: 'Cómo se suman',
+    rules: [
+      'Sesión hecha: 10 · RPE: +3 · Comentario de 20 letras o más: +5',
+      'Semana al 80 %: +20 y al 100 %: +10 más · Avisos para la semana siguiente: +5',
+      'Hacer más de lo planificado no suma. El descanso cuenta como cumplido.',
+      'Si cuentas un dolor o que estás enfermo, la semana queda en pausa y tu racha se guarda.',
+    ],
+    safety: 'Si te duele, para. Tu racha te espera.',
+  },
   notice: {
     coachTitle: (range: string) => `Avisos del atleta para la semana del ${range}`,
     title: 'Avisos para la próxima semana',

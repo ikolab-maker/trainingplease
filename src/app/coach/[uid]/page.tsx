@@ -18,8 +18,11 @@ import { activityLinkLabel } from '@/lib/activityLink';
 import { SPORTS } from '@/lib/sports';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
 import { MEMBERSHIPS, membershipOf } from '@/lib/membership';
+import { gamificationOn, scoreWeek } from '@/lib/gamification';
 import type { Session, UserDoc, Week } from '@/lib/types';
 
+const GAME_STATE = { ok: 'suma', frozen: 'en pausa', broken: 'cortada', open: 'semana en curso' } as const;
+const GAME_REASON = { health: 'dolor o enfermedad en un comentario', coach: 'congelada por el coach', noPlan: 'sin sesiones principales' } as const;
 const STATUS_TXT = { done: 'Realizada', missed: 'No realizada', late: 'Pendiente', today: 'Hoy', upcoming: 'Próxima', rest: 'Descanso' } as const;
 
 export default function AthletePage() {
@@ -91,7 +94,7 @@ function AthleteDetail({ uid }: { uid: string }) {
         </div>
 
         {week ? (
-          <WeekEditor uid={uid} week={week} weeks={weeks ?? []} today={today} hasConsent={!!athlete.consent}
+          <WeekEditor uid={uid} week={week} weeks={weeks ?? []} today={today} hasConsent={!!athlete.consent} game={gamificationOn(athlete)}
             onPreview={() => setPreview(true)} onSelect={setWeekId} />
         ) : (
           <>
@@ -137,6 +140,15 @@ function AthleteProfile({ uid, athlete }: { uid: string; athlete: UserDoc }) {
           </button>
         ))}
       </div>
+      <p className="note" style={{ marginBottom: '.3rem' }}>Puntos y racha{gamificationOn({ profile: athlete.profile }) ? '' : ' (apagado por ser menor de edad)'}</p>
+      <div className="theme-options" style={{ margin: '0 0 .8rem' }}>
+        {[{ on: true, label: 'Activados' }, { on: false, label: 'Apagados' }].map((o) => (
+          <button key={o.label} type="button" className="theme-swatch" aria-pressed={(athlete.gamification !== false) === o.on}
+            onClick={() => updateDoc(doc(db(), 'users', uid), { gamification: o.on, updatedAt: serverTimestamp() })}>
+            {o.label}
+          </button>
+        ))}
+      </div>
       {filled.length === 0 ? <p className="note">El atleta aún no completó su perfil.</p> : (
         <dl style={{ display: 'grid', gap: '.4rem', margin: 0 }}>
           {filled.map(([k, v]) => <div key={k}><dt style={{ fontWeight: 700, display: 'inline' }}>{k}: </dt><dd style={{ display: 'inline', margin: 0 }}>{v}</dd></div>)}
@@ -146,8 +158,8 @@ function AthleteProfile({ uid, athlete }: { uid: string; athlete: UserDoc }) {
   );
 }
 
-function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }: {
-  uid: string; week: Week; weeks: Week[]; today: string; hasConsent: boolean;
+function WeekEditor({ uid, week, weeks, today, hasConsent, game, onPreview, onSelect }: {
+  uid: string; week: Week; weeks: Week[]; today: string; hasConsent: boolean; game: boolean;
   onPreview: () => void; onSelect: (id: string) => void;
 }) {
   const sessions = useSessions(uid, week.id);
@@ -162,6 +174,16 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
   }, [week]);
 
   const c = sessions ? compliance(sessions, logs, today) : null;
+  const score = game && sessions && hasConsent ? scoreWeek(week, sessions, logs, today) : null;
+
+  async function toggleFrozen() {
+    try {
+      await saveWeek(uid, { ...week, frozen: !week.frozen });
+      toast(week.frozen ? 'Semana descongelada.' : 'Semana congelada: no corta la racha.');
+    } catch {
+      toast('No se pudo guardar.', 'error');
+    }
+  }
 
   async function saveMeta(e: React.FormEvent) {
     e.preventDefault();
@@ -198,6 +220,12 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, onPreview, onSelect }
           <h3>{week.title} · {rangeLabel(week.start)}</h3>
           <p className="pct">{c?.pct != null ? `${c.pct}%` : '–'}<small>cumplimiento{c?.pct != null ? ` (${c.done}/${c.planned})` : ': sin sesiones vencidas aún'}</small></p>
         </div>
+        {score && (
+          <p className="note">
+            Racha: {GAME_STATE[score.state]}{score.reason ? ` (${GAME_REASON[score.reason]})` : ''} · {score.points.total} puntos.{' '}
+            <button type="button" className="linklike" onClick={toggleFrozen}>{week.frozen ? 'Descongelar semana' : 'Congelar semana (lesión, viaje)'}</button>
+          </p>
+        )}
         {sessions === null ? <p className="loading">Cargando…</p> : (
           <div className="table-wrap">
             <table className="sessions">

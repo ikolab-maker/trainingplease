@@ -1270,3 +1270,21 @@ table.sessions td.comment { color: var(--ink-soft); font-style: italic; max-widt
 .site .lang-switch { border-color: rgba(127, 127, 127, .35); }
 .site .lang-switch button { color: inherit; }
 .site .lang-switch button[aria-pressed="true"] { background: #2F9CC4; color: #fff; }
+
+/* Racha y puntos (gamificación) */
+.game {
+  background: var(--surface);
+  border: 3px solid var(--pink-soft);
+  border-radius: 22px;
+  padding: .9rem 1.1rem 1rem;
+  margin: -0.6rem 0 1.6rem;
+}
+.game-top { display: flex; justify-content: space-between; gap: 1rem; }
+.game-label { margin: 0; font-size: .85rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .04em; }
+.game-streak { margin: .1rem 0 0; font-family: var(--display); font-size: 1.6rem; color: var(--pink-dark); }
+.game-sub { margin: 0; font-size: .85rem; color: var(--ink-soft); }
+.game-msg { margin: .7rem 0 0; font-size: .98rem; }
+.game-how { margin-top: .6rem; font-size: .9rem; }
+.game-how summary { cursor: pointer; font-weight: 700; }
+.game-how ul { margin: .4rem 0 0; padding-left: 1.1rem; }
+.game-safety { margin: .6rem 0 0; font-size: .85rem; color: var(--ink-soft); }

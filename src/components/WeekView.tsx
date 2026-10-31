@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DayCard } from './DayCard';
 import { Countdown } from './Countdown';
+import { GameCard } from './GameCard';
+import { gamificationOn } from '@/lib/gamification';
 import { useI18n } from './I18nProvider';
 import { saveLog, useLogs, useSessions, useWeeks, type LogMap } from '@/lib/data';
 import { addDays, compliance, daysUntil, isoWeekId, longDate, mondayOf, rangeLabel, sessionStatus, todayISO } from '@/lib/dates';
@@ -120,6 +122,10 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
                     t.week.markEach}
               </p>
             </div>
+
+            {sessions && !logsError && gamificationOn(profile) && (
+              <GameCard uid={uid} weeks={weeks} week={week} sessions={sessions} logs={logs} today={today} />
+            )}
 
             {logsError && readOnly && (
               <p className="alert">{t.week.revoked}</p>
