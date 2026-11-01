@@ -305,6 +305,7 @@ const es = {
     title: 'Blog',
     intro: 'Ideas prácticas para entrenar mejor, lo que aprendemos con nuestros atletas y novedades del club.',
     empty: 'Pronto el primer post.',
+    personalBadge: 'Solo para ti',
     privateBadge: 'Solo atletas',
     privateHint: 'Los posts marcados «Solo atletas» los ves porque entraste con tu cuenta.',
     minutes: (n: number) => `${n} min de lectura`,

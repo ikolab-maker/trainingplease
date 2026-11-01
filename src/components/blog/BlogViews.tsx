@@ -7,7 +7,7 @@ import { useDialogs } from '@/components/Dialogs';
 import { useI18n } from '@/components/I18nProvider';
 import { SiteFooter, SiteHeader } from '@/components/site/SiteChrome';
 import { Markdown } from '@/components/blog/Markdown';
-import { postContent, readingMinutes, type Post } from '@/lib/blog';
+import { isLive, postContent, readingMinutes, type Post } from '@/lib/blog';
 import {
   anonId, anonLiked, fetchPost, formatPostDate, listPosts, myLike, setAnonLiked, type PostResult,
 } from '@/lib/blogData';
@@ -33,16 +33,17 @@ function useMember() {
 
 export function BlogIndex() {
   const { t, lang } = useI18n();
-  const { settled, member } = useMember();
+  const { settled, member, state } = useMember();
+  const uid = state.status === 'ready' ? state.user.uid : null;
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!settled) return;
     let alive = true;
-    listPosts(member).then((p) => alive && setPosts(p)).catch(() => alive && setError(true));
+    listPosts(member, uid).then((p) => alive && setPosts(p)).catch(() => alive && setError(true));
     return () => { alive = false; };
-  }, [settled, member]);
+  }, [settled, member, uid]);
 
   return (
     <Shell>
@@ -68,7 +69,7 @@ export function BlogIndex() {
                       <Link href={`/blog/${p.slug}`} className="b-card">
                         <p className="b-meta">
                           {formatPostDate(p, lang)} · {t.blog.minutes(readingMinutes(content.body))}
-                          {p.private && <span className="b-badge">{t.blog.privateBadge}</span>}
+                          {p.private && <span className="b-badge">{p.status === 'personal' ? t.blog.personalBadge : t.blog.privateBadge}</span>}
                         </p>
                         <h2>{content.title}</h2>
                         {content.summary && <p>{content.summary}</p>}
@@ -133,8 +134,8 @@ export function BlogPost({ slug }: { slug: string }) {
         {back}
         <p className="b-meta">
           {formatPostDate(p, lang)} · {t.blog.minutes(readingMinutes(content.body))}
-          {p.private && <span className="b-badge">{t.blog.privateBadge}</span>}
-          {p.status !== 'published' && <span className="b-badge draft">Borrador</span>}
+          {p.private && <span className="b-badge">{p.status === 'personal' ? t.blog.personalBadge : t.blog.privateBadge}</span>}
+          {!isLive(p) && <span className="b-badge draft">Borrador</span>}
         </p>
         <h1>{content.title}</h1>
         {content.summary && <p className="b-lead">{content.summary}</p>}
@@ -155,7 +156,7 @@ function PostActions({ post }: { post: Post }) {
   const [likes, setLikes] = useState(post.likes ?? 0);
   const [liked, setLiked] = useState(false);
   const [busy, setBusy] = useState(false);
-  const canLike = post.status === 'published';
+  const canLike = isLive(post);
 
   useEffect(() => {
     if (uid) myLike(post.slug, uid).then(setLiked).catch(() => {});
