@@ -28,6 +28,7 @@ export interface UserDoc {
   theme?: Theme;
   coachTheme?: Theme; // tema del panel coach (solo admin)
   membership?: Membership;
+  gamification?: boolean; // false: puntos y racha apagados (lo decide el coach)
   lang?: Lang; // idioma elegido por el usuario; el agente y los correos lo usan
   goalRace?: GoalRace | null;
   profile?: {
@@ -50,6 +51,7 @@ export interface Week {
   phase?: string;
   goal?: string;
   aiAssisted?: boolean;
+  frozen?: boolean; // el coach congeló la semana (lesión, viaje): no corta la racha
   notes?: { title: string; body: string }[]; // reglas o recordatorios de la semana
 }
 

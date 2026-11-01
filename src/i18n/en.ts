@@ -62,6 +62,23 @@ const en: Messages = {
     forThisWeek: 'For this week',
     footerSafety: 'If any pain goes above 3 out of 10 or changes the way you run, stop the session and tell your coach.',
   },
+  game: {
+    title: 'Your streak',
+    streak: (n: number) => n === 1 ? '1 week' : `${n} weeks`,
+    best: (n: number) => `Best: ${n}`,
+    weekPoints: 'Points this week',
+    total: (n: number) => `${n} in total`,
+    state: { ok: 'Week completed: it adds to your streak.', frozen: 'Week on hold: your streak is kept.', broken: 'This week didn’t reach 80%. Your streak starts again.', open: 'Reach 80% of your sessions to add to your streak.' },
+    breakdown: (s: number, r: number, c: number, b: number, n: number) => [s && `${s} sessions`, r && `${r} RPE`, c && `${c} comments`, b && `${b} week`, n && `${n} notes`].filter(Boolean).join(' · '),
+    how: 'How points work',
+    rules: [
+      'Session done: 10 · RPE: +3 · Comment of 20 characters or more: +5',
+      'Week at 80%: +20, at 100%: +10 more · Notes for next week: +5',
+      'Doing more than planned earns nothing. Rest days count as done.',
+      'If you report pain or illness, the week goes on hold and your streak is kept.',
+    ],
+    safety: 'If it hurts, stop. Your streak will wait.',
+  },
   notice: {
     coachTitle: (range: string) => `Athlete notes for the week of ${range}`,
     title: 'Notes for next week',
