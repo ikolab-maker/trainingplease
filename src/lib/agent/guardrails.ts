@@ -84,6 +84,9 @@ export function maxQualitySessions(runDays: number, painFree: boolean): number {
   return 2;
 }
 
+/** Largo máximo del título de la semana: se ve en los botones de semanas del panel y de la app. */
+export const WEEK_TITLE_MAX = 30;
+
 /** Valida la propuesta. Devuelve el plan limpio, los problemas (vacío si pasa) y avisos para el coach. */
 export function checkProposal(raw: unknown, ctx: GuardContext, extras: SessionExtras = {}): { plan: PlanWeekFile[]; issues: string[]; warnings: string[]; km: number } {
   const { plan, errors } = parsePlanFile(raw);
@@ -95,6 +98,9 @@ export function checkProposal(raw: unknown, ctx: GuardContext, extras: SessionEx
   if (w.id !== ctx.weekId) issues.push(`La semana debe ser ${ctx.weekId}, no ${w.id}.`);
   if (w.week.start !== ctx.start) issues.push(`week.start debe ser ${ctx.start}.`);
   if (w.week.aiAssisted !== true) issues.push('week.aiAssisted debe ser true.');
+  if (ctx.mode !== 'ajuste' && w.week.title.length > WEEK_TITLE_MAX) {
+    issues.push(`week.title "${w.week.title}" es largo para los botones del panel: "Semana N · " y 1 a 3 palabras, máximo ${WEEK_TITLE_MAX} caracteres (el detalle va en goal).`);
+  }
 
   const end = addDays(ctx.start, 6);
   const runs = w.sessions.filter((s) => RUN_SPORTS.has(s.sport));
