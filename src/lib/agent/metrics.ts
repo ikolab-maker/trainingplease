@@ -8,9 +8,43 @@ import type { LogEntry, Session, Week } from '../types.ts';
 export const RUN_SPORTS = new Set(['running', 'fondo', 'tecnica']);
 
 /** Palabras en los comentarios (en español o inglés) que el Guardián trata como posible dolor o lesión. */
-export const PAIN_RE = /dolor|duel[eo]|molest|lesi[oó]n|rodilla|tobillo|cadera|gemelo|pantorrilla|isquio|pinchazo|calambre|tir[oó]n|inflama|fisio|\bpain|hurt|\bsore|injur|\bknee|ankle|\bhip\b|\bcalf|calves|hamstring|cramp|strain|swell|physio/i;
+export const PAIN_RE = /dolor|dol[ií][aó]|duel[eo]|molest|lesi[oó]n|rodilla|tobillo|cadera|gemelo|pantorrilla|isquio|pinchazo|calambre|tir[oó]n|inflama|fisio|\bpain|hurt|\bsore|injur|\bknee|ankle|\bhip\b|\bcalf|calves|hamstring|cramp|strain|swell|physio/i;
 /** Palabras que el Guardián trata como posible enfermedad (consenso del COI 2022: con fiebre o síntomas en el pecho no se entrena). */
 export const ILLNESS_RE = /fiebre|gripe|resfr[ií]|covid|enferm|infecci[oó]n|\btos\b|escalofr|pecho|palpitaci|mareo|fever|\bflu\b|\ba cold\b|\bsick|\bill\b|infection|cough|chills|chest|palpitation|dizz/i;
+
+/**
+ * El comentario dice que el dolor o la enfermedad ya pasó ("ya no tengo dolor", "sin molestias",
+ * "no me duele", "ya pasó la gripe"). "Mejor" solo no basta: puede seguir doliendo.
+ */
+const RESOLVED_RE = /\b(?:ya no|sin|nada de|cero|ning[uú]n[ao]?|no (?:tengo|siento|tuve|sent[ií]|hay|hubo|me))\b[^.;!?]{0,12}(?:dol(?:or|[ií])|duel|molest|fiebre|gripe|resfr|tos\b|s[ií]ntoma|lesi)|\bya (?:pas[oó]|se (?:me )?(?:fue|pas[oó])|estoy bien|me recuper)|\brecuperad[ao] (?:de|del)|\b(?:no|without|zero|no more)\s+(?:pain|soreness|fever|symptoms)|\bpain[- ]free|\bno longer (?:hurts?|sore|sick)|\bfully recovered/i;
+/** Pero algo sigue: "ya no me duele la rodilla, pero sí el tobillo", "todavía molesta". */
+const STILL_RE = /\b(?:pero|aunque|sin embargo|todav[ií]a|a[uú]n|sigue|but|still)\b/i;
+
+/** Si el comentario reporta el síntoma como activo o como ya resuelto. */
+export function mentionStatus(comment: string, symptom: RegExp): 'active' | 'resolved' | null {
+  if (!symptom.test(comment)) return null;
+  if (!RESOLVED_RE.test(comment)) return 'active';
+  const tail = comment.split(STILL_RE).slice(1).join(' ');
+  return tail && symptom.test(tail) ? 'active' : 'resolved';
+}
+
+type Mention = { id: string; title: string; comment: string };
+
+/**
+ * Menciones vigentes en orden de fecha: el comentario más reciente manda. Un "ya no tengo dolor"
+ * borra las menciones anteriores; uno nuevo de dolor después vuelve a activarlas.
+ */
+function currentMentions(rows: SessionRow[], symptom: RegExp): { active: Mention[]; resolved: Mention[] } {
+  let active: Mention[] = [];
+  const resolved: Mention[] = [];
+  for (const r of rows) {
+    const status = r.comment ? mentionStatus(r.comment, symptom) : null;
+    if (!status) continue;
+    const m = { id: r.id, title: r.title, comment: r.comment };
+    if (status === 'resolved') { active = []; resolved.push(m); } else active.push(m);
+  }
+  return { active, resolved };
+}
 
 export type Decision = 'descarga' | 'bajar' | 'mantener' | 'progresar' | 'sin-datos';
 export const DECISIONS: Decision[] = ['descarga', 'bajar', 'mantener', 'progresar', 'sin-datos'];
@@ -42,8 +76,9 @@ export interface WeekMetrics {
   kmDone: number; // km de las sesiones de carrera marcadas como hechas (según el plan; la app no guarda km reales)
   rpeOverTarget: { id: string; title: string; target: number; real: number }[]; // real ≥ objetivo + 2
   easyRunHighRpe: { id: string; title: string; target: number; real: number }[]; // rodaje suave (obj ≤ 5) con RPE ≥ 8
-  painMentions: { id: string; title: string; comment: string }[];
-  illnessMentions: { id: string; title: string; comment: string }[];
+  painMentions: Mention[]; // dolor vigente: el comentario más reciente no dice que pasó
+  illnessMentions: Mention[];
+  resolvedMentions: Mention[]; // el atleta dice que el dolor o la enfermedad ya pasó
   missedCore: string[];
   rows: SessionRow[];
 }
@@ -90,6 +125,9 @@ export function weekMetrics(
     if (RUN_SPORTS.has(r.sport) && r.rpeTarget <= 5 && r.rpeReal >= 8) easyRunHighRpe.push({ id: r.id, title: r.title, target: r.rpeTarget, real: r.rpeReal });
   }
 
+  const pain = currentMentions(rows, PAIN_RE);
+  const illness = currentMentions(rows, ILLNESS_RE);
+
   return {
     weekId: week.id,
     start: week.start,
@@ -103,8 +141,9 @@ export function weekMetrics(
     kmDone: runKm(sessions.filter((s) => logs?.[s.id]?.done)),
     rpeOverTarget,
     easyRunHighRpe,
-    painMentions: rows.filter((r) => r.comment && PAIN_RE.test(r.comment)).map((r) => ({ id: r.id, title: r.title, comment: r.comment })),
-    illnessMentions: rows.filter((r) => r.comment && ILLNESS_RE.test(r.comment)).map((r) => ({ id: r.id, title: r.title, comment: r.comment })),
+    painMentions: pain.active,
+    illnessMentions: illness.active,
+    resolvedMentions: [...pain.resolved, ...illness.resolved.filter((m) => !pain.resolved.some((p) => p.id === m.id))],
     missedCore: core.filter((r) => r.status === 'missed').map((r) => r.title),
     rows,
   };

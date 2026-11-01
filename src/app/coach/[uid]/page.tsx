@@ -88,7 +88,7 @@ function AthleteDetail({ uid }: { uid: string }) {
         <h3 className="section-title" style={{ marginTop: '1rem' }}>Plan semanal</h3>
         <div className="week-tabs" role="group" aria-label="Semanas">
           {weeks?.map((w) => (
-            <button key={w.id} type="button" aria-pressed={w.id === weekId} onClick={() => setWeekId(w.id)}>{w.title}</button>
+            <button key={w.id} type="button" title={w.title} aria-pressed={w.id === weekId} onClick={() => setWeekId(w.id)}>{w.title}</button>
           ))}
           <button type="button" onClick={newWeek}>+ Nueva semana</button>
         </div>

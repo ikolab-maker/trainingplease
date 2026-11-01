@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { effectiveKm, longestRecentRun, suggestDecision, weekMetrics } from './metrics.ts';
+import { effectiveKm, ILLNESS_RE, longestRecentRun, mentionStatus, PAIN_RE, suggestDecision, weekMetrics } from './metrics.ts';
 import { checkProposal, type GuardContext } from './guardrails.ts';
 import { OUTPUT_SCHEMA, sessionExtras, toPlanFile, type AgentOutput, type QualityWork } from './proposal.ts';
 import type { Session } from '../types.ts';
@@ -47,6 +47,30 @@ test('métricas: dolor o enfermedad escritos en inglés también mandan descarga
   assert.equal(ill.illnessMentions.length, 1);
   const fine = weekMetrics(week, sessions, { mar: { done: true, rpe: 4, comment: 'Felt great, I will push next week' } }, '2026-10-12');
   assert.equal(fine.painMentions.length + fine.illnessMentions.length, 0);
+});
+
+test('métricas: si el comentario más reciente dice que el dolor pasó, no manda descarga', () => {
+  const logs = {
+    mar: { done: true, rpe: 4, comment: 'Me molestó la rodilla derecha al final' },
+    jue: { done: true, rpe: 5, comment: 'Ya no tengo dolor, me sentí muy bien' },
+  };
+  const m = weekMetrics(week, sessions, logs, '2026-10-12');
+  assert.equal(m.painMentions.length, 0);
+  assert.equal(m.resolvedMentions.length, 1);
+  assert.notEqual(suggestDecision(m).decision, 'descarga');
+  // Un dolor nuevo después de la mejoría vuelve a mandar.
+  const again = weekMetrics(week, sessions, { ...logs, sab: { done: true, rpe: 5, comment: 'Volvió la molestia en la rodilla' } }, '2026-10-12');
+  assert.equal(again.painMentions.length, 1);
+  assert.equal(suggestDecision(again).decision, 'descarga');
+});
+
+test('métricas: negaciones y mejorías se leen como dolor resuelto; "pero todavía" sigue activo', () => {
+  for (const c of ['Sin dolor en la rodilla', 'No me dolió nada', 'Cero molestias hoy', 'Nada de dolor, todo bien', 'Ya pasó la molestia del gemelo', 'No pain at all today', 'Knee is pain-free now', 'Ya no tengo dolor'])
+    assert.equal(mentionStatus(c, PAIN_RE), 'resolved', c);
+  assert.equal(mentionStatus('Ya no tuve fiebre', ILLNESS_RE), 'resolved');
+  for (const c of ['Me duele la rodilla', 'Ya no me duele la rodilla, pero sí el tobillo', 'Mejor, aunque todavía molesta un poco', 'Sin series hoy porque me dolía el tobillo', 'Mejor que ayer, la rodilla aún molesta'])
+    assert.equal(mentionStatus(c, PAIN_RE), 'active', c);
+  assert.equal(mentionStatus('Corrí feliz', PAIN_RE), null);
 });
 
 test('métricas: RPE alto dos veces en rodaje suave manda descarga; sin registros, sin datos', () => {
@@ -235,8 +259,18 @@ test('Guardián: las propuestas W41 que Chris ya revisó pasan el formato', { sk
   for (const name of ['claudia', 'manuel', 'ronnil']) {
     const raw = JSON.parse(readFileSync(`/mnt/project-files/train-please/atletas/${name}/propuestas/2026-W41.json`, 'utf8'));
     const { issues } = checkProposal(raw, { ...ctx, weekId: '2026-W41', start: '2026-10-05', prevKm: null, recentMaxKm: null, race: null });
-    assert.deepEqual(issues, [], name);
+    // Esas propuestas son de antes del tope de largo del título.
+    assert.deepEqual(issues.filter((i) => !i.startsWith('week.title')), [], name);
   }
+});
+
+test('Guardián: el título de la semana es corto, salvo en un ajuste', () => {
+  const long = { ...out([8, 8, 14]) };
+  const raw = (o: AgentOutput) => toPlanFile(o, ctx.weekId, ctx.start);
+  const withTitle = (t: string) => ({ ...long, week: { ...long.week, title: t } });
+  assert.match(checkProposal(raw(withTitle('Semana 4 · Descarga y recuperación tras el 10K del Callao')), ctx).issues.join(), /week\.title/);
+  assert.doesNotMatch(checkProposal(raw(withTitle('Semana 4 · Descarga')), ctx).issues.join(), /week\.title/);
+  assert.doesNotMatch(checkProposal(raw(withTitle('Semana 4 · Descarga y recuperación tras el 10K del Callao')), { ...ctx, mode: 'ajuste' }).issues.join(), /week\.title/);
 });
 
 test('Ajuste: conserva ids y no toca lo ya registrado', async () => {

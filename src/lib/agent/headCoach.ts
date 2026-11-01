@@ -1,7 +1,7 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { addDays, dayParts } from '@/lib/dates';
-import { checkAdjustment, checkProposal, easyDaysAfter, LONG_RUN_MAX_MIN, volumeLimits, type GuardContext } from './guardrails';
+import { checkAdjustment, checkProposal, easyDaysAfter, LONG_RUN_MAX_MIN, volumeLimits, WEEK_TITLE_MAX, type GuardContext } from './guardrails';
 import type { AthleteContext } from './context';
 import { noticeId } from '@/lib/notice';
 import { easyPaceMid, equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, trainingPaces } from './fitness';
@@ -30,6 +30,7 @@ Cómo trabajar:
 3. Decide (descarga, bajar, mantener, progresar o sin-datos) y di qué regla la disparó. Si el Análisis sugiere descarga por dolor o RPE, esa decisión no se cambia.
 4. Si ya existe un plan previsto para la semana siguiente, ajústalo según la decisión en lugar de inventar uno nuevo. Si no, parte de la última semana: mismos días, misma voz, mismas notas que sigan vigentes.
 5. Escribe la semana siguiente completa, de lunes a domingo: una sesión por día como mínimo (el descanso también es sesión, con sport "descanso" y core false).
+   - week.title: "Semana N · " y 1 a 3 palabras (máximo ${WEEK_TITLE_MAX} caracteres en total; por ejemplo "Semana 5 · Descarga" o "Semana 9 · Semana de carrera"). El detalle va en goal.
    - id de sesión: corto, con letras, números y guiones, único (por ejemplo "w42-lun").
    - date dentro de la semana pedida, en formato AAAA-MM-DD.
    - distanceKm solo en sesiones de carrera (running, fondo, tecnica); en las demás, null.
@@ -186,6 +187,7 @@ function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string;
     if (m.easyRunHighRpe.length) out.push(`Rodaje suave con RPE ≥ 8: ${m.easyRunHighRpe.map((r) => r.title).join('; ')}`);
     if (m.painMentions.length) out.push(`Posible dolor en comentarios: ${m.painMentions.map((r) => `${r.title}: "${r.comment}"`).join('; ')}`);
     if (m.illnessMentions.length) out.push(`Posible enfermedad en comentarios: ${m.illnessMentions.map((r) => `${r.title}: "${r.comment}"`).join('; ')}`);
+    if (m.resolvedMentions.length) out.push(`El atleta dice que el dolor o la enfermedad ya pasó: ${m.resolvedMentions.map((r) => `${r.title}: "${r.comment}"`).join('; ')}. No bajes la carga por esas menciones: vuelve a la progresión normal con prudencia.`);
     if (m.missedCore.length) out.push(`Principales saltadas: ${m.missedCore.join('; ')}`);
   }
   out.push('', `Decisión sugerida por las reglas: **${suggestion.decision}**. Regla: ${suggestion.rule}`);
