@@ -1,0 +1,27 @@
+/* Carreras del atleta: la principal resalta con el amarillo de la marca. */
+.race-list { list-style: none; padding: 0; margin: 0 0 1.4rem; display: grid; gap: .8rem; }
+.race-card {
+  background: var(--surface);
+  border: 3px solid var(--pink-soft);
+  border-radius: 20px;
+  padding: .9rem 1rem 1rem;
+}
+.race-card.principal { border-color: var(--yellow); box-shadow: 0 0 0 3px var(--yellow) inset; }
+.race-card h4 { font-size: 1.5rem; color: var(--pink-dark); margin: .3rem 0 .2rem; }
+.race-head { display: flex; justify-content: space-between; gap: .6rem; align-items: center; }
+.race-tag {
+  font-family: var(--display);
+  font-size: .8rem;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: .05em .7em;
+  border-radius: 999px;
+  background: var(--pink-pale);
+  color: var(--ink-soft);
+}
+.race-tag.main { background: var(--yellow); color: #16283b; }
+.race-left { font-family: var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--blue-deep); }
+.race-meta { color: var(--ink-soft); margin: 0 0 .6rem; }
+.race-result { font-weight: 700; margin: 0 0 .6rem; color: var(--ink); }
+.race-result.met { color: #1f7a5a; }
+.race-card .actions { gap: .5rem; }

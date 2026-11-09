@@ -4,6 +4,7 @@ import { addDays, dayParts } from '@/lib/dates';
 import { checkAdjustment, checkProposal, easyDaysAfter, LONG_RUN_MAX_MIN, volumeLimits, WEEK_TITLE_MAX, type GuardContext } from './guardrails';
 import type { AthleteContext } from './context';
 import { noticeId } from '@/lib/notice';
+import { principalRace } from '@/lib/races';
 import { easyPaceMid, equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, trainingPaces } from './fitness';
 import { METHODOLOGY, METHODOLOGY_VERSION } from './methodology';
 import { effectiveKm, isDeloadPhase, longestRecentRun, round1, RUN_SPORTS, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
@@ -58,6 +59,28 @@ export interface HeadCoachResult {
 
 const dayName = (iso: string) => dayParts(iso).dow;
 
+/** Carreras del atleta: la principal (con meta), las recreativas que vienen y los resultados recientes. */
+function raceLines(ctx: AthleteContext, target: { start: string }, today: string): string[] {
+  if (!ctx.races.length) return [];
+  const end = addDays(target.start, 6);
+  const km = (n: number | null) => (n ? `, ${kmText(n)} km` : '');
+  const out = ['', '## Carreras del atleta (las registra él en la app)'];
+  const main = principalRace(ctx.races);
+  out.push(main
+    ? `Principal: ${main.name}, ${main.date}${km(main.distanceKm)}${main.goalTimeMin ? `, meta ${fmtTime(main.goalTimeMin)}` : ''}. El plan apunta a esta fecha.`
+    : 'No marcó una carrera principal: no hay fecha objetivo; avísale al coach en alerts.');
+  const fun = ctx.races.filter((r) => !r.principal && r.date >= today && r.date <= addDays(today, 70));
+  if (fun.length) {
+    out.push('Recreativas (se corren controladas, RPE 7–8, sin taper ni cambio de bloque):',
+      ...fun.map((r) => `- ${r.name}, ${r.date}${km(r.distanceKm)}${r.date >= target.start && r.date <= end ? ' · cae en la semana a proponer: va como sesión con race: true en su fecha y el día anterior suave' : ''}`));
+  }
+  const done = ctx.races.filter((r) => r.resultMin && r.date < today && r.date >= addDays(today, -60));
+  if (done.length) {
+    out.push('Resultados recientes:', ...done.map((r) => `- ${r.name}, ${r.date}${km(r.distanceKm)}: ${fmtTime(r.resultMin!)}${r.goalTimeMin ? ` (meta ${fmtTime(r.goalTimeMin)})` : ''}${r.principal ? ' · era la principal' : ''}`));
+  }
+  return out;
+}
+
 function sessionLine(s: { date: string; sport: string; title: string; distanceKm: number | null; rpe: number | null; core: boolean; summary?: string }) {
   return `- ${dayName(s.date)} ${s.date} · ${s.sport} · ${s.title}${s.summary ? ` (${s.summary})` : ''} · ${s.distanceKm ?? '–'} km · RPE obj ${s.rpe ?? '–'}${s.core ? '' : ' · extra'}`;
 }
@@ -83,7 +106,8 @@ function scienceLines(ctx: AthleteContext, today: string): string[] {
     out.push(`La carrera objetivo (${race.date}) ya se corrió o es hoy: si el atleta la corrió, su resultado es la nueva referencia; pídesela al coach en alerts.`);
   } else if (race?.distanceKm) {
     const weeks = Math.max(0, Math.round(daysBetween(today, race.date) / 7));
-    const goal = ctx.memory.goalTimeMin;
+    // La meta de la carrera principal (la pone el atleta) manda sobre la del panel.
+    const goal = principalRace(ctx.races)?.goalTimeMin ?? ctx.memory.goalTimeMin;
     const [lo, hi] = equivalentRange(ref, race.distanceKm);
     const range = `${fmtTime(lo)}–${fmtTime(hi)}`;
     const goalIndex = goal ? fitnessIndex(race.distanceKm, goal) : null;
@@ -157,6 +181,7 @@ function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string;
   if (ctx.goalRace) out.push(`Carrera objetivo: ${ctx.goalRace.name}, ${ctx.goalRace.date}${ctx.goalRace.distanceKm ? `, ${ctx.goalRace.distanceKm} km` : ''}.`);
   const p = Object.entries(ctx.profile).filter(([, v]) => v);
   if (p.length) out.push(`Perfil: ${p.map(([k, v]) => `${k}: ${v}`).join(' · ')}`);
+  out.push(...raceLines(ctx, target, today));
   out.push('', '## Ficha del atleta (memoria del coach)', ctx.memory.ficha.trim() || '(sin ficha todavía)');
   if (ctx.memory.history.length) {
     out.push('', '## Historial de decisiones', ...ctx.memory.history.slice(-8).map((h) => `- ${h.weekId}: ${h.row}`));
@@ -271,6 +296,14 @@ export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; a
   const recentRaces = adjust ? [] : (ctx.sessions[analyzedWeekId] ?? [])
     .filter((s) => RUN_SPORTS.has(s.sport) && (s.distanceKm ?? 0) > 0 && (s.race === true || (s.rpe ?? 0) >= 9))
     .map((s) => ({ date: s.date, distanceKm: s.distanceKm!, title: s.title }));
+  // Y las carreras registradas por el atleta en esa semana, si no estaban en el plan.
+  if (!adjust && analyzedWeek) {
+    for (const r of ctx.races) {
+      if (r.distanceKm && r.date >= analyzedWeek.start && r.date <= addDays(analyzedWeek.start, 6) && r.date < today && !recentRaces.some((x) => x.date === r.date)) {
+        recentRaces.push({ date: r.date, distanceKm: r.distanceKm, title: r.name });
+      }
+    }
+  }
   const reference = ctx.memory.reference;
   // En un ajuste la referencia es la misma semana tal como estaba: no sube km sin que se pida, y
   // la semana de carrera ya quedó protegida cuando se aprobó.

@@ -14,6 +14,17 @@ export interface GoalRace {
   distanceKm: number | null;
 }
 
+/** Carrera del atleta. Solo una es la principal: el plan apunta a ella y lleva meta de tiempo. */
+export interface Race {
+  id: string;
+  name: string;
+  date: string; // YYYY-MM-DD
+  distanceKm: number | null;
+  principal: boolean;
+  goalTimeMin: number | null; // meta de tiempo (obligatoria en la principal)
+  resultMin: number | null; // tiempo real, cuando ya la corrió
+}
+
 export interface ConsentSnapshot {
   version: string;
   acceptedAt: unknown; // Timestamp de Firestore
@@ -30,7 +41,8 @@ export interface UserDoc {
   membership?: Membership;
   gamification?: boolean; // false: puntos y racha apagados (lo decide el coach)
   lang?: Lang; // idioma elegido por el usuario; el agente y los correos lo usan
-  goalRace?: GoalRace | null;
+  goalRace?: GoalRace | null; // la principal de races (o la de antes de tener lista)
+  races?: Race[];
   profile?: {
     age?: string;
     heightCm?: string;

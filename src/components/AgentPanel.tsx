@@ -299,7 +299,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
           <input type="checkbox" checked={ref.maxEffort} onChange={(e) => setRef({ ...ref, maxEffort: e.target.checked })} />
           <span>Fue a tope (carrera o test). Desmárcala si fue un entrenamiento: el índice queda como mínimo.</span>
         </label>
-        <label className="field"><span>Meta de tiempo{athlete.goalRace ? ` en ${athlete.goalRace.name}` : ''} (opcional)</span>
+        <label className="field"><span>Meta de tiempo{athlete.goalRace ? ` en ${athlete.goalRace.name}` : ''} (opcional; si el atleta puso meta en su carrera principal, manda la suya)</span>
           <input value={goalTime} placeholder="1:50:00" onChange={(e) => setGoalTime(e.target.value)} /></label>
         <FitnessPreview draft={ref} goalTime={goalTime} race={athlete.goalRace ?? null} />
         <button type="button" className="btn small" disabled={!!busy || !formReady} onClick={saveFicha}>{busy === 'ficha' ? 'Guardando…' : 'Guardar ficha'}</button>
