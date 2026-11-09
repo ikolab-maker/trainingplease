@@ -29,6 +29,7 @@ export interface UserDoc {
   coachTheme?: Theme; // tema del panel coach (solo admin)
   membership?: Membership;
   gamification?: boolean; // false: puntos y racha apagados (lo decide el coach)
+  manualPlan?: boolean; // true: el coach arma el plan a mano; el agente de IA no procesa a este atleta (ni cron ni botones)
   lang?: Lang; // idioma elegido por el usuario; el agente y los correos lo usan
   goalRace?: GoalRace | null;
   profile?: {

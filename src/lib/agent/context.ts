@@ -22,6 +22,7 @@ export interface AthleteContext {
   profile: NonNullable<UserDoc['profile']>;
   hasConsent: boolean; // consentimiento vigente: sin él no se leen registros
   aiConsent: boolean; // la IA es parte de las finalidades necesarias: basta el consentimiento vigente
+  manualPlan: boolean; // el coach arma el plan a mano: el agente no corre para este atleta
   memory: AthleteMemory;
   weeks: Week[]; // todas, ordenadas
   sessions: Record<string, Session[]>; // por semana, solo las que se cargaron
@@ -72,6 +73,7 @@ export async function loadAthleteContext(uid: string, analyzedWeekId: string, ta
     profile: user.profile ?? {},
     hasConsent,
     aiConsent: hasConsent,
+    manualPlan: user.manualPlan === true,
     memory: {
       ficha: typeof mem.ficha === 'string' ? mem.ficha : '',
       history: Array.isArray(mem.history) ? mem.history : [],
