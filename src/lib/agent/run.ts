@@ -13,6 +13,8 @@ export type RunOutcome =
 
 type Trigger = 'cron' | 'coach';
 
+const MANUAL_REASON = 'Este atleta tiene plan manual: el agente no arma ni ajusta sus semanas.';
+
 /**
  * Semanas del ciclo: se analiza la semana en curso (el domingo es la que cierra)
  * y se propone la siguiente.
@@ -73,6 +75,7 @@ export async function runForAthlete(uid: string, opts: { trigger: Trigger; today
   try {
     const ctx = await loadAthleteContext(uid, analyzedWeekId, target.id);
     if (!ctx) return { uid, status: 'skipped', reason: 'No es un atleta.' };
+    if (ctx.manualPlan) return { uid, status: 'skipped', reason: MANUAL_REASON };
     if (!ctx.aiConsent) {
       await runRef.set({ ...base, status: 'skipped', reason: 'sin-consentimiento' });
       return { uid, status: 'skipped', reason: 'El atleta no tiene consentimiento vigente.' };
@@ -111,6 +114,7 @@ export async function runAdjustment(uid: string, weekId: string, request: string
   try {
     const ctx = await loadAthleteContext(uid, weekId, weekId);
     if (!ctx) return { uid, status: 'skipped', reason: 'No es un atleta.' };
+    if (ctx.manualPlan) return { uid, status: 'skipped', reason: MANUAL_REASON };
     if (!ctx.aiConsent) return { uid, status: 'skipped', reason: 'El atleta no tiene consentimiento vigente.' };
     const week = ctx.weeks.find((w) => w.id === weekId);
     if (!week || !ctx.sessions[weekId]?.length) return { uid, status: 'skipped', reason: `La semana ${weekId} no está cargada.` };
@@ -125,8 +129,10 @@ export async function runAdjustment(uid: string, weekId: string, request: string
   }
 }
 
-/** Todos los atletas, en paralelo (el loop semanal del domingo). */
+/** Todos los atletas, en paralelo (el loop semanal del domingo). Los de plan manual ni se leen: no gastan tokens. */
 export async function runForAllAthletes(trigger: Trigger): Promise<RunOutcome[]> {
   const snap = await adminDb().collection('users').where('role', '==', 'athlete').get();
-  return Promise.all(snap.docs.map((d) => runForAthlete(d.id, { trigger })));
+  return Promise.all(snap.docs.map((d) => d.get('manualPlan') === true
+    ? Promise.resolve<RunOutcome>({ uid: d.id, status: 'skipped', reason: MANUAL_REASON })
+    : runForAthlete(d.id, { trigger })));
 }

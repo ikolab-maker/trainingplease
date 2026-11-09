@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/components/AuthProvider';
+import { db } from '@/lib/firebase';
 import './agent.css';
 import { addDays, dayParts, daysUntil, isoWeekId, mondayOf, rangeLabel, todayISO } from '@/lib/dates';
 import { equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, parseReference, parseTime, trainingPaces, type FitnessReference } from '@/lib/agent/fitness';
@@ -233,7 +235,8 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   const shown = pending.length ? pending : proposals?.slice(0, 1) ?? [];
   const older = proposals?.filter((p) => !shown.includes(p)) ?? [];
   const weeklyPending = pending.some((p) => p.kind !== 'ajuste');
-  const canRun = !busy && aiConsent && agentReady;
+  const manual = athlete.manualPlan === true;
+  const canRun = !busy && aiConsent && agentReady && !manual;
 
   return (
     <section className="panel agent-panel">
@@ -241,6 +244,18 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
       <p className="note">
         Cada domingo a las 4 pm analiza la semana que cierra y carga sola la siguiente si el Guardián no encuentra problemas; si encuentra, te la deja aquí para revisar. Puedes corregir cualquier semana después. También ajusta una semana cargada cuando se lo pides.
       </p>
+      <p className="note" style={{ marginBottom: '.3rem' }}>Cómo se arma su plan</p>
+      <div className="theme-options" style={{ margin: '0 0 .8rem' }}>
+        {[{ on: false, label: 'Con el agente' }, { on: true, label: 'Manual (sin IA)' }].map((o) => (
+          <button key={o.label} type="button" className="theme-swatch" aria-pressed={manual === o.on}
+            onClick={() => updateDoc(doc(db(), 'users', uid), { manualPlan: o.on, updatedAt: serverTimestamp() }).catch(() => setMsg('No se pudo guardar.'))}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {manual && (
+        <p className="alert">Plan manual: el agente no corre para este atleta, ni el domingo ni con los botones, y no gasta tokens. Carga sus semanas con "Importar semana" o edítalas abajo.</p>
+      )}
       {!aiConsent && (
         <p className="alert">Este atleta no tiene consentimiento vigente: el agente no trabaja con sus datos.</p>
       )}

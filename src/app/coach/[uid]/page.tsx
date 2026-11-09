@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthProvider';
 import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { Gate } from '@/components/Gate';
 import { TopNav } from '@/components/TopNav';
@@ -110,6 +111,8 @@ function AthleteDetail({ uid }: { uid: string }) {
         <PlanTransfer uid={uid} athlete={athlete} weeks={weeks ?? []} weekId={weekId} onImported={setWeekId} />
 
         <AthleteProfile uid={uid} athlete={athlete} />
+
+        <DeleteAthlete uid={uid} athlete={athlete} />
       </div>
     </main>
   );
@@ -157,6 +160,53 @@ function AthleteProfile({ uid, athlete }: { uid: string; athlete: UserDoc }) {
           {filled.map(([k, v]) => <div key={k}><dt style={{ fontWeight: 700, display: 'inline' }}>{k}: </dt><dd style={{ display: 'inline', margin: 0 }}>{v}</dd></div>)}
         </dl>
       )}
+    </details>
+  );
+}
+
+/** Zona de peligro: borra al atleta y todos sus datos (para cuentas de prueba o una baja definitiva). */
+function DeleteAthlete({ uid, athlete }: { uid: string; athlete: UserDoc }) {
+  const { authHeaders } = useAuth();
+  const { confirm, toast } = useDialogs();
+  const router = useRouter();
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const name = (athlete.name ?? '').trim();
+
+  async function remove() {
+    if (!await confirm({
+      title: `Eliminar a ${name}`,
+      message: 'Se borran su perfil, su plan, sus registros, la memoria y las propuestas del agente, sus consentimientos y su cuenta en la app. No se puede deshacer.',
+      confirmLabel: 'Eliminar para siempre',
+      danger: true,
+    })) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/admin/athletes/remove', {
+        method: 'POST', headers: { ...(await authHeaders()), 'content-type': 'application/json' },
+        body: JSON.stringify({ uid, confirmName: typed.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'No se pudo eliminar.');
+      toast(`${name} fue eliminado.`);
+      router.replace('/coach');
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'No se pudo eliminar.', 'error');
+      setBusy(false);
+    }
+  }
+
+  return (
+    <details className="panel profile-panel">
+      <summary><h3>Eliminar atleta</h3></summary>
+      <p className="note">Borra a {name} y todos sus datos. Úsalo solo para cuentas de prueba o una baja definitiva. Para confirmar, escribe su nombre tal como aparece: <strong>{name}</strong></p>
+      <label className="field">
+        <span>Nombre del atleta</span>
+        <input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
+      </label>
+      <button type="button" className="btn secondary" disabled={busy || !name || typed.trim() !== name} onClick={remove}>
+        {busy ? 'Eliminando…' : 'Eliminar atleta'}
+      </button>
     </details>
   );
 }
