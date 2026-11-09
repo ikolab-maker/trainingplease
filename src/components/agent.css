@@ -9,3 +9,6 @@
 .agent-proposal small { color: var(--ink-soft); }
 .agent-item + .agent-item { border-top: 1px solid var(--pink-soft); margin-top: 1rem; padding-top: .6rem; }
 .agent-adjust { margin-top: 1.2rem; }
+.agent-injury { align-items: end; }
+.agent-injury .btn { margin-bottom: .5rem; }
+.agent-why { margin: .4rem 0; }

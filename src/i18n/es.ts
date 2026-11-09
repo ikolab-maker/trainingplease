@@ -40,6 +40,7 @@ const es = {
     aria: (race: string) => `Cuenta regresiva a ${race}`,
   },
   week: {
+    whyTitle: 'Por qué esta semana',
     kicker: 'Tu plan de entrenamiento',
     hello: (name: string) => `¡Hola ${name}!`,
     roadTo: (race: string) => `Tu camino a ${race}`,

@@ -65,6 +65,8 @@ export interface Week {
   aiAssisted?: boolean;
   frozen?: boolean; // el coach congeló la semana (lesión, viaje): no corta la racha
   notes?: { title: string; body: string }[]; // reglas o recordatorios de la semana
+  kind?: 'carga' | 'descarga' | 'taper' | 'carrera' | 'recuperacion'; // tipo de semana, calculado por el código (no por el nombre)
+  why?: string; // "por qué esta semana", escrito para el atleta
 }
 
 export interface Session {

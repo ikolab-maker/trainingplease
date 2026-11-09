@@ -1,13 +1,14 @@
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { addDays, dayParts } from '@/lib/dates';
+import { chronicKm, INJURY_STATUS_LABEL, isLowKind, targetKind, weekKindOf, type WeekKind } from './athleteState';
 import { checkAdjustment, checkProposal, easyDaysAfter, LONG_RUN_MAX_MIN, volumeLimits, WEEK_TITLE_MAX, type GuardContext } from './guardrails';
 import type { AthleteContext } from './context';
 import { noticeId } from '@/lib/notice';
 import { principalRace } from '@/lib/races';
 import { easyPaceMid, equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, trainingPaces } from './fitness';
 import { METHODOLOGY, METHODOLOGY_VERSION } from './methodology';
-import { effectiveKm, isDeloadPhase, longestRecentRun, round1, RUN_SPORTS, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
+import { effectiveKm, longestRecentRun, round1, RUN_SPORTS, runKm, suggestDecision, weekMetrics, type Decision, type WeekMetrics } from './metrics';
 import { OUTPUT_SCHEMA, sessionExtras, toPlanFile, type AgentOutput } from './proposal';
 import type { PlanWeekFile } from '@/lib/planFile';
 
@@ -26,7 +27,7 @@ Trabajas con tres especialistas que ya hicieron su parte:
 - Guardián: revisará tu propuesta con reglas duras (km semanales, salto por sesión, fondo, calidad por sesión, taper, dolor y enfermedad). Te da sus límites de la semana en el contexto; si algo falla te devolverá los problemas para corregir.
 
 Cómo trabajar:
-1. Lee la ficha del atleta (meta, reglas personales, lesiones, historial) y respétala por encima de la plantilla general.
+1. Lee la ficha del atleta (meta y reglas personales) y respétala por encima de la plantilla general. Para lesiones manda la lista de lesiones con estado: una lesión resuelta o en control no limita el volumen. Las limitaciones del perfil y el historial de decisiones son pasado: no los trates como dolor actual; el dolor actual sale solo de los comentarios recientes y de las lesiones activas.
 2. Interpreta las métricas y los comentarios del atleta. Cita sus palabras cuando importen.
 3. Decide (descarga, bajar, mantener, progresar o sin-datos) y di qué regla la disparó. Si el Análisis sugiere descarga por dolor o RPE, esa decisión no se cambia.
 4. Si ya existe un plan previsto para la semana siguiente, ajústalo según la decisión en lugar de inventar uno nuevo. Si no, parte de la última semana: mismos días, misma voz, mismas notas que sigan vigentes.
@@ -40,6 +41,7 @@ Cómo trabajar:
    - work: los bloques de calidad (zona M, T, I o R, km a ese ritmo y minutos por serie); vacío en sesiones suaves. race: true en carreras y tests, también en una carrera de preparación que se corre controlada; con race true, work va vacío.
    - Si Ciencia da ritmos, úsalos en los pasos junto al RPE (por ejemplo "a 5:30/km, RPE 7").
 6. summary: 3 líneas para el coach (qué pasó, cómo respondió, qué propones). alerts: solo lo que el coach deba mirar. coachMessage: 2 a 4 líneas con la decisión, los km contra la semana anterior y qué cambió. memoryRow: una fila para el historial con el formato "Fase | Cumplimiento | Km plan / hecho | RPE vs objetivo | Señales | Decisión".
+   athleteWhy: "por qué esta semana" para el atleta, en su idioma y en segunda persona, 2 a 4 líneas: de qué volumen parte (la base que da el Guardián), qué decidiste y qué señales de su semana lo explican (cita sus comentarios si ayudan). Cercano, sin jerga ni reglas internas, sin nombrar al Guardián.
 7. No es consejo médico: ante dolor, la indicación es parar y consultar a un profesional.
 
 Metodología vigente (Ciencia, versión ${METHODOLOGY_VERSION}):
@@ -55,6 +57,22 @@ export interface HeadCoachResult {
   suggestion: { decision: Decision; rule: string };
   usage: { inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number; costUsd: number };
   model: string;
+  rationale: Rationale;
+}
+
+/** El porqué de la propuesta, con los números que usó el código: se guarda para el coach. */
+export interface Rationale {
+  kind: WeekKind | null; // tipo de la semana propuesta (null en un ajuste: conserva el de la semana)
+  lastKm: number | null; // km de la semana anterior (hechos y pendientes)
+  chronicKm: number | null; // base de 4 semanas
+  baseKm: number | null; // base que usó el Guardián
+  capKm: number | null; // tope duro de la semana
+  floorKm: number | null; // piso del atleta para esta semana
+  ceilingKm: number | null; // techo del atleta
+  km: number; // km de carrera propuestos
+  decision: Decision;
+  rule: string; // regla del código
+  signals: string[]; // señales de la semana que pesaron
 }
 
 const dayName = (iso: string) => dayParts(iso).dow;
@@ -133,8 +151,14 @@ function guardLines(g: Omit<GuardContext, 'decision'>, longestSource: 'registros
     const ref = v.refFromNormal
       ? `La semana anterior no tuvo km de carrera: la referencia es el volumen normal reciente, ${kmText(v.refKm)} km.`
       : `Km de carrera de la semana anterior (hechos y pendientes): ${kmText(v.refKm)}.`;
-    const back = v.weekBase > v.refKm ? ` Viene de una descarga: puede volver al volumen previo (${kmText(v.weekBase)} km).` : '';
-    out.push(`${ref}${back} Guía +10 % (${kmText(v.weekBase * 1.1)}); tope duro +20 % (${kmText(v.weekCap)})${v.twoWeekCap ? ` y +30 % sobre los ${kmText(v.twoWeekBase!)} de hace dos semanas (${kmText(v.twoWeekCap)})` : ''}. Con descarga, hasta ${kmText(v.refKm * 0.75)} km; con bajar, hasta ${kmText(v.refKm * 0.9)}; con mantener, hasta ${kmText(round1(v.refKm * 1.03 + 0.5))}.`);
+    const chronic = v.refFromChronic && v.chronicKm ? ` La base de 4 semanas es ${kmText(v.chronicKm)} km: una semana baja no arrastra a las siguientes, así que la referencia es esa base.` : '';
+    const back = v.weekBase > v.refKm ? ` Viene de una semana baja a propósito (descarga, taper o carrera): puede volver al volumen previo (${kmText(v.weekBase)} km).` : '';
+    out.push(`${ref}${chronic}${back} Guía +10 % (${kmText(v.weekBase * 1.1)}); tope duro +20 % (${kmText(v.weekCap)})${v.twoWeekCap ? ` y +30 % sobre los ${kmText(v.twoWeekBase!)} de hace dos semanas (${kmText(v.twoWeekCap)})` : ''}. Con descarga, hasta ${kmText(v.refKm * 0.75)} km; con bajar, hasta ${kmText(v.refKm * 0.9)}; con mantener, hasta ${kmText(round1(v.refKm * 1.03 + 0.5))}.`);
+  }
+  if (g.mode !== 'ajuste' && (v.floorKm || v.ceilingKm)) {
+    const r = g.volumeRange!;
+    const hurt = g.painAlert || g.illnessAlert || g.activeInjury;
+    out.push(`Rango de km que fijó el coach: ${r.minKm ? `piso ${kmText(r.minKm)}` : 'sin piso'}${r.maxKm ? `, techo ${kmText(r.maxKm)}` : ''}.${v.floorKm && !hurt ? ` Esta semana va al menos con ${kmText(v.floorKm)} km de carrera, aunque la decisión sea bajar o descargar${v.floorKm < (r.minKm ?? 0) ? ' (lo que permiten los topes; se llega al piso en las próximas semanas)' : ''}.` : v.floorKm ? ' Hay dolor, enfermedad o una lesión activa: el piso no manda esta semana.' : ''}`);
   }
   if (g.longestRecentKm) {
     const what = g.mode === 'ajuste'
@@ -162,6 +186,18 @@ function guardLines(g: Omit<GuardContext, 'decision'>, longestSource: 'registros
   return out;
 }
 
+/** Lesiones con estado: lo que manda sobre el texto libre del perfil y del historial. */
+function injuryLines(ctx: AthleteContext): string[] {
+  const list = ctx.memory.injuries;
+  if (!list.length) return ['', '## Lesiones', 'Sin lesiones registradas con estado. No limites el volumen por lesiones pasadas del perfil o del historial: solo por dolor en comentarios recientes.'];
+  return ['', '## Lesiones (estado que lleva el coach)', ...list.map((l) => {
+    const effect = l.status === 'activa' ? 'limita: sin calidad que la cargue y prudencia con el volumen'
+      : l.status === 'en-control' ? 'no limita el volumen; vigila los comentarios'
+        : 'resuelta: no limita nada';
+    return `- ${l.zone}${l.since ? ` (desde ${l.since})` : ''}: ${INJURY_STATUS_LABEL[l.status]}, ${effect}.${l.note ? ` ${l.note}` : ''}`;
+  })];
+}
+
 function noticeLines(ctx: AthleteContext, weekId: string): string[] {
   const out: string[] = [];
   const note = ctx.memory.weekNote;
@@ -180,11 +216,12 @@ function buildBrief(ctx: AthleteContext, analyzed: string, target: { id: string;
   out.push(`Hoy (Lima): ${today}. Semana que se analiza: ${analyzed}. Semana a proponer: ${target.id}, del lunes ${target.start} al domingo ${addDays(target.start, 6)}.`);
   if (ctx.goalRace) out.push(`Carrera objetivo: ${ctx.goalRace.name}, ${ctx.goalRace.date}${ctx.goalRace.distanceKm ? `, ${ctx.goalRace.distanceKm} km` : ''}.`);
   const p = Object.entries(ctx.profile).filter(([, v]) => v);
-  if (p.length) out.push(`Perfil: ${p.map(([k, v]) => `${k}: ${v}`).join(' · ')}`);
+  if (p.length) out.push(`Perfil (escrito por el atleta al registrarse; "limitations" es historia, no dolor actual): ${p.map(([k, v]) => `${k}: ${v}`).join(' · ')}`);
   out.push(...raceLines(ctx, target, today));
   out.push('', '## Ficha del atleta (memoria del coach)', ctx.memory.ficha.trim() || '(sin ficha todavía)');
+  out.push(...injuryLines(ctx));
   if (ctx.memory.history.length) {
-    out.push('', '## Historial de decisiones', ...ctx.memory.history.slice(-8).map((h) => `- ${h.weekId}: ${h.row}`));
+    out.push('', '## Historial de decisiones (semanas pasadas: contexto, no son señales de esta semana)', ...ctx.memory.history.slice(-4).map((h) => `- ${h.weekId}: ${h.row}`));
   }
 
   out.push('', '## Semanas anteriores (plan)');
@@ -264,15 +301,40 @@ function buildAdjustBrief(ctx: AthleteContext, target: { id: string; start: stri
   return out.join('\n');
 }
 
+/** Señales que pesaron en la decisión, en frases cortas para el coach. */
+function signalsOf(m: WeekMetrics | null, ctx: AthleteContext): string[] {
+  const out: string[] = [];
+  if (m?.compliancePct != null) out.push(`Cumplimiento ${m.compliancePct} % (${m.coreDone}/${m.corePlanned})`);
+  if (m && m.kmPlanned) out.push(`Km ${m.kmDone} hechos de ${m.kmPlanned} planificados`);
+  if (m?.painMentions.length) out.push(`Dolor en ${m.painMentions.length} comentario(s)`);
+  if (m?.illnessMentions.length) out.push(`Posible enfermedad en ${m.illnessMentions.length} comentario(s)`);
+  if (m?.resolvedMentions.length) out.push('El atleta dice que el dolor ya pasó');
+  if (m?.rpeOverTarget.length) out.push(`RPE ≥ objetivo + 2 en ${m.rpeOverTarget.length} sesión(es)`);
+  if (m?.missedCore.length) out.push(`${m.missedCore.length} principal(es) sin marcar`);
+  const active = ctx.memory.injuries.filter((l) => l.status === 'activa');
+  if (active.length) out.push(`Lesión activa: ${active.map((l) => l.zone).join(', ')}`);
+  return out;
+}
+
 export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; analyzedWeekId: string; target: { id: string; start: string }; adjust?: { request: string } }): Promise<HeadCoachResult> {
   const { today, analyzedWeekId, target, adjust } = opts;
   const analyzedWeek = ctx.weeks.find((w) => w.id === analyzedWeekId);
   const metrics = analyzedWeek ? weekMetrics(analyzedWeek, ctx.sessions[analyzedWeekId] ?? [], ctx.logs, today) : null;
 
   const previous = ctx.weeks.filter((w) => w.id <= analyzedWeekId);
+  // Tipo de cada semana cargada (dato, no el nombre de la fase) y sus km efectivos.
+  const loaded = previous.filter((w) => ctx.sessions[w.id]);
+  const kinds = new Map<string, WeekKind>();
+  loaded.forEach((w, i) => {
+    const ss = ctx.sessions[w.id] ?? [];
+    const before = loaded.slice(0, i).map((x) => runKm(ctx.sessions[x.id] ?? []));
+    kinds.set(w.id, weekKindOf(w, runKm(ss), ss.some((s) => s.race === true && RUN_SPORTS.has(s.sport)), before));
+  });
+  const kindOf = (w: { id: string } | undefined) => (w ? kinds.get(w.id) ?? 'carga' : 'carga');
   let weeksSinceDeload: number | null = 0;
-  for (let i = previous.length - 1; i >= 0 && !isDeloadPhase(previous[i].phase); i--) weeksSinceDeload++;
-  if (weeksSinceDeload === previous.length) weeksSinceDeload = null; // nunca hubo descarga registrada: no se fuerza por calendario
+  for (let i = loaded.length - 1; i >= 0 && !isLowKind(kindOf(loaded[i])); i--) weeksSinceDeload++;
+  if (!loaded.length) weeksSinceDeload = null;
+  const chronic = chronicKm(loaded.map((w) => ({ kind: kindOf(w), km: effectiveKm(ctx.sessions[w.id] ?? [], ctx.logs, today) })));
   const emptyMetrics = weekMetrics({ id: analyzedWeekId, start: '', phase: '' }, [], null, today);
   const suggestion = suggestDecision(metrics ?? emptyMetrics, { weeksSinceDeload });
   const mustDeload = !adjust && suggestion.decision === 'descarga' && !/calendario/.test(suggestion.rule);
@@ -315,8 +377,11 @@ export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; a
     prevKm: adjust ? runKm(original) : prevKm,
     prev2Km: adjust ? null : prev2Km,
     recentMaxKm: adjust ? null : recent.length ? Math.max(...recent) : null,
-    prevWasDeload: !adjust && isDeloadPhase(analyzedWeek?.phase),
-    prev2WasDeload: !adjust && isDeloadPhase(before?.phase),
+    prevWasDeload: !adjust && !!analyzedWeek && isLowKind(kindOf(analyzedWeek)),
+    prev2WasDeload: !adjust && !!before && isLowKind(kindOf(before)),
+    chronicKm: adjust ? null : chronic,
+    volumeRange: adjust ? null : ctx.memory.volumeRange,
+    activeInjury: ctx.memory.injuries.some((l) => l.status === 'activa'),
     race: adjust || !ctx.goalRace ? null : { date: ctx.goalRace.date, distanceKm: ctx.goalRace.distanceKm },
     recentRaces,
     lockedIds: locked.map((s) => s.id),
@@ -384,5 +449,34 @@ export async function runHeadCoach(ctx: AthleteContext, opts: { today: string; a
   if (!last) throw new Error('El agente no produjo ninguna propuesta.');
   // Los avisos del Guardián no bloquean: van al coach con las alertas del modelo.
   last.output.alerts = [...new Set([...(last.output.alerts ?? []), ...warnings])];
-  return { ...last, attempts, metrics: metrics ?? emptyMetrics, suggestion, usage, model: HEAD_COACH_MODEL };
+
+  // Tipo de la semana propuesta: lo calcula el código y queda guardado en la semana (un ajuste conserva el que tenía).
+  let kind: WeekKind | null = null;
+  if (!adjust) {
+    const race = ctx.goalRace;
+    const end = addDays(target.start, 6);
+    const days = race ? daysBetween(target.start, race.date) : null;
+    kind = targetKind({
+      decision: last.output.decision,
+      raceThisWeek: !!race && race.date >= target.start && race.date <= end,
+      taperWeek: days != null && days >= 7 && days <= 13,
+      afterRace: !!race && !!analyzedWeek && race.date >= analyzedWeek.start && race.date <= addDays(analyzedWeek.start, 6),
+    });
+    if (last.plan[0]) last.plan[0].week.kind = kind;
+  }
+  const v = volumeLimits(guardBase);
+  const rationale: Rationale = {
+    kind,
+    lastKm: v.lastKm ?? null,
+    chronicKm: v.chronicKm,
+    baseKm: v.weekBase ?? null,
+    capKm: v.weekCap,
+    floorKm: v.floorKm,
+    ceilingKm: v.ceilingKm,
+    km: last.km,
+    decision: last.output.decision,
+    rule: suggestion.rule,
+    signals: signalsOf(metrics, ctx),
+  };
+  return { ...last, attempts, metrics: metrics ?? emptyMetrics, suggestion, usage, model: HEAD_COACH_MODEL, rationale };
 }

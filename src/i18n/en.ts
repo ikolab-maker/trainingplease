@@ -41,6 +41,7 @@ const en: Messages = {
     aria: (race: string) => `Countdown to ${race}`,
   },
   week: {
+    whyTitle: 'Why this week',
     kicker: 'Your training plan',
     hello: (name: string) => `Hi ${name}!`,
     roadTo: (race: string) => `Your road to ${race}`,

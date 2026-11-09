@@ -5,6 +5,7 @@ import type { GoalRace, LogEntry, Session, UserDoc, Week, Race } from '@/lib/typ
 import { noticeId } from '@/lib/notice';
 import type { Lang } from '@/lib/i18n';
 import { parseReference, type FitnessReference } from './fitness';
+import { parseInjuries, parseVolumeRange, type Injury, type VolumeRange } from './athleteState';
 
 export interface MemoryRow { weekId: string; decision: string; row: string }
 export interface AthleteMemory {
@@ -13,6 +14,8 @@ export interface AthleteMemory {
   reference: FitnessReference | null; // tiempo de referencia para el índice de forma y los ritmos
   goalTimeMin: number | null; // meta de tiempo en la carrera objetivo
   weekNote: { weekId: string; text: string } | null; // nota del coach para una semana puntual
+  injuries: Injury[]; // lesiones con estado (activa, en control, resuelta): manda sobre el texto libre
+  volumeRange: VolumeRange | null; // piso y techo de km semanales que fijó el coach
 }
 
 export interface AthleteContext {
@@ -80,6 +83,8 @@ export async function loadAthleteContext(uid: string, analyzedWeekId: string, ta
       history: Array.isArray(mem.history) ? mem.history : [],
       reference: parseReference(mem.reference),
       goalTimeMin: typeof mem.goalTimeMin === 'number' && mem.goalTimeMin > 0 ? mem.goalTimeMin : null,
+      injuries: parseInjuries(mem.injuries).injuries,
+      volumeRange: parseVolumeRange(mem.volumeRange).range,
       weekNote: typeof mem.weekNote?.weekId === 'string' && typeof mem.weekNote?.text === 'string' && mem.weekNote.text ? { weekId: mem.weekNote.weekId, text: mem.weekNote.text } : null,
     },
     weeks,

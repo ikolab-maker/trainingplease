@@ -92,7 +92,7 @@ const ctx: GuardContext = {
 };
 
 const out = (kms: number[], rpe = 4, more: Partial<AgentOutput['sessions'][number]>[] = []): AgentOutput => ({
-  decision: 'progresar', decisionRule: 'r', summary: 's', alerts: [], questionsForAthlete: [], coachMessage: 'c', memoryRow: 'm',
+  decision: 'progresar', decisionRule: 'r', summary: 's', alerts: [], questionsForAthlete: [], coachMessage: 'c', memoryRow: 'm', athleteWhy: 'w',
   week: { title: 'Semana 4', phase: 'Construcción', goal: 'g', notes: [] },
   sessions: kms.map((km, i) => ({
     id: `w42-${i}`, date: `2026-10-${String(12 + i).padStart(2, '0')}`, sport: i === kms.length - 1 ? 'fondo' : 'running', title: `S${i}`,
@@ -284,4 +284,27 @@ test('Ajuste: conserva ids y no toca lo ya registrado', async () => {
   const issues = checkAdjustment(broken as never, original, [original[0]]).join('|');
   assert.match(issues, /Faltan sesiones.*w41-sab.*w41-dom/);
   assert.match(issues, /w41-jue.*no se puede cambiar/);
+});
+
+test('Guardián: base de 4 semanas; una semana baja no arrastra a la siguiente', () => {
+  // Semana anterior baja (20 km sin marcar), base de 4 semanas 32: el tope se calcula sobre 32, no sobre 20.
+  assert.match(check(out([10, 11, 15]), { prevKm: 20, recentMaxKm: 32 }).issues.join(), /Sube demasiado/);
+  assert.deepEqual(check(out([10, 11, 15]), { prevKm: 20, recentMaxKm: 32, chronicKm: 32 }).issues, []);
+});
+
+test('Guardián: piso y techo del atleta; el dolor deja bajar del piso', () => {
+  const range = { volumeRange: { minKm: 30, maxKm: 40 } };
+  assert.match(check(out([8, 8, 10]), range).issues.join(), /piso del atleta/);
+  // Una descarga por calendario no baja del piso: su máximo sube hasta él.
+  assert.deepEqual(check(out([10, 10, 10]), { ...range, decision: 'descarga' }).issues, []);
+  assert.doesNotMatch(check(out([6, 6, 8], 4), { ...range, decision: 'descarga', painAlert: true }).issues.join(), /piso/);
+  assert.match(check(out([12, 12, 12]), { ...range, volumeRange: { minKm: null, maxKm: 33 } }).issues.join(), /techo/);
+  // Muy por debajo del piso: se sube lo que permiten los topes (+20 %), no de golpe.
+  assert.deepEqual(check(out([10, 11, 15]), { volumeRange: { minKm: 50, maxKm: null } }).issues, []);
+});
+
+test('métricas: una parte del cuerpo sin palabra de dolor no es dolor', () => {
+  for (const c of ['Fuerza de cadera y gemelos', 'Trabajé rodilla alta en técnica', 'Knee drives felt good'])
+    assert.equal(mentionStatus(c, PAIN_RE), null, c);
+  assert.equal(mentionStatus('Me duele la cadera', PAIN_RE), 'active');
 });
