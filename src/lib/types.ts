@@ -14,6 +14,17 @@ export interface GoalRace {
   distanceKm: number | null;
 }
 
+/** Carrera del atleta. Solo una es la principal: el plan apunta a ella y lleva meta de tiempo. */
+export interface Race {
+  id: string;
+  name: string;
+  date: string; // YYYY-MM-DD
+  distanceKm: number | null;
+  principal: boolean;
+  goalTimeMin: number | null; // meta de tiempo (obligatoria en la principal)
+  resultMin: number | null; // tiempo real, cuando ya la corrió
+}
+
 export interface ConsentSnapshot {
   version: string;
   acceptedAt: unknown; // Timestamp de Firestore
@@ -31,7 +42,8 @@ export interface UserDoc {
   gamification?: boolean; // false: puntos y racha apagados (lo decide el coach)
   manualPlan?: boolean; // true: el coach arma el plan a mano; el agente de IA no procesa a este atleta (ni cron ni botones)
   lang?: Lang; // idioma elegido por el usuario; el agente y los correos lo usan
-  goalRace?: GoalRace | null;
+  goalRace?: GoalRace | null; // la principal de races (o la de antes de tener lista)
+  races?: Race[];
   profile?: {
     age?: string;
     heightCm?: string;
@@ -54,6 +66,8 @@ export interface Week {
   aiAssisted?: boolean;
   frozen?: boolean; // el coach congeló la semana (lesión, viaje): no corta la racha
   notes?: { title: string; body: string }[]; // reglas o recordatorios de la semana
+  kind?: 'carga' | 'descarga' | 'taper' | 'carrera' | 'recuperacion'; // tipo de semana, calculado por el código (no por el nombre)
+  why?: string; // "por qué esta semana", escrito para el atleta
 }
 
 export interface Session {

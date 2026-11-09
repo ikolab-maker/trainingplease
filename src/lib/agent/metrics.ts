@@ -7,8 +7,14 @@ import type { LogEntry, Session, Week } from '../types.ts';
 /** Deportes que suman km de carrera. */
 export const RUN_SPORTS = new Set(['running', 'fondo', 'tecnica']);
 
-/** Palabras en los comentarios (en español o inglés) que el Guardián trata como posible dolor o lesión. */
-export const PAIN_RE = /dolor|dol[ií][aó]|duel[eo]|molest|lesi[oó]n|rodilla|tobillo|cadera|gemelo|pantorrilla|isquio|pinchazo|calambre|tir[oó]n|inflama|fisio|\bpain|hurt|\bsore|injur|\bknee|ankle|\bhip\b|\bcalf|calves|hamstring|cramp|strain|swell|physio/i;
+/**
+ * Palabras de dolor en los comentarios (en español o inglés) que el Guardián trata como posible dolor o lesión.
+ * Una parte del cuerpo sola no cuenta ("fuerza de cadera", "trabajé gemelos"): necesita una palabra de dolor.
+ */
+export const PAIN_RE = /dolor|dol[ií][aó]|duel[eo]|molest|lesi[oó]n|pinchazo|calambre|tir[oó]n|inflama|fisio|\bpain|hurt|\bsore|injur|cramp|strain|swell|physio/i;
+/** Partes del cuerpo: solo sirven para leer qué sigue doliendo después de un "pero" o "todavía". */
+export const BODY_RE = /rodilla|tobillo|cadera|gemelo|pantorrilla|isquio|espalda|pie\b|fascia|\bknee|ankle|\bhip\b|\bcalf|calves|hamstring|\bback\b|\bfoot/i;
+const PAIN_OR_BODY_RE = new RegExp(`${PAIN_RE.source}|${BODY_RE.source}`, 'i');
 /** Palabras que el Guardián trata como posible enfermedad (consenso del COI 2022: con fiebre o síntomas en el pecho no se entrena). */
 export const ILLNESS_RE = /fiebre|gripe|resfr[ií]|covid|enferm|infecci[oó]n|\btos\b|escalofr|pecho|palpitaci|mareo|fever|\bflu\b|\ba cold\b|\bsick|\bill\b|infection|cough|chills|chest|palpitation|dizz/i;
 
@@ -25,7 +31,9 @@ export function mentionStatus(comment: string, symptom: RegExp): 'active' | 'res
   if (!symptom.test(comment)) return null;
   if (!RESOLVED_RE.test(comment)) return 'active';
   const tail = comment.split(STILL_RE).slice(1).join(' ');
-  return tail && symptom.test(tail) ? 'active' : 'resolved';
+  // "Ya no me duele la rodilla, pero sí el tobillo": tras el "pero", nombrar una zona basta.
+  const stillRe = symptom === PAIN_RE ? PAIN_OR_BODY_RE : symptom;
+  return tail && stillRe.test(tail) ? 'active' : 'resolved';
 }
 
 type Mention = { id: string; title: string; comment: string };
@@ -147,10 +155,6 @@ export function weekMetrics(
     missedCore: core.filter((r) => r.status === 'missed').map((r) => r.title),
     rows,
   };
-}
-
-export function isDeloadPhase(phase: string | undefined): boolean {
-  return /descarga|taper|recuperaci/i.test(phase ?? '');
 }
 
 /**

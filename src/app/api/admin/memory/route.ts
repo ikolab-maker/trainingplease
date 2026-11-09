@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb, verifyRequest } from '@/lib/firebase-admin';
 import { todayISO } from '@/lib/dates';
 import { fitnessIndex, parseReference } from '@/lib/agent/fitness';
+import { parseInjuries, parseVolumeRange } from '@/lib/agent/athleteState';
 
 export const runtime = 'nodejs';
 
@@ -51,6 +52,16 @@ export async function POST(req: Request) {
     else if (typeof n?.weekId === 'string' && /^\d{4}-W\d{2}$/.test(n.weekId) && typeof n?.text === 'string' && n.text.length <= 2000) {
       update.weekNote = { weekId: n.weekId, text: n.text.trim() };
     } else return NextResponse.json({ error: 'La nota de la semana debe ser texto (máximo 2000 caracteres).' }, { status: 400 });
+  }
+  if (body.injuries !== undefined) {
+    const { injuries, error } = parseInjuries(body.injuries);
+    if (error) return NextResponse.json({ error }, { status: 400 });
+    update.injuries = injuries;
+  }
+  if (body.volumeRange !== undefined) {
+    const { range, error } = parseVolumeRange(body.volumeRange);
+    if (error) return NextResponse.json({ error }, { status: 400 });
+    update.volumeRange = range ?? FieldValue.delete();
   }
   if (!Object.keys(update).length) return NextResponse.json({ error: 'Nada que guardar.' }, { status: 400 });
 

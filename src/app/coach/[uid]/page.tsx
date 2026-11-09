@@ -20,6 +20,8 @@ import { SPORTS } from '@/lib/sports';
 import { DEFAULT_THEME, THEMES } from '@/lib/themes';
 import { MEMBERSHIPS, membershipOf } from '@/lib/membership';
 import { gamificationOn, scoreWeek } from '@/lib/gamification';
+import { fmtTime } from '@/lib/agent/fitness';
+import { racesFromLegacy } from '@/lib/races';
 import type { Session, UserDoc, Week } from '@/lib/types';
 
 const GAME_STATE = { ok: 'suma', frozen: 'en pausa', broken: 'cortada', open: 'semana en curso' } as const;
@@ -85,6 +87,7 @@ function AthleteDetail({ uid }: { uid: string }) {
       <div className="wrap">
         <p><Link href="/coach">‹ Todos los atletas</Link></p>
         {!athlete.consent && <p className="alert">Consentimiento pendiente o revocado: no puedes ver sus registros hasta que acepte.</p>}
+        <AthleteRaces athlete={athlete} />
 
         <h3 className="section-title" style={{ marginTop: '1rem' }}>Plan semanal</h3>
         <div className="week-tabs" role="group" aria-label="Semanas">
@@ -342,5 +345,25 @@ function WeekEditor({ uid, week, weeks, today, hasConsent, game, onPreview, onSe
         </div>
       </form>
     </>
+  );
+}
+
+/** Carreras que registró el atleta: la principal con su meta y las recreativas (solo lectura). */
+function AthleteRaces({ athlete }: { athlete: UserDoc }) {
+  const races = racesFromLegacy(athlete.races, athlete.goalRace);
+  const today = todayISO();
+  if (!races.length) return <p className="alert">Aún no registra carreras: el agente no tiene una fecha objetivo.</p>;
+  return (
+    <ul className="pending-list" style={{ marginBottom: '1rem' }}>
+      {races.filter((r) => r.date >= today || r.resultMin).map((r) => (
+        <li key={r.id}>
+          <span>
+            <b>{r.principal ? 'Principal' : 'Recreativa'}</b> · {r.name} · {longDate(r.date)}{r.distanceKm ? ` · ${r.distanceKm} km` : ''}
+            {r.goalTimeMin ? ` · meta ${fmtTime(r.goalTimeMin)}` : r.principal ? ' · sin meta' : ''}
+            {r.resultMin ? ` · hizo ${fmtTime(r.resultMin)}` : ''}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -17,6 +17,7 @@ export interface AgentOutput {
   questionsForAthlete: string[];
   coachMessage: string;
   memoryRow: string;
+  athleteWhy: string; // "por qué esta semana" para el atleta, en su idioma
   week: { title: string; phase: string; goal: string; notes: { title: string; body: string }[] };
   sessions: {
     id: string; date: string; sport: string; title: string; summary: string;
@@ -43,6 +44,7 @@ export const OUTPUT_SCHEMA = obj({
   questionsForAthlete: strList,
   coachMessage: str,
   memoryRow: str,
+  athleteWhy: str,
   week: obj({
     title: str, phase: str, goal: str,
     notes: { type: 'array', items: obj({ title: str, body: str }) },
@@ -68,7 +70,7 @@ export function sessionExtras(out: AgentOutput): Record<string, { race: boolean;
 export function toPlanFile(out: AgentOutput, weekId: string, start: string): PlanWeekFile[] {
   return [{
     id: weekId,
-    week: { start, title: out.week.title, phase: out.week.phase, goal: out.week.goal, aiAssisted: true, notes: out.week.notes },
+    week: { start, title: out.week.title, phase: out.week.phase, goal: out.week.goal, aiAssisted: true, notes: out.week.notes, ...(out.athleteWhy?.trim() ? { why: out.athleteWhy.trim() } : {}) },
     sessions: out.sessions.map(({ race, work: _work, ...s }) => ({ ...s, sport: s.sport as PlanWeekFile['sessions'][number]['sport'], ...(race === true ? { race: true } : {}) })),
   }];
 }
