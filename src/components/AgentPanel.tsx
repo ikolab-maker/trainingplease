@@ -8,6 +8,7 @@ import { equivalentRange, fitnessIndex, fmtPace, fmtTime, goalCheck, parseRefere
 import { parsePlanFile, type PlanWeekFile } from '@/lib/planFile';
 import { SPORTS } from '@/lib/sports';
 import type { UserDoc } from '@/lib/types';
+import { INJURY_STATUS_LABEL, INJURY_STATUSES, parseInjuries, WEEK_KIND_LABEL, type Injury, type WeekKind } from '@/lib/agent/athleteState';
 
 interface Proposal {
   id: string;
@@ -29,6 +30,10 @@ interface Proposal {
   trigger: string;
   kind?: 'semanal' | 'ajuste';
   request?: string;
+  rationale?: {
+    kind: WeekKind | null; lastKm: number | null; chronicKm: number | null; baseKm: number | null; capKm: number | null;
+    floorKm: number | null; ceilingKm: number | null; km: number; rule: string; signals: string[];
+  };
 }
 
 const DECISION_LABEL: Record<string, string> = {
@@ -76,7 +81,9 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   const [ficha, setFicha] = useState('');
   const [history, setHistory] = useState<{ weekId: string; row: string }[]>([]);
   const [agentReady, setAgentReady] = useState(true);
-  const [busy, setBusy] = useState<'' | 'run' | 'adjust' | 'approve' | 'discard' | 'ficha' | 'nota'>('');
+  const [busy, setBusy] = useState<'' | 'run' | 'adjust' | 'approve' | 'discard' | 'ficha' | 'nota' | 'estado'>('');
+  const [injuries, setInjuries] = useState<Injury[]>([]);
+  const [range, setRange] = useState({ min: '', max: '' });
   const [msg, setMsg] = useState('');
   const [editing, setEditing] = useState<string | null>(null); // id de la propuesta en edición
   const [request, setRequest] = useState('');
@@ -106,6 +113,9 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
         setRef(r ? { label: r.label, distanceKm: String(r.distanceKm).replace('.', ','), time: fmtTime(r.timeMin), date: r.date, maxEffort: r.maxEffort } : EMPTY_REF);
         setGoalTime(typeof data.memory?.goalTimeMin === 'number' ? fmtTime(data.memory.goalTimeMin) : '');
         setWeekNote(data.memory?.weekNote?.weekId === nextWeekId ? data.memory.weekNote.text ?? '' : '');
+        setInjuries(parseInjuries(data.memory?.injuries).injuries);
+        const vr = data.memory?.volumeRange;
+        setRange({ min: vr?.minKm != null ? String(vr.minKm) : '', max: vr?.maxKm != null ? String(vr.maxKm) : '' });
         formFor.current = uid;
       }
     } catch {
@@ -119,7 +129,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
   useEffect(() => {
     shownUid.current = uid;
     formFor.current = null;
-    setProposals(null); setHistory([]); setFicha(''); setRef(EMPTY_REF); setGoalTime(''); setWeekNote(''); setEditing(null); setRequest(''); setMsg('');
+    setProposals(null); setHistory([]); setFicha(''); setRef(EMPTY_REF); setGoalTime(''); setWeekNote(''); setInjuries([]); setRange({ min: '', max: '' }); setEditing(null); setRequest(''); setMsg('');
   }, [uid]);
   useEffect(() => { load(); }, [load]);
   const formReady = formFor.current === uid;
@@ -191,6 +201,23 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
       setMsg('Sin conexión.');
     } finally { setBusy(''); }
   }
+
+  async function saveState() {
+    const num = (t: string) => (t.trim() ? Number(t.replace(',', '.')) : null);
+    const minKm = num(range.min);
+    const maxKm = num(range.max);
+    if ((minKm != null && !Number.isFinite(minKm)) || (maxKm != null && !Number.isFinite(maxKm))) { setMsg('El piso y el techo van en km, por ejemplo 30.'); return; }
+    if (injuries.some((l) => !l.zone.trim())) { setMsg('Cada lesión necesita su zona (por ejemplo, rodilla derecha).'); return; }
+    setBusy('estado'); setMsg('');
+    try {
+      const { ok, data } = await post('/api/admin/memory', { uid, injuries, volumeRange: minKm == null && maxKm == null ? null : { minKm, maxKm } });
+      setMsg(ok ? 'Lesiones y rango guardados: el agente los usa desde la próxima semana.' : data.error ?? 'No se pudo guardar.');
+    } catch {
+      setMsg('Sin conexión.');
+    } finally { setBusy(''); }
+  }
+
+  const setInjury = (i: number, patch: Partial<Injury>) => setInjuries(injuries.map((l, j) => (j === i ? { ...l, ...patch } : l)));
 
   async function saveWeekNote() {
     setBusy('nota'); setMsg('');
@@ -276,6 +303,35 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
       </label>
       <button type="button" className="btn small" disabled={!!busy || !formReady} onClick={saveWeekNote}>{busy === 'nota' ? 'Guardando…' : 'Guardar nota'}</button>
 
+      <h4>Lesiones y volumen</h4>
+      <p className="note">El agente decide con esto, no con lo que el atleta escribió hace meses. Una lesión resuelta o en control no limita el volumen; solo una activa. El piso es el mínimo de km de carrera por semana: el agente no baja de ahí salvo dolor, enfermedad o una lesión activa.</p>
+      {injuries.length === 0 && <p className="note">Sin lesiones registradas.</p>}
+      {injuries.map((l, i) => (
+        <div key={l.id} className="form-row agent-injury">
+          <label className="field"><span>Zona</span>
+            <input value={l.zone} placeholder="Rodilla derecha" maxLength={80} onChange={(e) => setInjury(i, { zone: e.target.value })} /></label>
+          <label className="field"><span>Desde</span>
+            <input type="date" value={l.since} max={todayISO()} onChange={(e) => setInjury(i, { since: e.target.value })} /></label>
+          <label className="field"><span>Estado</span>
+            <select value={l.status} onChange={(e) => setInjury(i, { status: e.target.value as Injury['status'] })}>
+              {INJURY_STATUSES.map((st) => <option key={st} value={st}>{INJURY_STATUS_LABEL[st]}</option>)}
+            </select></label>
+          <label className="field"><span>Nota</span>
+            <input value={l.note} placeholder="Opcional" maxLength={500} onChange={(e) => setInjury(i, { note: e.target.value })} /></label>
+          <button type="button" className="btn small secondary" onClick={() => setInjuries(injuries.filter((_, j) => j !== i))}>Quitar</button>
+        </div>
+      ))}
+      <div className="agent-actions">
+        <button type="button" className="btn small secondary" disabled={!formReady} onClick={() => setInjuries([...injuries, { id: `l${Date.now().toString(36)}`, zone: '', since: '', status: 'activa', note: '' }])}>+ Agregar lesión</button>
+      </div>
+      <div className="form-row">
+        <label className="field"><span>Piso de km por semana</span>
+          <input inputMode="decimal" value={range.min} placeholder="30" onChange={(e) => setRange({ ...range, min: e.target.value })} /></label>
+        <label className="field"><span>Techo de km por semana</span>
+          <input inputMode="decimal" value={range.max} placeholder="45" onChange={(e) => setRange({ ...range, max: e.target.value })} /></label>
+      </div>
+      <button type="button" className="btn small" disabled={!!busy || !formReady} onClick={saveState}>{busy === 'estado' ? 'Guardando…' : 'Guardar lesiones y rango'}</button>
+
       <details>
         <summary>Ficha del atleta para el agente</summary>
         <p className="note">Meta, reglas personales, lesiones y lo que el agente debe recordar siempre. La lee en cada análisis.</p>
@@ -299,7 +355,7 @@ export function AgentPanel({ uid, athlete, weekId, onApproved }: { uid: string; 
           <input type="checkbox" checked={ref.maxEffort} onChange={(e) => setRef({ ...ref, maxEffort: e.target.checked })} />
           <span>Fue a tope (carrera o test). Desmárcala si fue un entrenamiento: el índice queda como mínimo.</span>
         </label>
-        <label className="field"><span>Meta de tiempo{athlete.goalRace ? ` en ${athlete.goalRace.name}` : ''} (opcional)</span>
+        <label className="field"><span>Meta de tiempo{athlete.goalRace ? ` en ${athlete.goalRace.name}` : ''} (opcional; si el atleta puso meta en su carrera principal, manda la suya)</span>
           <input value={goalTime} placeholder="1:50:00" onChange={(e) => setGoalTime(e.target.value)} /></label>
         <FitnessPreview draft={ref} goalTime={goalTime} race={athlete.goalRace ?? null} />
         <button type="button" className="btn small" disabled={!!busy || !formReady} onClick={saveFicha}>{busy === 'ficha' ? 'Guardando…' : 'Guardar ficha'}</button>
@@ -356,6 +412,21 @@ function FitnessPreview({ draft, goalTime, race }: { draft: RefDraft; goalTime: 
   );
 }
 
+const km = (n: number | null) => (n == null ? '–' : `${String(n).replace('.', ',')} km`);
+
+/** El porqué de la propuesta con los números que usó el código (base, topes, piso y señales). */
+function RationaleView({ r }: { r: NonNullable<Proposal['rationale']> }) {
+  return (
+    <div className="note agent-why">
+      <strong>Por qué:</strong>{' '}
+      {r.kind ? `semana de ${WEEK_KIND_LABEL[r.kind]}. ` : ''}
+      Semana anterior {km(r.lastKm)} · base de 4 semanas {km(r.chronicKm)} · base usada {km(r.baseKm)} · tope {km(r.capKm)}
+      {r.floorKm != null ? ` · piso ${km(r.floorKm)}` : ''}{r.ceilingKm != null ? ` · techo ${km(r.ceilingKm)}` : ''} · propone {km(r.km)}.
+      {r.signals.length > 0 && <> Señales: {r.signals.join(' · ')}.</>}
+    </div>
+  );
+}
+
 function ProposalView({ p }: { p: Proposal }) {
   const week = p.plan?.[0];
   const m = p.metrics;
@@ -374,6 +445,7 @@ function ProposalView({ p }: { p: Proposal }) {
       </p>
       <p style={{ whiteSpace: 'pre-line' }}>{p.summary}</p>
       <p className="note">Regla: {p.decisionRule}</p>
+      {p.rationale && <RationaleView r={p.rationale} />}
       {p.alerts.length > 0 && <div className="alert"><strong>Mira esto:</strong><ul>{p.alerts.map((a) => <li key={a}>{a}</li>)}</ul></div>}
       {p.issues.length > 0 && (
         <div className="alert error"><strong>El Guardián no quedó conforme ({p.attempts} intentos):</strong><ul>{p.issues.map((a) => <li key={a}>{a}</li>)}</ul></div>

@@ -42,11 +42,6 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
     limitations: profile.profile?.limitations ?? '',
     goals: profile.profile?.goals ?? '',
   });
-  const [race, setRace] = useState({
-    name: profile.goalRace?.name ?? '',
-    date: profile.goalRace?.date ?? '',
-    distanceKm: profile.goalRace?.distanceKm?.toString() ?? '',
-  });
   const { confirm, toast } = useDialogs();
   const { t, lang } = useI18n();
   const userRef = doc(db(), 'users', uid);
@@ -57,11 +52,8 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
-    const goalRace = race.name && race.date
-      ? { name: race.name.trim(), date: race.date, distanceKm: race.distanceKm ? Number(race.distanceKm.replace(',', '.')) : null }
-      : null;
     try {
-      await updateDoc(userRef, { profile: p, goalRace, updatedAt: serverTimestamp() });
+      await updateDoc(userRef, { profile: p, updatedAt: serverTimestamp() });
       toast(t.settings.profileSaved);
     } catch {
       toast(t.common.saveError, 'error');
@@ -118,14 +110,7 @@ function Settings({ uid, profile }: { uid: string; profile: UserDoc }) {
 
         <form className="panel form" onSubmit={saveProfile}>
           <h3>{t.settings.profile}</h3>
-          <div className="form-row">
-            <label className="field"><span>{t.settings.race}</span>
-              <input value={race.name} placeholder={t.settings.racePlaceholder} onChange={(e) => setRace({ ...race, name: e.target.value })} /></label>
-            <label className="field"><span>{t.settings.date}</span>
-              <input type="date" value={race.date} onChange={(e) => setRace({ ...race, date: e.target.value })} /></label>
-            <label className="field"><span>{t.settings.distance}</span>
-              <input inputMode="decimal" value={race.distanceKm} placeholder={lang === 'es' ? '21,1' : '21.1'} onChange={(e) => setRace({ ...race, distanceKm: e.target.value })} /></label>
-          </div>
+          <p className="note"><Link href="/carreras">{t.races.settingsLink}</Link></p>
           <div className="form-row">
             <label className="field"><span>{t.settings.age}</span>
               <input inputMode="numeric" value={p.age} placeholder="35" onChange={(e) => setP({ ...p, age: e.target.value })} /></label>

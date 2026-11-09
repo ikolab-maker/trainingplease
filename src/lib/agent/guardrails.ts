@@ -7,6 +7,7 @@ import { addDays } from '../dates.ts';
 import { parsePlanFile, type PlanWeekFile } from '../planFile.ts';
 import { RUN_SPORTS, round1, runKm, type Decision } from './metrics.ts';
 import type { QualityWork } from './proposal.ts';
+import type { VolumeRange } from './athleteState.ts';
 import type { Session } from '../types.ts';
 
 export interface GuardContext {
@@ -18,8 +19,11 @@ export interface GuardContext {
   prevKm: number | null; // km de carrera de la semana anterior (hechos y pendientes)
   prev2Km?: number | null; // km de carrera de dos semanas atrás
   recentMaxKm: number | null; // máximo de km de las 4 semanas previas (volumen normal antes del taper)
-  prevWasDeload: boolean;
-  prev2WasDeload?: boolean; // la semana de hace dos fue descarga o recuperación
+  prevWasDeload: boolean; // la semana anterior fue baja a propósito (tipo descarga, taper, carrera o recuperación)
+  prev2WasDeload?: boolean; // igual, la de hace dos semanas
+  chronicKm?: number | null; // base de 4 semanas: promedio de km de las semanas de carga recientes
+  volumeRange?: VolumeRange | null; // piso y techo de km que fijó el coach para este atleta
+  activeInjury?: boolean; // hay una lesión con estado "activa" en su ficha
   race: { date: string; distanceKm: number | null } | null; // carrera objetivo
   recentRaces?: { date: string; distanceKm: number; title: string }[]; // carreras o tests de la semana analizada
   lockedIds?: string[]; // en un ajuste: sesiones ya pasadas o registradas, que no se pueden cambiar
@@ -29,7 +33,7 @@ export interface GuardContext {
   mode?: 'semanal' | 'ajuste'; // en un ajuste, las reglas de estructura (4 a 7) avisan en vez de bloquear
 }
 
-type VolumeContext = Pick<GuardContext, 'prevKm' | 'prev2Km' | 'recentMaxKm' | 'prevWasDeload' | 'prev2WasDeload'>;
+type VolumeContext = Pick<GuardContext, 'prevKm' | 'prev2Km' | 'recentMaxKm' | 'prevWasDeload' | 'prev2WasDeload' | 'chronicKm' | 'volumeRange'>;
 
 /**
  * Referencias de volumen de la regla 1, compartidas con el resumen que recibe el modelo.
@@ -39,18 +43,33 @@ type VolumeContext = Pick<GuardContext, 'prevKm' | 'prev2Km' | 'recentMaxKm' | '
 export function volumeLimits(ctx: VolumeContext) {
   const normal = Math.max(ctx.prev2Km ?? 0, ctx.recentMaxKm ?? 0) || null;
   const refFromNormal = !(ctx.prevKm && ctx.prevKm > 0);
-  const refKm = refFromNormal ? normal : ctx.prevKm!;
+  const lastKm = refFromNormal ? normal : ctx.prevKm!;
+  // Base de 4 semanas: si la semana anterior quedó baja (dolor, viaje, sesiones sin marcar), no arrastra a esta.
+  const chronic = ctx.chronicKm && ctx.chronicKm > 0 ? ctx.chronicKm : 0;
+  const refFromChronic = chronic > (lastKm ?? 0);
+  const refKm = Math.max(lastKm ?? 0, chronic) || null;
   const weekBase = refKm && ctx.prevWasDeload && ctx.recentMaxKm ? Math.max(refKm, ctx.recentMaxKm) : refKm;
-  const twoWeekBase = ctx.prev2Km && ctx.prev2Km > 0
-    ? (ctx.prev2WasDeload && ctx.recentMaxKm ? Math.max(ctx.prev2Km, ctx.recentMaxKm) : ctx.prev2Km)
+  const prev2 = ctx.prev2Km && ctx.prev2Km > 0 ? ctx.prev2Km : null;
+  const twoWeekBase = prev2
+    ? Math.max(ctx.prev2WasDeload && ctx.recentMaxKm ? Math.max(prev2, ctx.recentMaxKm) : prev2, chronic)
     : null;
+  const weekCap = weekBase ? round1(weekBase * WEEK_CAP + 0.5) : null;
+  const twoWeekCap = twoWeekBase ? round1(twoWeekBase * TWO_WEEK_CAP + 0.5) : null;
+  // Piso del atleta: si está muy por debajo, se sube hacia él lo que permiten los topes (en dos o tres semanas llega).
+  const minKm = ctx.volumeRange?.minKm ?? null;
+  const floorKm = minKm ? round1(Math.min(minKm, weekBase ? weekBase * WEEK_CAP : Infinity, twoWeekBase ? twoWeekBase * TWO_WEEK_CAP : Infinity)) : null;
   return {
     refKm, // referencia para descarga, bajar y mantener
     refFromNormal,
+    refFromChronic,
+    lastKm,
+    chronicKm: chronic || null,
     weekBase,
-    weekCap: weekBase ? round1(weekBase * WEEK_CAP + 0.5) : null,
+    weekCap,
     twoWeekBase,
-    twoWeekCap: twoWeekBase ? round1(twoWeekBase * TWO_WEEK_CAP + 0.5) : null,
+    twoWeekCap,
+    floorKm, // mínimo de esta semana por el piso del atleta (null si no tiene)
+    ceilingKm: ctx.volumeRange?.maxKm ?? null,
   };
 }
 
@@ -136,14 +155,24 @@ export function checkProposal(raw: unknown, ctx: GuardContext, extras: SessionEx
       issues.push(`Sube demasiado en dos semanas: ${fmtKm(km)} km contra ${fmtKm(vol.twoWeekBase!)} de hace dos semanas (máximo +30 %: ${fmtKm(vol.twoWeekCap)} km).`);
     }
     const ref = vol.refKm;
-    if (ref && ctx.decision === 'descarga' && km > round1(ref * 0.75 + 0.5)) {
-      issues.push(`Una descarga baja 30–40 % de km: ${fmtKm(km)} km es demasiado (máximo ${fmtKm(ref * 0.75)} km).`);
+    // Con dolor, enfermedad o lesión activa, el piso del atleta no manda; si no, ninguna decisión baja de él.
+    const hurt = !!(ctx.painAlert || ctx.illnessAlert || ctx.activeInjury);
+    const floor = !hurt && !taper && ctx.mode !== 'ajuste' ? vol.floorKm : null;
+    const atLeastFloor = (cap: number) => Math.max(cap, floor ?? 0);
+    if (ref && ctx.decision === 'descarga' && km > atLeastFloor(round1(ref * 0.75 + 0.5))) {
+      issues.push(`Una descarga baja 30–40 % de km: ${fmtKm(km)} km es demasiado (máximo ${fmtKm(atLeastFloor(ref * 0.75))} km).`);
     }
-    if (ref && ctx.decision === 'bajar' && km > round1(ref * 0.95)) {
-      issues.push(`La decisión es bajar 10–20 %: ${fmtKm(km)} km no baja lo suficiente (máximo ${fmtKm(ref * 0.9)} km).`);
+    if (ref && ctx.decision === 'bajar' && km > atLeastFloor(round1(ref * 0.95))) {
+      issues.push(`La decisión es bajar 10–20 %: ${fmtKm(km)} km no baja lo suficiente (máximo ${fmtKm(atLeastFloor(ref * 0.9))} km).`);
     }
-    if (ref && ctx.decision === 'mantener' && km > round1(ref * 1.03 + 0.5)) {
+    if (ref && ctx.decision === 'mantener' && km > atLeastFloor(round1(ref * 1.03 + 0.5))) {
       issues.push(`La decisión es mantener: ${fmtKm(km)} km sube respecto de ${fmtKm(ref)}.`);
+    }
+    if (floor && km < floor - 0.05) {
+      issues.push(`Baja del piso del atleta: ${fmtKm(km)} km de carrera y el coach fijó un mínimo de ${fmtKm(ctx.volumeRange!.minKm!)} km${floor < ctx.volumeRange!.minKm! ? ` (esta semana se sube hasta ${fmtKm(floor)}, lo que permiten los topes)` : ''}. Sin dolor activo no se baja de ahí.`);
+    }
+    if (vol.ceilingKm && km > vol.ceilingKm + 0.05) {
+      issues.push(`Pasa el techo de km del atleta: ${fmtKm(km)} km contra un máximo de ${fmtKm(vol.ceilingKm)} km que fijó el coach.`);
     }
   }
 

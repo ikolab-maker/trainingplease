@@ -352,6 +352,9 @@ ul { margin: 0; padding-left: 1.2em; }
   margin-bottom: .9rem;
 }
 .week-goal { font-size: 1.1rem; max-width: 60ch; }
+.week-why { max-width: 60ch; margin-top: .6rem; }
+.week-why summary { cursor: pointer; font-family: var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--blue-deep); }
+.week-why p { margin: .4rem 0 0; white-space: pre-line; }
 
 .progress {
   background: var(--pink-pale);

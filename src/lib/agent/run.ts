@@ -42,6 +42,7 @@ function proposalDoc(r: HeadCoachResult, analyzedWeekId: string) {
       rpeOverTarget: r.metrics.rpeOverTarget.length,
     },
     km: r.km,
+    rationale: r.rationale,
     plan: r.plan,
     issues: r.issues,
     attempts: r.attempts,

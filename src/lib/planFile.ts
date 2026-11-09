@@ -11,6 +11,7 @@ export interface PlanWeekFile {
   sessions: (Omit<Session, 'id'> & { id: string })[];
 }
 
+const WEEK_KINDS = ['carga', 'descarga', 'taper', 'carrera', 'recuperacion'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const WEEK_RE = /^\d{4}-W\d{2}$/;
 const SESSION_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
@@ -84,6 +85,8 @@ export function parsePlanFile(raw: unknown): { plan: PlanWeekFile[]; errors: str
     if (typeof week.phase === 'string') meta.phase = str(week.phase, 200);
     if (typeof week.goal === 'string') meta.goal = str(week.goal, 3000);
     if (typeof week.aiAssisted === 'boolean') meta.aiAssisted = week.aiAssisted;
+    if (WEEK_KINDS.includes(week.kind)) meta.kind = week.kind;
+    if (typeof week.why === 'string') meta.why = str(week.why, 1500);
     if (Array.isArray(week.notes)) {
       meta.notes = week.notes.filter((n: any) => n && typeof n.title === 'string').slice(0, 10)
         .map((n: any) => ({ title: str(n.title, 200), body: str(n.body, 3000) }));

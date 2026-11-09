@@ -108,6 +108,12 @@ export function WeekView({ uid, profile, readOnly }: { uid: string; profile: Use
               {week.phase && <span className="week-phase">{week.phase}</span>}
               {week.aiAssisted && <span className="week-phase ai-flag" style={{ marginLeft: '.4rem' }}>{t.week.aiFlag}</span>}
               {week.goal && <p className="week-goal">{week.goal}</p>}
+              {week.why && (
+                <details className="week-why">
+                  <summary>{t.week.whyTitle}</summary>
+                  <p>{week.why}</p>
+                </details>
+              )}
             </div>
 
             <div className={`progress${allDone ? ' done' : ''}`}>
