@@ -365,6 +365,126 @@ Three things worth knowing:
 
 In short: a test every so often, well prepared and well logged, makes your plan talk about you and not about just any runner.`;
 
+const LENTO_ES = `![Corre lento para correr más: la prueba del habla](https://trainingplease.app/img/blog/corre-lento.png)
+
+Casi todos empezamos igual. Sales a correr, miras el reloj, te parece lento y aprietas. Al día siguiente, lo mismo. A las pocas semanas estás cansado, te duele algo y el ritmo no mejora.
+
+No es falta de ganas. Es que corriste todos los días en una zona que no es ni suave ni dura: demasiado rápido para recuperarte y demasiado lento para que cuente como entrenamiento de calidad.
+
+> Correr suave no es entrenar menos. Es entrenar para poder seguir entrenando.
+
+## Por qué funciona correr suave
+
+Lo que te hace mejorar como corredor no es una sesión heroica. Es **acumular semanas** sin lesionarte. Y eso se construye con rodajes suaves:
+
+- **El corazón y los músculos se adaptan** con tiempo corriendo, no con sufrimiento. A ritmo suave tu cuerpo aprende a usar mejor el oxígeno y a gastar menos energía en cada paso.
+- **Tendones, huesos y articulaciones** se adaptan más lento que tus pulmones. Si siempre vas rápido, el motor crece antes que el chasis y aparecen las molestias.
+- **Te recuperas para el día que sí toca apretar.** Una sesión dura bien hecha vale más que cuatro sesiones a medio gas.
+
+Los corredores de élite lo saben bien: hacen la gran mayoría de su entrenamiento a ritmos que a nosotros nos parecerían cómodos.
+
+## ¿Cuánto debe ser suave?
+
+En tu plan, **al menos tres cuartas partes de tu tiempo corriendo** van a ritmo suave, y lo ideal es acercarse a cuatro de cada cinco minutos. El resto es tu sesión de calidad: series, un tramo a ritmo o un fondo con final más vivo.
+
+Ojo con un detalle: lo contamos en **minutos**, no en salidas. Si corres tres o cuatro días a la semana, normalmente **una sola** de esas salidas tiene partes duras, y aun así esa salida empieza y termina suave.
+
+En tu plan esto ya está hecho: cuando dice **E · Easy**, es esto. Los ritmos que salen de tu test de 5K, basados en la metodología de un reconocido entrenador de fondo, ponen la mayor parte de tu semana justamente aquí.
+
+## La prueba del habla
+
+No necesitas reloj ni pulsómetro para saber si vas suave. Necesitas hablar.
+
+| Puedes decir... | Vas en... | RPE aproximado |
+|---|---|---|
+| **Una frase completa**, sin cortarla para respirar | **Suave.** Aquí va casi toda tu semana | 3 o 4 |
+| Frases cortas, con pausas | Ritmo exigente (umbral) | 6 o 7 |
+| Dos o tres palabras seguidas | Duro (series) | 8 o 9 |
+
+Si corres solo, prueba decir en voz alta: *«Hoy salí a correr y me siento bien»*. Si te sale de corrido, vas bien. Si la partes en dos, baja un poco.
+
+## Cómo frenarte (porque cuesta)
+
+- **Olvida el ritmo del reloj** en los rodajes suaves. Mira el tiempo total, no el minuto por kilómetro.
+- **Si hay una cuesta, sube más lento** o camina. La regla es el esfuerzo, no el ritmo.
+- **Si sales con alguien más rápido**, que se adapte esa persona, o separen caminos.
+- **Caminar no es fallar.** Si empiezas, alternar trote y caminata es una forma muy válida de sumar minutos suaves.
+- **Calor, mala noche o semana pesada:** ese día tu suave es más lento. Es normal.
+
+## Cuándo sí apretar
+
+Cuando tu plan lo pide. Ese día vas con ganas y con buena técnica, y como llegas descansado, lo aprovechas. Si todo es suave salvo eso, tu semana tiene sentido.
+
+Y si un rodaje suave se te hizo pesado, cuéntalo en el comentario de la sesión, con tu RPE. Ese dato le dice a tu plan si la semana siguiente toca seguir o bajar.
+
+## Una aclaración honesta
+
+Esto no lo escribe un médico ni un coach certificado. Lo escribe alguien que corre y que combina el deporte con una vida de trabajo. Lo que te contamos se basa en la metodología de un reconocido entrenador de fondo y en lo que hoy dicen los estudios.
+
+*Este post es informativo y no reemplaza el consejo de un médico. Si tienes una condición de salud, dolor en el pecho, mareos o un dolor que te cambia la pisada, para y consulta a un profesional antes de seguir.*
+
+En pocas palabras: **corre lento la mayor parte del tiempo, y rápido solo cuando toca.** Si puedes contar tu día mientras corres, vas por buen camino.`;
+
+const LENTO_EN = `![Run slow to run more: the talk test](https://trainingplease.app/img/blog/corre-lento-en.png)
+
+Almost all of us start the same way. You go out for a run, look at your watch, it feels slow and you push. The next day, the same. A few weeks later you’re tired, something hurts and your pace isn’t getting better.
+
+It isn’t a lack of motivation. You ran every day in a zone that is neither easy nor hard: too fast to recover and too slow to count as quality training.
+
+> Running easy isn’t training less. It’s training so you can keep training.
+
+## Why running easy works
+
+What makes you a better runner isn’t one heroic session. It’s **stacking up weeks** without getting injured. And that is built with easy runs:
+
+- **Your heart and muscles adapt** to time on your feet, not to suffering. At an easy pace your body learns to use oxygen better and to spend less energy on every stride.
+- **Tendons, bones and joints** adapt more slowly than your lungs. If you always go fast, the engine grows before the chassis and the aches show up.
+- **You recover for the day you do need to push.** One hard session done well is worth more than four at half throttle.
+
+Elite runners know this well: they do the vast majority of their training at paces that would feel comfortable to us.
+
+## How much should be easy?
+
+In your plan, **at least three quarters of your running time** is at an easy pace, ideally close to four out of every five minutes. The rest is your quality session: intervals, a stretch at pace or a long run with a livelier finish.
+
+One detail: we count it in **minutes**, not in runs. If you run three or four days a week, usually **only one** of those runs has hard parts, and even that run starts and ends easy.
+
+Your plan already does this: when it says **E · Easy**, this is it. The paces from your 5K test, based on the method of a renowned distance-running coach, put most of your week right here.
+
+## The talk test
+
+You don’t need a watch or a heart-rate monitor to know if you’re going easy. You need to talk.
+
+| You can say... | You’re running... | Approx. RPE |
+|---|---|---|
+| **A full sentence**, without stopping to breathe | **Easy.** Almost all of your week goes here | 3 or 4 |
+| Short phrases, with pauses | Demanding pace (threshold) | 6 or 7 |
+| Two or three words at a time | Hard (intervals) | 8 or 9 |
+
+If you run alone, try saying out loud: *“I went out for a run and I feel good.”* If it comes out in one go, you’re fine. If you split it in two, slow down a little.
+
+## How to hold yourself back (because it’s hard)
+
+- **Forget the pace on your watch** on easy runs. Look at total time, not minutes per kilometer.
+- **On a hill, go up slower** or walk. The rule is effort, not pace.
+- **If you run with someone faster**, they adapt to you, or you split up.
+- **Walking isn’t failing.** If you’re starting out, alternating jogging and walking is a perfectly valid way to add easy minutes.
+- **Heat, a bad night or a heavy week:** that day your easy is slower. That’s normal.
+
+## When to push
+
+When your plan asks for it. That day you go for it with good form, and since you arrive rested, you make the most of it. If everything else is easy, your week makes sense.
+
+And if an easy run felt heavy, say so in the session comment, along with your RPE. That tells your plan whether next week should keep going or ease off.
+
+## An honest note
+
+This isn’t written by a doctor or a certified coach. It’s written by someone who runs and combines sport with a working life. What we share here is based on the method of a renowned distance-running coach and on what current studies say.
+
+*This post is for information only and does not replace a doctor’s advice. If you have a health condition, chest pain, dizziness or a pain that changes your stride, stop and see a professional before going on.*
+
+In short: **run slow most of the time, and fast only when it’s time.** If you can tell the story of your day while you run, you’re on the right track.`;
+
 export const SUGGESTED_POSTS: SuggestedPost[] = [
   {
     slug: 'que-es-el-rpe',
@@ -391,6 +511,20 @@ export const SUGGESTED_POSTS: SuggestedPost[] = [
       title: 'Your 5K test: how to prepare, run it and what we do with your time',
       summary: 'Every so often you run an all-out 5K. Your plan’s paces come from that time. What to do the day before, what to eat, how to run it and when not to.',
       body: TEST_EN,
+    },
+  },
+  {
+    slug: 'corre-lento',
+    private: false,
+    es: {
+      title: 'Corre lento para correr más',
+      summary: 'Si estás empezando, el mejor consejo suena al revés: baja el ritmo. Por qué la mayor parte de tu semana debe ser suave y cómo saberlo sin reloj, con la prueba del habla.',
+      body: LENTO_ES,
+    },
+    en: {
+      title: 'Run slow to run more',
+      summary: 'If you’re just starting, the best advice sounds backwards: slow down. Why most of your week should be easy and how to tell without a watch, with the talk test.',
+      body: LENTO_EN,
     },
   },
 ];
