@@ -32,17 +32,17 @@ export default function AthletePage() {
   const { uid } = useParams<{ uid: string }>();
   return (
     <Gate role="admin">
-      {() => (
+      {({ user }) => (
         <>
           <TopNav />
-          <AthleteDetail uid={uid} />
+          <AthleteDetail uid={uid} self={uid === user.uid} />
         </>
       )}
     </Gate>
   );
 }
 
-function AthleteDetail({ uid }: { uid: string }) {
+function AthleteDetail({ uid, self }: { uid: string; self: boolean }) {
   const [athlete, setAthlete] = useState<UserDoc | null>(null);
   useEffect(() => onSnapshot(doc(db(), 'users', uid), (s) => setAthlete(s.exists() ? (s.data() as UserDoc) : null)), [uid]);
 
@@ -112,7 +112,7 @@ function AthleteDetail({ uid }: { uid: string }) {
 
         <AthleteProfile uid={uid} athlete={athlete} />
 
-        <DeleteAthlete uid={uid} athlete={athlete} />
+        {!self && <DeleteAthlete uid={uid} athlete={athlete} />}
       </div>
     </main>
   );

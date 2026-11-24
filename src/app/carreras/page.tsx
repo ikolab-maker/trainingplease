@@ -14,7 +14,7 @@ import './carreras.css';
 
 export default function CarrerasPage() {
   return (
-    <Gate role="athlete">
+    <Gate athleteView>
       {({ profile }) => (
         <>
           <TopNav />

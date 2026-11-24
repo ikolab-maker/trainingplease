@@ -8,18 +8,25 @@ import { LEGAL_VERSION } from '@/lib/legal';
 import type { Role, UserDoc } from '@/lib/types';
 import type { User } from 'firebase/auth';
 
-export function needsConsent(p: UserDoc): boolean {
-  return p.role === 'athlete' && (!p.consent || p.consent.version !== LEGAL_VERSION);
+/** El atleta siempre necesita consentimiento vigente; el coach, solo cuando entra a su propio plan. */
+export function needsConsent(p: UserDoc, athleteView = false): boolean {
+  return (p.role === 'athlete' || athleteView) && (!p.consent || p.consent.version !== LEGAL_VERSION);
 }
 
-/** Protege una página: exige sesión, rol y (para atletas) consentimiento vigente. */
-export function Gate({ role, allowNoConsent, children }: {
+/**
+ * Protege una página: exige sesión, rol y (para atletas) consentimiento vigente.
+ * `athleteView`: páginas del atleta que el coach también usa para su propio plan
+ * (también le piden consentimiento, porque sus registros son datos de salud).
+ */
+export function Gate({ role, athleteView, allowNoConsent, children }: {
   role?: Role;
+  athleteView?: boolean;
   allowNoConsent?: boolean;
   children: (ctx: { user: User; profile: UserDoc }) => ReactNode;
 }) {
   const { state } = useAuth();
   const router = useRouter();
+  const wrongRole = (r: Role) => (athleteView ? r !== 'athlete' && r !== 'admin' : !!role && r !== role);
 
   useEffect(() => {
     if (state.status === 'signedOut' || state.status === 'denied' || state.status === 'unconfigured') {
@@ -28,14 +35,14 @@ export function Gate({ role, allowNoConsent, children }: {
     }
     if (state.status !== 'ready') return;
     const p = state.profile;
-    if (role && p.role !== role) router.replace(p.role === 'admin' ? '/coach' : '/plan');
-    else if (!allowNoConsent && needsConsent(p)) router.replace('/bienvenida');
-  }, [state, role, allowNoConsent, router]);
+    if (wrongRole(p.role)) router.replace(p.role === 'admin' ? '/coach' : '/plan');
+    else if (!allowNoConsent && needsConsent(p, athleteView)) router.replace('/bienvenida');
+  }, [state, role, athleteView, allowNoConsent, router]);
 
   if (state.status !== 'ready') return <Loading />;
   const p = state.profile;
-  if (role && p.role !== role) return <Loading />;
-  if (!allowNoConsent && needsConsent(p)) return <Loading />;
+  if (wrongRole(p.role)) return <Loading />;
+  if (!allowNoConsent && needsConsent(p, athleteView)) return <Loading />;
   return <>{children({ user: state.user, profile: p })}</>;
 }
 

@@ -34,17 +34,17 @@ type InvestorRow = InvestorContact & Created & { id: string };
 export default function CoachPage() {
   return (
     <Gate role="admin">
-      {() => (
+      {({ user }) => (
         <>
           <TopNav />
-          <Dashboard />
+          <Dashboard myUid={user.uid} />
         </>
       )}
     </Gate>
   );
 }
 
-function Dashboard() {
+function Dashboard({ myUid }: { myUid: string }) {
   const [rows, setRows] = useState<AthleteRow[] | null>(null);
   const [pending, setPending] = useState<Pending[]>([]);
   const [requests, setRequests] = useState<PilotRow[]>([]);
@@ -99,6 +99,7 @@ function Dashboard() {
       <header className="banner"><h2>Panel coach</h2><p>Atletas, planes y cumplimiento</p></header>
       <div className="wrap">
         <h3 className="section-title">Atletas</h3>
+        <p className="section-sub">Tu propio plan: <Link href={`/coach/${myUid}`}>edítalo como el de un atleta</Link> y míralo en <Link href="/plan">Mi semana</Link>.</p>
         {rows === null ? <p className="loading">Cargando…</p> : rows.length === 0 ? (
           <p className="section-sub">Todavía no hay atletas activos. Da de alta el primero abajo; aparecerá aquí cuando entre con Google.</p>
         ) : (

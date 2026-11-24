@@ -22,7 +22,8 @@ export async function POST(req: Request) {
 
   const db = adminDb();
   const user = await db.doc(`users/${uid}`).get();
-  if (!user.exists || user.get('role') !== 'athlete') {
+  // El coach también puede cargarse su propio plan.
+  if (!user.exists || (user.get('role') !== 'athlete' && uid !== token.uid)) {
     return NextResponse.json({ error: 'Ese atleta no existe.' }, { status: 404 });
   }
 

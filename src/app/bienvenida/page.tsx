@@ -10,7 +10,7 @@ import { grantConsent, type OptionalPurposes } from '@/lib/consent';
 import { legalText } from '@/lib/legalText';
 
 export default function BienvenidaPage() {
-  return <Gate role="athlete" allowNoConsent>{({ user, profile }) => <Consent uid={user.uid} name={profile.name} renewing={!!profile.consent} />}</Gate>;
+  return <Gate athleteView allowNoConsent>{({ user, profile }) => <Consent uid={user.uid} name={profile.name} renewing={!!profile.consent} />}</Gate>;
 }
 
 function Consent({ uid, name, renewing }: { uid: string; name: string; renewing: boolean }) {
