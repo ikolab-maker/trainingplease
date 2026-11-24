@@ -13,7 +13,7 @@ export function TopNav() {
   const isAdmin = state.profile.role === 'admin';
 
   const links = isAdmin
-    ? [{ href: '/coach', label: t.nav.athletes }, { href: '/coach/blog', label: t.nav.blog }, { href: '/coach/docs', label: t.nav.docs }]
+    ? [{ href: '/coach', label: t.nav.athletes }, { href: '/plan', label: t.nav.myWeek }, { href: '/coach/blog', label: t.nav.blog }, { href: '/coach/docs', label: t.nav.docs }]
     : [{ href: '/plan', label: t.nav.myWeek }, { href: '/carreras', label: t.nav.races }, { href: '/blog', label: t.nav.blog }, { href: '/ajustes', label: t.nav.settings }];
 
   return (

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error }, { status: 400 });
   const ref = adminDb().doc(`users/${token.uid}`);
   const snap = await ref.get();
-  if (!snap.exists || snap.get('role') !== 'athlete') return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  if (!snap.exists || !['athlete', 'admin'].includes(snap.get('role'))) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   await ref.update({ races, goalRace: toGoalRace(principalRace(races)), updatedAt: FieldValue.serverTimestamp() });
   return NextResponse.json({ ok: true, races });
 }

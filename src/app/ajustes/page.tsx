@@ -17,7 +17,7 @@ import type { Theme, UserDoc } from '@/lib/types';
 
 export default function AjustesPage() {
   return (
-    <Gate role="athlete">
+    <Gate athleteView>
       {({ user, profile }) => (
         <>
           <TopNav />

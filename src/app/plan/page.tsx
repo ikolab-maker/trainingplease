@@ -8,7 +8,7 @@ import { useI18n } from '@/components/I18nProvider';
 export default function PlanPage() {
   const { t } = useI18n();
   return (
-    <Gate role="athlete">
+    <Gate athleteView>
       {({ user, profile }) => (
         <>
           <TopNav />
